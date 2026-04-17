@@ -113,4 +113,20 @@ public class Tarefa {
     public StatusTarefa getStatus() { return status; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
+    public void atualizarDetalhes(String titulo, String descricao, LocalDateTime dataInicio, LocalDateTime dataFim) {
+        if (this.status == StatusTarefa.CONCLUIDA) {
+            throw new IllegalStateException("Uma tarefa não pode ser editada após ser concluída.");
+        }
+        if (titulo == null || titulo.trim().isEmpty()) {
+            throw new IllegalArgumentException("Título é obrigatório.");
+        }
+        if (dataInicio != null && dataFim != null && dataInicio.isAfter(dataFim)) {
+            throw new IllegalArgumentException("Data de início não pode ser depois da data de fim.");
+        }
+        this.titulo = titulo;
+        this.descricao = descricao;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.dataAtualizacao = LocalDateTime.now();
+    }
 }
