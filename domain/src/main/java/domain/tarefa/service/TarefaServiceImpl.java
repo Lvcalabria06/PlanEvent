@@ -9,8 +9,6 @@ import domain.tarefa.entity.Tarefa;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.valueobject.StatusTarefa;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class TarefaServiceImpl implements TarefaService {
@@ -22,10 +20,10 @@ public class TarefaServiceImpl implements TarefaService {
     private final ResponsavelTarefaRepository responsavelTarefaRepository;
 
     public TarefaServiceImpl(TarefaRepository tarefaRepository,
-                             EquipeRepository equipeRepository,
-                             EventoRepository eventoRepository,
-                             FuncionarioRepository funcionarioRepository,
-                             ResponsavelTarefaRepository responsavelTarefaRepository) {
+            EquipeRepository equipeRepository,
+            EventoRepository eventoRepository,
+            FuncionarioRepository funcionarioRepository,
+            ResponsavelTarefaRepository responsavelTarefaRepository) {
         this.tarefaRepository = tarefaRepository;
         this.equipeRepository = equipeRepository;
         this.eventoRepository = eventoRepository;
@@ -47,8 +45,9 @@ public class TarefaServiceImpl implements TarefaService {
             throw new IllegalStateException("Já existe uma tarefa com esse título na equipe.");
         }
 
-        // RN3: Data inicio e fim não sobrepostas manipulada pelos construtores da entidade
-        
+        // RN3: Data inicio e fim não sobrepostas manipulada pelos construtores da
+        // entidade
+
         return tarefaRepository.salvar(tarefa);
     }
 
@@ -57,7 +56,8 @@ public class TarefaServiceImpl implements TarefaService {
         Tarefa tarefaAtual = tarefaRepository.buscarPorId(tarefaEditada.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
 
-        // RN8: Não editável após conclusão (a própria entidade Tarefa já validará no update)
+        // RN8: Não editável após conclusão (a própria entidade Tarefa já validará no
+        // update)
         if (!tarefaAtual.getTitulo().equals(tarefaEditada.getTitulo())) {
             if (tarefaRepository.existePorTituloEEquipe(tarefaEditada.getTitulo(), tarefaAtual.getEquipeId())) {
                 throw new IllegalStateException("Já existe uma tarefa com esse título na equipe.");
@@ -69,8 +69,7 @@ public class TarefaServiceImpl implements TarefaService {
                 tarefaEditada.getTitulo(),
                 tarefaEditada.getDescricao(),
                 tarefaEditada.getDataInicio(),
-                tarefaEditada.getDataFim()
-        );
+                tarefaEditada.getDataFim());
 
         return tarefaRepository.salvar(tarefaAtual);
     }
@@ -96,10 +95,12 @@ public class TarefaServiceImpl implements TarefaService {
         // RN5: Só pode ser iniciada se houver pelo menos um responsável atribuído
         List<ResponsavelTarefa> responsaveis = responsavelTarefaRepository.listarPorTarefa(tarefaId);
         if (responsaveis == null || responsaveis.isEmpty()) {
-            throw new IllegalStateException("A tarefa só pode ser iniciada se houver pelo menos um responsável atribuído.");
+            throw new IllegalStateException(
+                    "A tarefa só pode ser iniciada se houver pelo menos um responsável atribuído.");
         }
 
-        // Inicia a tarefa aplicando as regras de RN6 (fluxo controlado interno da entidade)
+        // Inicia a tarefa aplicando as regras de RN6 (fluxo controlado interno da
+        // entidade)
         tarefa.iniciar();
 
         tarefaRepository.salvar(tarefa);
@@ -113,9 +114,11 @@ public class TarefaServiceImpl implements TarefaService {
         funcionarioRepository.buscarPorId(funcionarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Funcionário não encontrado."));
 
-        // RN4: Apenas funcionários da equipe da tarefa podem ser atribuídos como responsáveis
+        // RN4: Apenas funcionários da equipe da tarefa podem ser atribuídos como
+        // responsáveis
         if (!isFuncionarioNaEquipe(tarefa.getEquipeId(), funcionarioId)) {
-            throw new IllegalStateException("Apenas funcionários pertencentes à equipe da tarefa podem ser atribuídos.");
+            throw new IllegalStateException(
+                    "Apenas funcionários pertencentes à equipe da tarefa podem ser atribuídos.");
         }
 
         if (responsavelTarefaRepository.existePorTarefaEFuncionario(tarefaId, funcionarioId)) {
@@ -132,15 +135,18 @@ public class TarefaServiceImpl implements TarefaService {
     }
 
     /**
-     * Lógica incorporada no serviço para verificar se o funcionário pertence à equipe
-     * (Implementado diretamente no service para compensar a ausência do MembroEquipeRepository)
+     * Lógica incorporada no serviço para verificar se o funcionário pertence à
+     * equipe
+     * (Implementado diretamente no service para compensar a ausência do
+     * MembroEquipeRepository)
      */
     private boolean isFuncionarioNaEquipe(String equipeId, String funcionarioId) {
         Equipe equipe = equipeRepository.buscarPorId(equipeId)
                 .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada."));
-        
+
         // Simulação da regra de negócio incorporada:
-        // Como o repositório de associação DB não existe, validamos usando os dados da raiz (Ex: o Lider)
+        // Como o repositório de associação DB não existe, validamos usando os dados da
+        // raiz (Ex: o Lider)
         // ou outra premissa de domínio, ao invés de buscar membros por junção SQL.
         return equipe.getLiderId() != null && equipe.getLiderId().equals(funcionarioId);
     }
