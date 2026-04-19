@@ -26,7 +26,9 @@ public class Contrato {
 
     public Contrato(String eventoId, TipoContrato tipo, String objeto, BigDecimal valor,
             LocalDateTime dataInicio, LocalDateTime dataFim, List<DadosParteContrato> dadosPartes) {
+
         validarCamposObrigatorios(eventoId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
+
         this.id = UUID.randomUUID().toString();
         this.eventoId = eventoId;
         this.tipo = tipo;
@@ -45,10 +47,13 @@ public class Contrato {
 
     public void atualizarDetalhes(TipoContrato tipo, String objeto, BigDecimal valor,
             LocalDateTime dataInicio, LocalDateTime dataFim, List<DadosParteContrato> dadosPartes) {
+
         if (this.status == StatusContrato.ENCERRADO || this.status == StatusContrato.CANCELADO) {
             throw new IllegalStateException("Contrato não pode ser alterado neste estado.");
         }
+
         validarCamposObrigatorios(this.eventoId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
+
         this.tipo = tipo;
         this.objeto = objeto.trim();
         this.valor = valor;
@@ -63,8 +68,7 @@ public class Contrato {
 
     public boolean estaCompleto() {
         try {
-            validarCamposObrigatorios(eventoId, tipo, objeto, valor, dataInicio, dataFim,
-                    getDadosPartesInterno());
+            validarCamposObrigatorios(eventoId, tipo, objeto, valor, dataInicio, dataFim, getDadosPartesInterno());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -75,13 +79,16 @@ public class Contrato {
         if (this.status == StatusContrato.CANCELADO) {
             throw new IllegalStateException("Contrato cancelado não pode ser encerrado.");
         }
+
         if (this.status == StatusContrato.ENCERRADO) {
             throw new IllegalStateException("Contrato já está encerrado.");
         }
+
         if (!estaCompleto()) {
             throw new IllegalStateException(
                     "Não é permitido encerrar contrato com informações incompletas ou inconsistentes.");
         }
+
         this.status = StatusContrato.ENCERRADO;
         this.updatedAt = LocalDateTime.now();
     }
@@ -90,6 +97,7 @@ public class Contrato {
         if (this.status != StatusContrato.RASCUNHO && this.status != StatusContrato.EM_NEGOCIACAO) {
             throw new IllegalStateException("Contrato não está em um estado válido para assinatura.");
         }
+
         this.status = StatusContrato.ASSINADO;
         this.updatedAt = LocalDateTime.now();
     }
@@ -98,6 +106,7 @@ public class Contrato {
         if (this.status == StatusContrato.ENCERRADO) {
             throw new IllegalStateException("Um contrato encerrado não pode ser cancelado.");
         }
+
         this.status = StatusContrato.CANCELADO;
         this.updatedAt = LocalDateTime.now();
     }
