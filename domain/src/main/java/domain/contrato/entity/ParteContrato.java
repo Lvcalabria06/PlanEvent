@@ -8,17 +8,15 @@ public class ParteContrato {
     private String nomeParte;
     private String tipoParte;
 
-    public ParteContrato() {
-        this.id = UUID.randomUUID().toString();
-        this.contratoId = null;
-    }
-
     public ParteContrato(String contratoId, String nomeParte, String tipoParte) {
-        if (contratoId == null) {
+        if (contratoId == null || contratoId.trim().isEmpty()) {
             throw new IllegalArgumentException("ID do contrato é obrigatório.");
         }
         if (nomeParte == null || nomeParte.trim().isEmpty()) {
             throw new IllegalArgumentException("Nome da parte é obrigatório.");
+        }
+        if (tipoParte == null || tipoParte.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tipo da parte é obrigatório.");
         }
         this.id = UUID.randomUUID().toString();
         this.contratoId = contratoId;
@@ -26,7 +24,6 @@ public class ParteContrato {
         this.tipoParte = tipoParte;
     }
 
-    // Getters
     public String getId() { return id; }
     public String getContratoId() { return contratoId; }
     public String getNomeParte() { return nomeParte; }
