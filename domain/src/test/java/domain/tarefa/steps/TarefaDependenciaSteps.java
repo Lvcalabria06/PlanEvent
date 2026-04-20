@@ -68,15 +68,10 @@ public class TarefaDependenciaSteps {
 
         when(tarefaRepository.salvar(any(Tarefa.class))).thenAnswer(i -> i.getArgument(0));
 
-        // Por padrão, sem responsáveis mockados a menos que setado
         when(responsavelTarefaRepository.listarPorTarefa(any())).thenReturn(
             Collections.singletonList(new ResponsavelTarefa("t", "f"))
         );
     }
-
-    // =====================================
-    // GIVENS
-    // =====================================
 
     @Given("existem duas tarefas do mesmo evento")
     public void existem_duas_tarefas_do_mesmo_evento() {
@@ -150,7 +145,6 @@ public class TarefaDependenciaSteps {
     @Given("a tarefa A tem sua data de conclusão alterada para depois do início de B")
     public void a_tarefa_A_tem_sua_data_de_conclusao_alterada_para_depois_do_inicio_de_B() {
         tarefaB.atualizarDetalhes("B", "D", LocalDateTime.now().plusDays(2), LocalDateTime.now().plusDays(5));
-        // A edição que cruza B
         tarefaA.atualizarDetalhes("A", "D", LocalDateTime.now(), LocalDateTime.now().plusDays(10));
     }
 
@@ -182,7 +176,6 @@ public class TarefaDependenciaSteps {
         existem_tarefas_A_B_e_C_do_mesmo_evento();
         tarefaC.adicionarDependencia(tarefaA.getId());
         tarefaC.adicionarDependencia(tarefaB.getId());
-        // Simular o repositório listando as deps
         when(tarefaRepository.listarPorIds(tarefaC.listarDependencias())).thenReturn(Arrays.asList(tarefaA, tarefaB));
     }
 
@@ -205,10 +198,6 @@ public class TarefaDependenciaSteps {
         when(tarefaRepository.listarDependentes(tarefaA.getId())).thenReturn(new ArrayList<>());
     }
 
-
-    // =====================================
-    // WHENS
-    // =====================================
 
     @When("eu definir que a tarefa B depende da tarefa A")
     @When("eu tentar definir uma dependência entre elas")
@@ -309,10 +298,6 @@ public class TarefaDependenciaSteps {
     }
 
 
-    // =====================================
-    // THENS
-    // =====================================
-
     @Then("a dependência é criada com sucesso")
     @Then("as dependências são criadas com sucesso")
     @Then("a tarefa B é iniciada com sucesso")
@@ -348,7 +333,6 @@ public class TarefaDependenciaSteps {
     }
 
 
-    // Aux
     private void mockTarefas(Tarefa... tarefas) {
         for (Tarefa t : tarefas) {
             when(tarefaRepository.buscarPorId(t.getId())).thenReturn(Optional.of(t));
