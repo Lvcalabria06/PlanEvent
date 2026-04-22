@@ -40,7 +40,7 @@ public class TarefaSteps {
 
     private TarefaService tarefaService;
 
-    private Exception excecaoLancada;
+    public static Exception excecaoLancada;
     private Tarefa tarefaEmContexto;
     private Equipe equipeEmContexto;
     private String idEquipeValida = "equipe-1";
