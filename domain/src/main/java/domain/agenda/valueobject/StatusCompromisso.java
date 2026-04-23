@@ -1,5 +1,5 @@
 package domain.agenda.valueobject;
 
 public enum StatusCompromisso {
-    AGENDADO, REALIZADO, CANCELADO, ADIADO
+    AGENDADO, EM_ANDAMENTO, REALIZADO, CANCELADO, ADIADO
 }
