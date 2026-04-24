@@ -1,0 +1,126 @@
+Domain PlanEvent {}
+
+BoundedContext PlanejamentoContext implements PlanEvent {
+
+    Aggregate Evento {
+        Entity Evento {
+            aggregateRoot
+            -EventoId id
+            String nome
+            String descricao
+            -TipoEvento tipo
+            -PorteEvento porte
+
+            List<TarefaId> tarefas
+            -LocalId local
+            -OrcamentoEventoId orcamento
+
+            Repository EventoRepository {
+                @Evento buscar(@EventoId id);
+            }
+        }
+
+        ValueObject EventoId { String valor }
+        ValueObject TipoEvento { String valor }
+        ValueObject PorteEvento { String valor }
+
+        Service EventoService {
+            @Evento buscar(@EventoId id);
+            @Evento adicionarTarefa(@EventoId id, @TarefaId tarefa);
+            @Evento definirLocal(@EventoId id, @LocalId local);
+        }
+    }
+
+    Aggregate Tarefa {
+        Entity Tarefa {
+            aggregateRoot
+            -TarefaId id
+            String titulo
+            -StatusTarefa status
+
+            -EventoId evento
+            -ResponsavelTarefaId responsavel
+
+            Repository TarefaRepository {
+                @Tarefa buscar(@TarefaId id);
+            }
+        }
+
+        ValueObject TarefaId { String valor }
+        ValueObject StatusTarefa { String valor }
+        ValueObject ResponsavelTarefaId { String valor }
+
+        Service TarefaService {
+            @Tarefa buscar(@TarefaId id);
+            @Tarefa concluir(@TarefaId id);
+            @Tarefa atribuirResponsavel(@TarefaId id, @ResponsavelTarefaId responsavel);
+        }
+    }
+
+    Aggregate Funcionario {
+        Entity Funcionario {
+            aggregateRoot
+            -FuncionarioId id
+            String nome
+            -DisponibilidadeFuncionario disponibilidade
+
+            Repository FuncionarioRepository {
+                @Funcionario buscar(@FuncionarioId id);
+            }
+        }
+
+        ValueObject FuncionarioId { String valor }
+        ValueObject DisponibilidadeFuncionario { String valor }
+
+        Service FuncionarioService {
+            @Funcionario buscar(@FuncionarioId id);
+        }
+    }
+
+    Aggregate Local {
+        Entity Local {
+            aggregateRoot
+            -LocalId id
+            String nome
+            String endereco
+            -StatusLocal status
+
+            Repository LocalRepository {
+                @Local buscar(@LocalId id);
+            }
+        }
+
+        ValueObject LocalId { String valor }
+        ValueObject StatusLocal { String valor }
+
+        Service LocalService {
+            @Local buscar(@LocalId id);
+            @Local reservar(@LocalId id);
+            @Local liberar(@LocalId id);
+        }
+    }
+
+    Aggregate Financeiro {
+        Entity OrcamentoEvento {
+            aggregateRoot
+            -OrcamentoEventoId id
+            double valorTotal
+
+            List<DespesaId> despesas
+            List<ReceitaId> receitas
+
+            Repository OrcamentoEventoRepository {
+                @OrcamentoEvento buscar(@OrcamentoEventoId id);
+            }
+        }
+
+        ValueObject OrcamentoEventoId { String valor }
+        ValueObject DespesaId { String valor }
+        ValueObject ReceitaId { String valor }
+
+        Service FinanceiroService {
+            @OrcamentoEvento buscar(@OrcamentoEventoId id);
+            double calcularSaldo(@OrcamentoEventoId id);
+        }
+    }
+}
