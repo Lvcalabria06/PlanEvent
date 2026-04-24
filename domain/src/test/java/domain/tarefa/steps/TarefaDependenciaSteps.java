@@ -75,7 +75,7 @@ public class TarefaDependenciaSteps {
 
     @Given("existem duas tarefas do mesmo evento")
     public void existem_duas_tarefas_do_mesmo_evento() {
-        Equipe eq1 = new Equipe("evento-1", "EQ", null);
+        Equipe eq1 = new Equipe("evento-1", "EQ", (String) null);
         when(equipeRepository.buscarPorId("eq-1")).thenReturn(Optional.of(eq1));
 
         tarefaA = new Tarefa("eq-1", "A", "Desc", null, null);
@@ -86,8 +86,8 @@ public class TarefaDependenciaSteps {
 
     @Given("existem duas tarefas de eventos diferentes")
     public void existem_duas_tarefas_de_eventos_diferentes() {
-        Equipe eq1 = new Equipe("evento-1", "EQ", null);
-        Equipe eq2 = new Equipe("evento-2", "EQ", null);
+        Equipe eq1 = new Equipe("evento-1", "EQ", (String) null);
+        Equipe eq2 = new Equipe("evento-2", "EQ", (String) null);
         when(equipeRepository.buscarPorId("eq-1")).thenReturn(Optional.of(eq1));
         when(equipeRepository.buscarPorId("eq-2")).thenReturn(Optional.of(eq2));
 
