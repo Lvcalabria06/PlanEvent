@@ -3,12 +3,7 @@ package domain.financeiro.valueobject;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * Value Object que representa uma linha do relatório financeiro por categoria.
- *
- * RN2: Inclui total por categoria e percentual de variação entre previsto e realizado.
- * RN8: Percentual = ((realizado - previsto) / previsto) × 100.
- */
+
 public class ItemRelatorioCategoria {
 
     private static final double LIMIAR_CRITICO = 20.0;
@@ -41,10 +36,7 @@ public class ItemRelatorioCategoria {
                 : ClassificacaoDesvio.NORMAL;
     }
 
-    /**
-     * RN8: ((realizado - previsto) / previsto) × 100.
-     * Se previsto == 0: 100% se houver realizado, 0% caso contrário.
-     */
+
     private static double calcularPercentual(BigDecimal previsto, BigDecimal realizado) {
         if (previsto.compareTo(BigDecimal.ZERO) == 0) {
             return realizado.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;

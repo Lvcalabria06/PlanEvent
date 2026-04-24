@@ -81,9 +81,7 @@ public class RelatorioFinanceiroSteps {
                 .thenAnswer(inv -> inv.getArgument(0));
     }
 
-    /* ════════════════════════════════════════════════
-       GIVEN
-       ════════════════════════════════════════════════ */
+
 
     @Given("existe um evento válido para relatório")
     public void existe_um_evento_valido_para_relatorio() {
@@ -180,9 +178,7 @@ public class RelatorioFinanceiroSteps {
         when(relatorioRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
 
-    /* ════════════════════════════════════════════════
-       WHEN
-       ════════════════════════════════════════════════ */
+
 
     @When("eu gerar o relatório financeiro do evento")
     public void eu_gerar_o_relatorio_financeiro_do_evento() {
@@ -261,9 +257,7 @@ public class RelatorioFinanceiroSteps {
         }
     }
 
-    /* ════════════════════════════════════════════════
-       THEN
-       ════════════════════════════════════════════════ */
+
 
     @Then("o relatório é gerado e persistido com sucesso")
     public void o_relatorio_e_gerado_com_sucesso() {
