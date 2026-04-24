@@ -79,7 +79,7 @@ public class TarefaSteps {
     @Given("existe uma equipe válida associada ao evento")
     @Given("existe uma equipe válida")
     public void existe_uma_equipe_valida_associada_ao_evento() {
-        equipeEmContexto = new Equipe(idEventoValido, "Equipe Alpha", null); 
+        equipeEmContexto = new Equipe(idEventoValido, "Equipe Alpha", (String) null);
         when(equipeRepository.buscarPorId(any())).thenReturn(Optional.of(equipeEmContexto));
         when(eventoRepository.buscarPorId(any())).thenReturn(Optional.of(Mockito.mock(Evento.class)));
     }
@@ -150,7 +150,7 @@ public class TarefaSteps {
     @Given("existe um funcionário que não pertence à equipe")
     public void existe_um_funcionario_que_nao_pertence_a_equipe() {
         when(funcionarioRepository.buscarPorId(any())).thenReturn(Optional.of(Mockito.mock(Funcionario.class)));
-        Equipe equipeDesvinculada = new Equipe("evento-2", "Outra Equipe", null);
+        Equipe equipeDesvinculada = new Equipe("evento-2", "Outra Equipe", (String) null);
         when(equipeRepository.buscarPorId(any())).thenReturn(Optional.of(equipeDesvinculada));
     }
 
