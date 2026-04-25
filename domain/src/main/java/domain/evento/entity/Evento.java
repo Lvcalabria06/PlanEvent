@@ -25,12 +25,7 @@ public class Evento {
     }
 
     public Evento(String nome, TipoEvento tipo, PorteEvento porte, int quantidadeEstimadaParticipantes, String objetivo, String localId) {
-        if (nome == null || nome.trim().isEmpty()) {
-            throw new IllegalArgumentException("Nome do evento é obrigatório.");
-        }
-        if (quantidadeEstimadaParticipantes <= 0) {
-            throw new IllegalArgumentException("Quantidade estimada deve ser maior que zero.");
-        }
+        validarDadosObrigatorios(nome, tipo, porte, quantidadeEstimadaParticipantes, objetivo);
         this.id = UUID.randomUUID().toString();
         this.nome = nome;
         this.tipo = tipo;
@@ -41,6 +36,19 @@ public class Evento {
         this.planejamentoConfirmado = false;
         this.dataCriacao = LocalDateTime.now();
         this.dataAtualizacao = this.dataCriacao;
+    }
+
+    public void atualizarDados(String nome, TipoEvento tipo, PorteEvento porte, int quantidadeEstimadaParticipantes, String objetivo) {
+        if (this.planejamentoConfirmado) {
+            throw new IllegalStateException("Não é possível editar o evento após confirmar o planejamento.");
+        }
+        validarDadosObrigatorios(nome, tipo, porte, quantidadeEstimadaParticipantes, objetivo);
+        this.nome = nome;
+        this.tipo = tipo;
+        this.porte = porte;
+        this.quantidadeEstimadaParticipantes = quantidadeEstimadaParticipantes;
+        this.objetivo = objetivo;
+        this.atualizarData();
     }
 
     public void confirmarPlanejamento() {
@@ -61,6 +69,24 @@ public class Evento {
 
     private void atualizarData() {
         this.dataAtualizacao = LocalDateTime.now();
+    }
+
+    private void validarDadosObrigatorios(String nome, TipoEvento tipo, PorteEvento porte, int quantidadeEstimadaParticipantes, String objetivo) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome do evento é obrigatório.");
+        }
+        if (tipo == null) {
+            throw new IllegalArgumentException("Tipo do evento é obrigatório.");
+        }
+        if (porte == null) {
+            throw new IllegalArgumentException("Porte do evento é obrigatório.");
+        }
+        if (quantidadeEstimadaParticipantes <= 0) {
+            throw new IllegalArgumentException("Quantidade estimada deve ser maior que zero.");
+        }
+        if (objetivo == null || objetivo.trim().isEmpty()) {
+            throw new IllegalArgumentException("Objetivo do evento é obrigatório.");
+        }
     }
 
     // Getters
