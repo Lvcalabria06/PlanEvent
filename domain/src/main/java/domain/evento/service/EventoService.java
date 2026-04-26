@@ -16,4 +16,5 @@ public interface EventoService {
     List<Local> listarLocaisCompativeis(String eventoId, BigDecimal tetoCusto);
     Evento vincularLocalAoEvento(String eventoId, String localId, BigDecimal tetoCusto);
     Evento removerLocalDoEvento(String eventoId);
+    Evento concluirEvento(String eventoId);
 }

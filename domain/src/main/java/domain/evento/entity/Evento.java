@@ -15,6 +15,7 @@ public class Evento {
     private String objetivo;
     private String localId;
     private boolean planejamentoConfirmado;
+    private boolean concluido;
     private final LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
@@ -67,6 +68,17 @@ public class Evento {
         this.atualizarData();
     }
 
+    public void concluirEvento() {
+        if (concluido) {
+            throw new IllegalStateException("O evento já está concluído.");
+        }
+        if (localId == null || localId.isBlank()) {
+            throw new IllegalStateException("Não é possível concluir o evento sem local vinculado.");
+        }
+        this.concluido = true;
+        this.atualizarData();
+    }
+
     private void atualizarData() {
         this.dataAtualizacao = LocalDateTime.now();
     }
@@ -98,6 +110,7 @@ public class Evento {
     public String getObjetivo() { return objetivo; }
     public String getLocalId() { return localId; }
     public boolean isPlanejamentoConfirmado() { return planejamentoConfirmado; }
+    public boolean isConcluido() { return concluido; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
 }
