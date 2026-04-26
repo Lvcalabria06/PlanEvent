@@ -7,13 +7,14 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             aggregateRoot
             -EventoId id
             String nome
-            String descricao
             -TipoEvento tipo
             -PorteEvento porte
-
-            List<TarefaId> tarefas
-            -LocalId local
-            -OrcamentoEventoId orcamento
+            int quantidadeEstimadaParticipantes
+            String objetivo
+            String localId
+            boolean planejamentoConfirmado
+            Date dataCriacao
+            Date dataAtualizacao
 
             Repository EventoRepository {
                 @Evento buscar(@EventoId id);
@@ -23,23 +24,21 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         ValueObject EventoId { String valor }
         ValueObject TipoEvento { String valor }
         ValueObject PorteEvento { String valor }
-
-        Service EventoService {
-            @Evento buscar(@EventoId id);
-            @Evento adicionarTarefa(@EventoId id, @TarefaId tarefa);
-            @Evento definirLocal(@EventoId id, @LocalId local);
-        }
     }
 
     Aggregate Tarefa {
         Entity Tarefa {
             aggregateRoot
             -TarefaId id
+            String equipeId
             String titulo
+            String descricao
+            Date dataInicio
+            Date dataFim
             -StatusTarefa status
-
-            -EventoId evento
-            -ResponsavelTarefaId responsavel
+            List<DependenciaTarefa> dependencias
+            Date dataCriacao
+            Date dataAtualizacao
 
             Repository TarefaRepository {
                 @Tarefa buscar(@TarefaId id);
@@ -48,12 +47,15 @@ BoundedContext PlanejamentoContext implements PlanEvent {
 
         ValueObject TarefaId { String valor }
         ValueObject StatusTarefa { String valor }
-        ValueObject ResponsavelTarefaId { String valor }
+        ValueObject DependenciaTarefa { String tarefaPredecessoraId }
 
         Service TarefaService {
-            @Tarefa buscar(@TarefaId id);
-            @Tarefa concluir(@TarefaId id);
-            @Tarefa atribuirResponsavel(@TarefaId id, @ResponsavelTarefaId responsavel);
+            @Tarefa criarTarefa(@Tarefa tarefa);
+            @Tarefa editarTarefa(@Tarefa tarefa);
+            void removerTarefa(String tarefaId);
+            void iniciarTarefa(String tarefaId);
+            void atribuirResponsavel(String tarefaId, String funcionarioId);
+            List<Tarefa> listarPorEquipe(String equipeId);
         }
     }
 
@@ -62,7 +64,11 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             aggregateRoot
             -FuncionarioId id
             String nome
+            -CargoFuncionario cargo
             -DisponibilidadeFuncionario disponibilidade
+            boolean ativo
+            Date createdAt
+            Date updatedAt
 
             Repository FuncionarioRepository {
                 @Funcionario buscar(@FuncionarioId id);
@@ -70,10 +76,15 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         }
 
         ValueObject FuncionarioId { String valor }
+        ValueObject CargoFuncionario { String valor }
         ValueObject DisponibilidadeFuncionario { String valor }
 
         Service FuncionarioService {
-            @Funcionario buscar(@FuncionarioId id);
+            @Funcionario criarFuncionario(@Funcionario funcionario);
+            @Funcionario editarFuncionario(@Funcionario funcionario);
+            @Funcionario buscarFuncionario(String id);
+            List<Funcionario> listarFuncionarios();
+            void inativarFuncionario(String id);
         }
     }
 
@@ -82,8 +93,14 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             aggregateRoot
             -LocalId id
             String nome
+            int capacidade
             String endereco
+            String tipo
+            String infraestrutura
+            String restricoes
+            BigDecimal custo
             -StatusLocal status
+            Date updatedAt
 
             Repository LocalRepository {
                 @Local buscar(@LocalId id);
@@ -94,9 +111,10 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         ValueObject StatusLocal { String valor }
 
         Service LocalService {
-            @Local buscar(@LocalId id);
-            @Local reservar(@LocalId id);
-            @Local liberar(@LocalId id);
+            @Local cadastrarLocal(String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
+            @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
+            void desativarLocal(String id);
+            List<Local> listarLocais();
         }
     }
 
@@ -104,10 +122,9 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         Entity OrcamentoEvento {
             aggregateRoot
             -OrcamentoEventoId id
-            double valorTotal
-
-            List<DespesaId> despesas
-            List<ReceitaId> receitas
+            String eventoId
+            BigDecimal valorTotal
+            Date dataCriacao
 
             Repository OrcamentoEventoRepository {
                 @OrcamentoEvento buscar(@OrcamentoEventoId id);
@@ -115,12 +132,79 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         }
 
         ValueObject OrcamentoEventoId { String valor }
-        ValueObject DespesaId { String valor }
-        ValueObject ReceitaId { String valor }
+    }
 
-        Service FinanceiroService {
-            @OrcamentoEvento buscar(@OrcamentoEventoId id);
-            double calcularSaldo(@OrcamentoEventoId id);
+    Aggregate Estoque {
+        Entity ItemEstoque {
+            aggregateRoot
+            -ItemEstoqueId id
+            String nome
+            int quantidadeTotal
+            int quantidadeDisponivel
         }
+
+        ValueObject ItemEstoqueId { String valor }
+    }
+
+    Aggregate Equipe {
+        Entity Equipe {
+            aggregateRoot
+            -EquipeId id
+            String eventoId
+            String nome
+            String liderId
+            Date dataCriacao
+            Date dataAtualizacao
+        }
+
+        ValueObject EquipeId { String valor }
+    }
+
+    Aggregate Contrato {
+        Entity Contrato {
+            aggregateRoot
+            -ContratoId id
+            String eventoId
+            -TipoContrato tipo
+            String objeto
+            BigDecimal valor
+            Date dataInicio
+            Date dataFim
+            -StatusContrato status
+            List<ParteContrato> partes
+            Date createdAt
+            Date updatedAt
+        }
+
+        ValueObject ContratoId { String valor }
+        ValueObject TipoContrato { String valor }
+        ValueObject StatusContrato { String valor }
+        ValueObject ParteContrato { String contratoId, String nomeParte, String tipoParte }
+
+        Service ContratoService {
+            @Contrato criarContrato(@Contrato contrato);
+            @Contrato editarContrato(@Contrato contrato);
+            @Contrato buscarContrato(String id);
+            List<Contrato> listarContratosPorEvento(String eventoId);
+            void encerrarContrato(String id);
+        }
+    }
+
+    Aggregate Agenda {
+        Entity Compromisso {
+            aggregateRoot
+            -CompromissoId id
+            String gestorId
+            String titulo
+            String descricao
+            Date dataInicio
+            Date dataFim
+            -StatusCompromisso status
+            Date createdAt
+            Date updatedAt
+        }
+
+        ValueObject CompromissoId { String valor }
+        ValueObject StatusCompromisso { String valor }
     }
 }
