@@ -84,10 +84,23 @@ monitorado automaticamente. O sistema identifica riscos contratuais e gera
 alertas para ações preventivas. Além disso, contratos podem possuir Documentos,
 com versionamento e histórico completo para auditoria.
 
-Os Locais também possuem gestão própria, incluindo cadastro, disponibilidade
-e períodos de Manutenção, durante os quais ficam indisponíveis. O sistema
-realiza bloqueios inteligentes na agenda dos locais, impedindo reservas em
-horários inválidos ou conflitantes.
+Os Locais possuem gestão própria, com cadastro, controle de disponibilidade,
+períodos de manutenção e agenda de uso. Cada Local pode ter períodos de bloqueio
+registrados, sempre com motivo associado, durante os quais não poderá ser
+reservado.
+
+A Agenda do Local concentra as reservas vinculadas a Eventos, com data e horário
+de início e fim. Ao criar uma nova reserva, o sistema deve validar todo o
+intervalo solicitado. Se houver sobreposição com manutenção, bloqueio cadastrado
+ou outra reserva existente, a solicitação será recusada, informando ao Gestor o
+motivo do impedimento.
+
+Após o uso do espaço, quando o Evento estiver concluído e houver Local vinculado,
+o Gestor poderá registrar uma avaliação de adequação do Local. A avaliação deve
+indicar um nível fixo do sistema, como adequado, parcialmente adequado ou
+inadequado, acompanhada de justificativa textual. Cada par Evento e Local utilizado
+pode possuir apenas uma avaliação principal, mantendo histórico consultável por
+Local, com data, hora e usuário responsável pelo registro.
 
 O diferencial do sistema está na automação e inteligência aplicada às decisões,
 como previsão de consumo, validação de disponibilidade e identificação de riscos

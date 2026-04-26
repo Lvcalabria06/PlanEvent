@@ -77,6 +77,13 @@ public class EventoServiceImpl implements EventoService {
         return eventoRepository.salvar(evento);
     }
 
+    @Override
+    public Evento concluirEvento(String eventoId) {
+        Evento evento = buscarEventoExistente(eventoId);
+        evento.concluirEvento();
+        return eventoRepository.salvar(evento);
+    }
+
     private Evento buscarEventoExistente(String eventoId) {
         return eventoRepository.buscarPorId(eventoId)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado."));
