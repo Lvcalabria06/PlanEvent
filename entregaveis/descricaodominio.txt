@@ -1,0 +1,95 @@
+Link de acesso ao documento: https://docs.google.com/document/d/1BjeNDoEgnlY3AC-fIM3TsCOQWZ3bHpamKh5VU_r2HNA/edit?tab=t.0#heading=h.l2i142tfq1pj
+
+Descrição do Domínio EventFlow
+
+O EventFlow é um sistema inteligente de gestão de eventos que auxilia gestores
+a planejar, organizar e executar eventos de forma estruturada, garantindo
+controle operacional, financeiro, logístico e administrativo.
+
+Linguagem do Domínio
+
+Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa
+uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e
+quantidade estimada de participantes.
+
+No cadastro do Evento, o sistema deve registrar automaticamente um identificador
+único, gerado pelo próprio sistema e imutável. Também devem ser registradas
+automaticamente a data de criação e a data de atualização do evento.
+
+A preparação inicial do Evento reúne as informações básicas necessárias para o
+cadastro inicial. Todo Evento deve ser criado com a preparação inicial ainda
+não confirmada. Enquanto a preparação inicial não estiver confirmada, o Gestor
+pode cadastrar, visualizar e editar os dados do Evento, respeitando as regras
+do domínio.
+
+A confirmação da preparação inicial somente pode ocorrer uma única vez. Após
+essa confirmação, não deve ser permitida a alteração ou remoção do Local
+vinculado ao Evento, quando houver Local vinculado.
+
+A escolha do Local é tratada em funcionalidade própria, separada da preparação
+inicial do Evento. Para apoiar essa escolha, o Gestor pode informar um teto
+máximo de custo do espaço. Esse teto é utilizado apenas como critério para
+escolha do Local, não substituindo o controle financeiro do Evento.
+
+Com base no teto informado, o sistema lista apenas Locais ativos cujo custo seja
+menor ou igual ao teto e cuja capacidade seja maior ou igual à quantidade
+estimada de participantes do Evento. O vínculo do Local ao Evento deve utilizar
+um identificador de Local existente e válido no cadastro de Locais.
+
+Enquanto a preparação inicial não estiver confirmada, o Gestor pode vincular,
+alterar ou remover o Local do Evento. Após a confirmação da preparação inicial,
+não é permitido vincular, alterar ou remover o Local.
+
+O sistema gerencia os Recursos necessários para o evento por meio de previsões
+baseadas em histórico. A Previsão de Consumo estima itens e quantidades com base
+em eventos anteriores semelhantes. Esses recursos podem ser reservados, sendo
+que cada Reserva considera a disponibilidade real e evita conflitos entre
+eventos concorrentes.
+
+A disponibilidade de recursos é controlada considerando o total em estoque, as
+quantidades já reservadas e o período do evento. Caso haja conflito, o sistema
+sinaliza ou bloqueia a operação, garantindo consistência e evitando alocações
+duplicadas.
+
+Cada Evento possui controle financeiro por meio de Orçamentos e Despesas. As
+despesas são registradas por categoria, fornecedor, valor e data, sendo
+automaticamente comparadas ao orçamento previsto. O sistema calcula desvios
+percentuais e classifica situações críticas quando os gastos ultrapassam limites
+definidos. Além disso, mantém um Fluxo de Caixa, registrando entradas e saídas
+ao longo do tempo, e permite gerar relatórios consolidados para análise e
+auditoria.
+
+A organização operacional é feita através de Funcionários e Equipes.
+Funcionários possuem dados como nome, cargo e disponibilidade, podendo ser
+alocados em Equipes específicas de um Evento. Cada Equipe possui um conjunto
+de membros e um responsável, garantindo organização e distribuição de
+responsabilidades.
+
+As atividades do evento são representadas por Tarefas, que pertencem a uma
+Equipe e possuem título, responsáveis, datas e status. As Tarefas seguem um
+fluxo controlado de execução, podendo estar pendentes, em andamento ou
+concluídas, e podem possuir Dependências, garantindo que atividades sejam
+realizadas na ordem correta. O sistema impede inconsistências como dependências
+cíclicas ou execução fora de sequência.
+
+O gestor também possui uma Agenda, composta por Compromissos, que organizam
+suas atividades ao longo do tempo. Cada compromisso pode ter Lembretes, que
+notificam o gestor antes de eventos importantes, garantindo melhor organização
+e cumprimento de prazos.
+
+No âmbito administrativo, o sistema gerencia Contratos, que formalizam acordos
+com fornecedores e parceiros. Cada contrato possui um ciclo de vida, podendo
+estar criado, ativo, próximo do vencimento, vencido ou encerrado, sendo
+monitorado automaticamente. O sistema identifica riscos contratuais e gera
+alertas para ações preventivas. Além disso, contratos podem possuir Documentos,
+com versionamento e histórico completo para auditoria.
+
+Os Locais também possuem gestão própria, incluindo cadastro, disponibilidade
+e períodos de Manutenção, durante os quais ficam indisponíveis. O sistema
+realiza bloqueios inteligentes na agenda dos locais, impedindo reservas em
+horários inválidos ou conflitantes.
+
+O diferencial do sistema está na automação e inteligência aplicada às decisões,
+como previsão de consumo, validação de disponibilidade e identificação de riscos
+financeiros e contratuais. Todas as operações registram data, hora e responsável,
+garantindo rastreabilidade completa e suporte à tomada de decisão.
