@@ -13,12 +13,23 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             String objetivo
             String localId
             boolean planejamentoConfirmado
+            boolean concluido
             Date dataCriacao
             Date dataAtualizacao
 
             Repository EventoRepository {
                 @Evento buscar(@EventoId id);
             }
+        }
+
+        Service EventoService {
+            @Evento cadastrarEvento();
+            @Evento editarEvento();
+            @Evento visualizarEvento();
+            @Evento confirmarPreparacaoInicial();
+            @Evento vincularLocalAoEvento();
+            @Evento removerLocalDoEvento();
+            @Evento concluirEvento();
         }
 
         ValueObject EventoId { String valor }
@@ -107,7 +118,55 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             }
         }
 
+        Entity AgendaLocal {
+            -AgendaLocalId id
+            String localId
+            Repository AgendaLocalRepository {
+                @AgendaLocal buscar(@AgendaLocalId id);
+            }
+        }
+
+        Entity ReservaLocal {
+            -ReservaLocalId id
+            String agendaLocalId
+            String eventoId
+            Date dataInicio
+            Date dataFim
+            Repository ReservaLocalRepository {
+                @ReservaLocal buscar(@ReservaLocalId id);
+            }
+        }
+
+        Entity IndisponibilidadeLocal {
+            -IndisponibilidadeLocalId id
+            String localId
+            Date dataInicio
+            Date dataFim
+            String motivo
+            Repository IndisponibilidadeLocalRepository {
+                @IndisponibilidadeLocal buscar(@IndisponibilidadeLocalId id);
+            }
+        }
+
+        Entity AvaliacaoLocalEvento {
+            -AvaliacaoLocalEventoId id
+            String eventoId
+            String localId
+            -NivelAdequacao nivelAdequacao
+            String justificativa
+            String registradoPorUsuarioId
+            Date dataAvaliacao
+            Repository AvaliacaoLocalEventoRepository {
+                @AvaliacaoLocalEvento buscar(@AvaliacaoLocalEventoId id);
+            }
+        }
+
         ValueObject LocalId { String valor }
+        ValueObject AgendaLocalId { String valor }
+        ValueObject ReservaLocalId { String valor }
+        ValueObject IndisponibilidadeLocalId { String valor }
+        ValueObject AvaliacaoLocalEventoId { String valor }
+        ValueObject NivelAdequacao { String valor }
         ValueObject StatusLocal { String valor }
 
         Service LocalService {
@@ -115,6 +174,19 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             void desativarLocal(String id);
             List<Local> listarLocais();
+        }
+
+        Service IndisponibilidadeLocalService {
+            @IndisponibilidadeLocal registrarIndisponibilidade();
+        }
+
+        Service ReservaLocalService {
+            @ReservaLocal reservar();
+        }
+
+        Service AvaliacaoLocalEventoService {
+            @AvaliacaoLocalEvento registrarAvaliacao();
+            List<AvaliacaoLocalEvento> listarAvaliacoesDoLocal();
         }
     }
 
