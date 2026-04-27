@@ -14,6 +14,7 @@ import java.util.UUID;
 public class Contrato {
     private final String id;
     private final String eventoId;
+    private String fornecedorId;
     private TipoContrato tipo;
     private String objeto;
     private BigDecimal valor;
@@ -145,8 +146,14 @@ public class Contrato {
         }
     }
 
+    public void definirFornecedor(String fornecedorId) {
+        this.fornecedorId = fornecedorId;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public String getId() { return id; }
     public String getEventoId() { return eventoId; }
+    public String getFornecedorId() { return fornecedorId; }
     public TipoContrato getTipo() { return tipo; }
     public String getObjeto() { return objeto; }
     public BigDecimal getValor() { return valor; }

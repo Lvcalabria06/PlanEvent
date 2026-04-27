@@ -1,0 +1,337 @@
+Domain PlanEvent {}
+
+BoundedContext PlanejamentoContext implements PlanEvent {
+
+    Aggregate Evento {
+        Entity Evento {
+            aggregateRoot
+            -EventoId id
+            String nome
+            -TipoEvento tipo
+            -PorteEvento porte
+            int quantidadeEstimadaParticipantes
+            String objetivo
+            String localId
+            boolean planejamentoConfirmado
+            boolean concluido
+            Date dataCriacao
+            Date dataAtualizacao
+
+            Repository EventoRepository {
+                @Evento buscar(@EventoId id);
+            }
+        }
+
+        Service EventoService {
+            @Evento cadastrarEvento();
+            @Evento editarEvento();
+            @Evento visualizarEvento();
+            @Evento confirmarPreparacaoInicial();
+            @Evento vincularLocalAoEvento();
+            @Evento removerLocalDoEvento();
+            @Evento concluirEvento();
+        }
+
+        ValueObject EventoId { String valor }
+        ValueObject TipoEvento { String valor }
+        ValueObject PorteEvento { String valor }
+    }
+
+    Aggregate Tarefa {
+        Entity Tarefa {
+            aggregateRoot
+            -TarefaId id
+            String equipeId
+            String titulo
+            String descricao
+            Date dataInicio
+            Date dataFim
+            -StatusTarefa status
+            List<DependenciaTarefa> dependencias
+            Date dataCriacao
+            Date dataAtualizacao
+
+            Repository TarefaRepository {
+                @Tarefa buscar(@TarefaId id);
+            }
+        }
+
+        ValueObject TarefaId { String valor }
+        ValueObject StatusTarefa { String valor }
+        ValueObject DependenciaTarefa { String tarefaPredecessoraId }
+
+        Service TarefaService {
+            @Tarefa criarTarefa(@Tarefa tarefa);
+            @Tarefa editarTarefa(@Tarefa tarefa);
+            void removerTarefa(String tarefaId);
+            void iniciarTarefa(String tarefaId);
+            void atribuirResponsavel(String tarefaId, String funcionarioId);
+            List<Tarefa> listarPorEquipe(String equipeId);
+        }
+    }
+
+    Aggregate Funcionario {
+        Entity Funcionario {
+            aggregateRoot
+            -FuncionarioId id
+            String nome
+            -CargoFuncionario cargo
+            -DisponibilidadeFuncionario disponibilidade
+            boolean ativo
+            Date createdAt
+            Date updatedAt
+
+            Repository FuncionarioRepository {
+                @Funcionario buscar(@FuncionarioId id);
+            }
+        }
+
+        ValueObject FuncionarioId { String valor }
+        ValueObject CargoFuncionario { String valor }
+        ValueObject DisponibilidadeFuncionario { String valor }
+
+        Service FuncionarioService {
+            @Funcionario criarFuncionario(@Funcionario funcionario);
+            @Funcionario editarFuncionario(@Funcionario funcionario);
+            @Funcionario buscarFuncionario(String id);
+            List<Funcionario> listarFuncionarios();
+            void inativarFuncionario(String id);
+        }
+    }
+
+    Aggregate Local {
+        Entity Local {
+            aggregateRoot
+            -LocalId id
+            String nome
+            int capacidade
+            String endereco
+            String tipo
+            String infraestrutura
+            String restricoes
+            BigDecimal custo
+            -StatusLocal status
+            Date updatedAt
+
+            Repository LocalRepository {
+                @Local buscar(@LocalId id);
+            }
+        }
+
+        Entity AgendaLocal {
+            -AgendaLocalId id
+            String localId
+            Repository AgendaLocalRepository {
+                @AgendaLocal buscar(@AgendaLocalId id);
+            }
+        }
+
+        Entity ReservaLocal {
+            -ReservaLocalId id
+            String agendaLocalId
+            String eventoId
+            Date dataInicio
+            Date dataFim
+            Repository ReservaLocalRepository {
+                @ReservaLocal buscar(@ReservaLocalId id);
+            }
+        }
+
+        Entity IndisponibilidadeLocal {
+            -IndisponibilidadeLocalId id
+            String localId
+            Date dataInicio
+            Date dataFim
+            String motivo
+            Repository IndisponibilidadeLocalRepository {
+                @IndisponibilidadeLocal buscar(@IndisponibilidadeLocalId id);
+            }
+        }
+
+        Entity AvaliacaoLocalEvento {
+            -AvaliacaoLocalEventoId id
+            String eventoId
+            String localId
+            -NivelAdequacao nivelAdequacao
+            String justificativa
+            String registradoPorUsuarioId
+            Date dataAvaliacao
+            Repository AvaliacaoLocalEventoRepository {
+                @AvaliacaoLocalEvento buscar(@AvaliacaoLocalEventoId id);
+            }
+        }
+
+        ValueObject LocalId { String valor }
+        ValueObject AgendaLocalId { String valor }
+        ValueObject ReservaLocalId { String valor }
+        ValueObject IndisponibilidadeLocalId { String valor }
+        ValueObject AvaliacaoLocalEventoId { String valor }
+        ValueObject NivelAdequacao { String valor }
+        ValueObject StatusLocal { String valor }
+
+        Service LocalService {
+            @Local cadastrarLocal(String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
+            @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
+            void desativarLocal(String id);
+            List<Local> listarLocais();
+        }
+
+        Service IndisponibilidadeLocalService {
+            @IndisponibilidadeLocal registrarIndisponibilidade();
+        }
+
+        Service ReservaLocalService {
+            @ReservaLocal reservar();
+        }
+
+        Service AvaliacaoLocalEventoService {
+            @AvaliacaoLocalEvento registrarAvaliacao();
+            List<AvaliacaoLocalEvento> listarAvaliacoesDoLocal();
+        }
+    }
+
+    Aggregate Financeiro {
+        Entity OrcamentoEvento {
+            aggregateRoot
+            -OrcamentoEventoId id
+            String eventoId
+            BigDecimal valorTotal
+            Date dataCriacao
+
+            Repository OrcamentoEventoRepository {
+                @OrcamentoEvento buscar(@OrcamentoEventoId id);
+            }
+        }
+
+        ValueObject OrcamentoEventoId { String valor }
+    }
+
+    Aggregate Estoque {
+        Entity ItemEstoque {
+            aggregateRoot
+            -ItemEstoqueId id
+            String nome
+            int quantidadeTotal
+            int quantidadeDisponivel
+        }
+
+        ValueObject ItemEstoqueId { String valor }
+    }
+
+    Aggregate Equipe {
+        Entity Equipe {
+            aggregateRoot
+            -EquipeId id
+            String eventoId
+            String nome
+            String liderId
+            Date dataCriacao
+            Date dataAtualizacao
+        }
+
+        ValueObject EquipeId { String valor }
+    }
+
+    Aggregate Contrato {
+        Entity Contrato {
+            aggregateRoot
+            -ContratoId id
+            String eventoId
+            -TipoContrato tipo
+            String objeto
+            BigDecimal valor
+            Date dataInicio
+            Date dataFim
+            -StatusContrato status
+            List<ParteContrato> partes
+            Date createdAt
+            Date updatedAt
+        }
+
+        ValueObject ContratoId { String valor }
+        ValueObject TipoContrato { String valor }
+        ValueObject StatusContrato { String valor }
+        ValueObject ParteContrato { String contratoId, String nomeParte, String tipoParte }
+
+        Service ContratoService {
+            @Contrato criarContrato(@Contrato contrato);
+            @Contrato editarContrato(@Contrato contrato);
+            @Contrato buscarContrato(String id);
+            List<Contrato> listarContratosPorEvento(String eventoId);
+            void encerrarContrato(String id);
+        }
+    }
+
+    Aggregate Conciliacao {
+        Entity VinculoConciliacao {
+            aggregateRoot
+            -VinculoConciliacaoId id
+            String eventoId
+            String despesaId
+            String contratoId
+            -MetodoConciliacao metodo
+            String responsavelId
+            Date dataConciliacao
+            Date createdAt
+            Date updatedAt
+
+            Repository VinculoConciliacaoRepository {
+                @VinculoConciliacao salvar(@VinculoConciliacao vinculo);
+                @VinculoConciliacao buscarPorDespesaId(String despesaId);
+                List<VinculoConciliacao> listarPorEventoId(String eventoId);
+                List<VinculoConciliacao> listarPorContratoId(String contratoId);
+                void removerPorDespesaId(String despesaId);
+            }
+        }
+
+        Entity RelatorioConciliacao {
+            -RelatorioConciliacaoId id
+            String eventoId
+            String responsavelId
+            Date dataGeracao
+            List<ItemRelatorioConciliacao> itens
+
+            Repository RelatorioConciliacaoRepository {
+                @RelatorioConciliacao salvar(@RelatorioConciliacao relatorio);
+                @RelatorioConciliacao buscarPorId(String id);
+            }
+        }
+
+        ValueObject VinculoConciliacaoId { String valor }
+        ValueObject RelatorioConciliacaoId { String valor }
+        ValueObject MetodoConciliacao { String valor }
+        ValueObject StatusConciliacao { String valor }
+        ValueObject ItemRelatorioConciliacao {
+            String despesaId
+            String contratoId
+            -StatusConciliacao status
+            -MetodoConciliacao metodo
+        }
+
+        Service ConciliacaoService {
+            void executarConciliacaoAutomatica(String eventoId, String responsavelId);
+            List<Despesa> listarDespesasDescobertasPorEvento(String eventoId);
+            List<Contrato> listarContratosExtrapoladosPorEvento(String eventoId);
+            @VinculoConciliacao vincularManualmente(String despesaId, String contratoId, String responsavelId);
+            @RelatorioConciliacao gerarRelatorio(String eventoId, String responsavelId);
+        }
+    }
+
+    Aggregate Agenda {
+        Entity Compromisso {
+            aggregateRoot
+            -CompromissoId id
+            String gestorId
+            String titulo
+            String descricao
+            Date dataInicio
+            Date dataFim
+            -StatusCompromisso status
+            Date createdAt
+            Date updatedAt
+        }
+
+        ValueObject CompromissoId { String valor }
+        ValueObject StatusCompromisso { String valor }
+    }
+}
