@@ -262,6 +262,61 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         }
     }
 
+    Aggregate Conciliacao {
+        Entity VinculoConciliacao {
+            aggregateRoot
+            -VinculoConciliacaoId id
+            String eventoId
+            String despesaId
+            String contratoId
+            -MetodoConciliacao metodo
+            String responsavelId
+            Date dataConciliacao
+            Date createdAt
+            Date updatedAt
+
+            Repository VinculoConciliacaoRepository {
+                @VinculoConciliacao salvar(@VinculoConciliacao vinculo);
+                @VinculoConciliacao buscarPorDespesaId(String despesaId);
+                List<VinculoConciliacao> listarPorEventoId(String eventoId);
+                List<VinculoConciliacao> listarPorContratoId(String contratoId);
+                void removerPorDespesaId(String despesaId);
+            }
+        }
+
+        Entity RelatorioConciliacao {
+            -RelatorioConciliacaoId id
+            String eventoId
+            String responsavelId
+            Date dataGeracao
+            List<ItemRelatorioConciliacao> itens
+
+            Repository RelatorioConciliacaoRepository {
+                @RelatorioConciliacao salvar(@RelatorioConciliacao relatorio);
+                @RelatorioConciliacao buscarPorId(String id);
+            }
+        }
+
+        ValueObject VinculoConciliacaoId { String valor }
+        ValueObject RelatorioConciliacaoId { String valor }
+        ValueObject MetodoConciliacao { String valor }
+        ValueObject StatusConciliacao { String valor }
+        ValueObject ItemRelatorioConciliacao {
+            String despesaId
+            String contratoId
+            -StatusConciliacao status
+            -MetodoConciliacao metodo
+        }
+
+        Service ConciliacaoService {
+            void executarConciliacaoAutomatica(String eventoId, String responsavelId);
+            List<Despesa> listarDespesasDescobertasPorEvento(String eventoId);
+            List<Contrato> listarContratosExtrapoladosPorEvento(String eventoId);
+            @VinculoConciliacao vincularManualmente(String despesaId, String contratoId, String responsavelId);
+            @RelatorioConciliacao gerarRelatorio(String eventoId, String responsavelId);
+        }
+    }
+
     Aggregate Agenda {
         Entity Compromisso {
             aggregateRoot

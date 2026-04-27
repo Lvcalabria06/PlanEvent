@@ -1,8 +1,8 @@
 Link de acesso ao documento: https://docs.google.com/document/d/1BjeNDoEgnlY3AC-fIM3TsCOQWZ3bHpamKh5VU_r2HNA/edit?tab=t.0#heading=h.l2i142tfq1pj
 
-Descrição do Domínio EventFlow
+Descrição do Domínio PlanEvent
 
-O EventFlow é um sistema inteligente de gestão de eventos que auxilia gestores
+O PlanEvent é um sistema inteligente de gestão de eventos que auxilia gestores
 a planejar, organizar e executar eventos de forma estruturada, garantindo
 controle operacional, financeiro, logístico e administrativo.
 
