@@ -1,5 +1,9 @@
 package domain.estoque.valueobject;
 
 public enum StatusReservaEstoque {
-    PENDENTE, CONFIRMADA, CANCELADA, FINALIZADA
+    PENDENTE,
+    CONFIRMADA,
+    EM_USO,
+    CANCELADA,
+    FINALIZADA
 }
