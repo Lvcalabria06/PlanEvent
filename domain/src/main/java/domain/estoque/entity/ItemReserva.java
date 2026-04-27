@@ -8,15 +8,9 @@ public class ItemReserva {
     private final String itemEstoqueId;
     private int quantidade;
 
-    public ItemReserva() {
-        this.id = UUID.randomUUID().toString();
-        this.reservaId = null;
-        this.itemEstoqueId = null;
-    }
-
     public ItemReserva(String reservaId, String itemEstoqueId, int quantidade) {
-        if (reservaId == null || itemEstoqueId == null) {
-            throw new IllegalArgumentException("IDs de reserva e item de estoque são obrigatórios.");
+        if (reservaId == null || reservaId.isBlank() || itemEstoqueId == null || itemEstoqueId.isBlank()) {
+            throw new IllegalArgumentException("IDs de reserva e item de estoque sao obrigatorios.");
         }
         if (quantidade <= 0) {
             throw new IllegalArgumentException("A quantidade deve ser maior que zero.");
@@ -34,9 +28,19 @@ public class ItemReserva {
         this.quantidade = novaQuantidade;
     }
 
-    // Getters
-    public String getId() { return id; }
-    public String getReservaId() { return reservaId; }
-    public String getItemEstoqueId() { return itemEstoqueId; }
-    public int getQuantidade() { return quantidade; }
+    public String getId() {
+        return id;
+    }
+
+    public String getReservaId() {
+        return reservaId;
+    }
+
+    public String getItemEstoqueId() {
+        return itemEstoqueId;
+    }
+
+    public int getQuantidade() {
+        return quantidade;
+    }
 }
