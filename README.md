@@ -1,9 +1,9 @@
-# EventOS - Sistema de Gestão de Eventos
+# PlanEvent - Sistema de Gestão de Eventos
 
 ## 1. Descrição do Domínio
-O **EventOS** é um sistema voltado para o gerenciamento inteligente e completo de eventos.
+O **PlanEvent** é um sistema voltado para o gerenciamento inteligente e completo de eventos.
 
-O EventOS é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo.
+O PlanEvent é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo.
 
 **Localização no repositório:**
 `entregaveis/descricaodominio.txt`
@@ -22,7 +22,7 @@ O protótipo foi criado para validar os fluxos principais do sistema e garantir 
 O arquivo .cml foi elaborado com o Context Mapper, respeitando os princípios de Bounded Contexts e Ubiquitous Language.
 
 **Localização no repositório:**
-`entregaveis/eventos.cml`
+`entregaveis/planevent.cml`
 
 ## 5. Definição de Funcionalidades, User Stories e Regras de Negócio
 Este documento apresenta a descrição detalhada das funcionalidades do sistema, acompanhada das respectivas histórias de usuário (User Stories) e regras de negócio (Business Rules), construídas a partir da linguagem onipresente e das necessidades identificadas no domínio.
@@ -56,7 +56,7 @@ O projeto segue uma estrutura baseada em Domain-Driven Design (DDD) e Clean Arch
 ## 9. Autores
 Projeto desenvolvido no contexto da disciplina Requisitos, Projeto de Software e Validação – CESAR School.
 
-**Equipe EventOS:**
+**Equipe PlanEvent:**
 - Artur Dowsley
 - Felipe Barros
 - Maria Luíza Dantas
