@@ -20,6 +20,9 @@ public class Evento {
     private int quantidadeEstimadaParticipantes;
     private String objetivo;
     private String localId;
+    private String layoutLocalId;
+    private String justificativaExcecaoLayout;
+    private boolean validacaoLayoutPendente;
     private boolean planejamentoConfirmado;
     private boolean concluido;
     private LocalDateTime janelaInicioPlanejamento;
@@ -48,6 +51,9 @@ public class Evento {
         this.quantidadeEstimadaParticipantes = quantidadeEstimadaParticipantes;
         this.objetivo = objetivo;
         this.localId = localId;
+        this.layoutLocalId = null;
+        this.justificativaExcecaoLayout = null;
+        this.validacaoLayoutPendente = false;
         this.planejamentoConfirmado = false;
         this.locaisContingenciaOrdenados = new ArrayList<>();
         this.historicoTrocasLocal = new ArrayList<>();
@@ -60,11 +66,15 @@ public class Evento {
             throw new IllegalStateException("Não é possível editar o evento após confirmar o planejamento.");
         }
         validarDadosObrigatorios(nome, tipo, porte, quantidadeEstimadaParticipantes, objetivo);
+        boolean mudouParticipantes = this.quantidadeEstimadaParticipantes != quantidadeEstimadaParticipantes;
         this.nome = nome;
         this.tipo = tipo;
         this.porte = porte;
         this.quantidadeEstimadaParticipantes = quantidadeEstimadaParticipantes;
         this.objetivo = objetivo;
+        if (mudouParticipantes && this.layoutLocalId != null) {
+            this.validacaoLayoutPendente = true;
+        }
         this.atualizarData();
     }
 
@@ -81,7 +91,29 @@ public class Evento {
             throw new IllegalStateException("Não é possível alterar o local após confirmar o planejamento.");
         }
         this.localId = novoLocalId;
+        this.layoutLocalId = null;
+        this.justificativaExcecaoLayout = null;
+        this.validacaoLayoutPendente = false;
         this.atualizarData();
+    }
+
+    public void associarLayout(String layoutLocalId, String justificativaExcecao) {
+        if (layoutLocalId == null || layoutLocalId.isBlank()) {
+            throw new IllegalArgumentException("Layout do local é obrigatório.");
+        }
+        this.layoutLocalId = layoutLocalId;
+        this.justificativaExcecaoLayout = justificativaExcecao != null && !justificativaExcecao.isBlank()
+                ? justificativaExcecao.trim()
+                : null;
+        this.validacaoLayoutPendente = false;
+        this.atualizarData();
+    }
+
+    public void marcarValidacaoLayoutPendente() {
+        if (this.layoutLocalId != null) {
+            this.validacaoLayoutPendente = true;
+            this.atualizarData();
+        }
     }
 
     public void definirJanelaPlanejamento(LocalDateTime inicio, LocalDateTime fim) {
@@ -195,6 +227,9 @@ public class Evento {
     public String getLocalId() { return localId; }
     public boolean isPlanejamentoConfirmado() { return planejamentoConfirmado; }
     public boolean isConcluido() { return concluido; }
+    public String getLayoutLocalId() { return layoutLocalId; }
+    public String getJustificativaExcecaoLayout() { return justificativaExcecaoLayout; }
+    public boolean isValidacaoLayoutPendente() { return validacaoLayoutPendente; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
 

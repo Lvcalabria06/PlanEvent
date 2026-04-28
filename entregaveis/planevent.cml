@@ -14,6 +14,9 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             int quantidadeEstimadaParticipantes
             String objetivo
             String localId
+            String layoutLocalId
+            String justificativaExcecaoLayout
+            boolean validacaoLayoutPendente
             boolean planejamentoConfirmado
             boolean concluido
             Date janelaInicioPlanejamento
@@ -47,11 +50,24 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             Evento executarTrocaPrincipalPorContingencia();
         }
 
+        Service PlanejamentoLayoutEventoService {
+            List<CompatibilidadeLayoutEvento> analisarCompatibilidadeLayouts();
+            Evento associarLayoutAoEvento();
+            Evento marcarRevalidacaoLayoutPendente();
+        }
+
         ValueObject EventoId { String valor }
         ValueObject TipoEvento { String valor }
         ValueObject PorteEvento { String valor }
         ValueObject ResultadoAnaliseAlocacao { String eventoId }
         ValueObject AlertaRiscoAlocacao { String eventoId, String localPrincipalId }
+        ValueObject CompatibilidadeLayoutEvento {
+            String layoutId
+            String nomeLayout
+            int capacidadeMaxima
+            boolean compativel
+            String justificativa
+        }
     }
 
     Aggregate Tarefa {
@@ -135,6 +151,40 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             }
         }
 
+        Entity LayoutLocal {
+            -LayoutLocalId id
+            String localId
+            String nome
+            String descricao
+            int capacidadeMaxima
+            String usuarioCriacao
+            String usuarioAtualizacao
+            Date dataCriacao
+            Date dataAtualizacao
+            Repository LayoutLocalRepository {
+                @LayoutLocal buscar(@LayoutLocalId id);
+                List<LayoutLocal> listarPorLocal(String localId);
+            }
+        }
+
+        Entity AvaliacaoContextualLocal {
+            -AvaliacaoContextualLocalId id
+            String eventoId
+            String localId
+            -TipoEvento tipoEvento
+            -PorteEvento porteEvento
+            int participantesContexto
+            Map<String, int> notasPorCriterio
+            BigDecimal notaFinal
+            String justificativa
+            String usuarioResponsavel
+            Date dataHoraRegistro
+            Repository AvaliacaoContextualLocalRepository {
+                @AvaliacaoContextualLocal buscar(@AvaliacaoContextualLocalId id);
+                List<AvaliacaoContextualLocal> listarPorLocal(String localId);
+            }
+        }
+
         Entity AgendaLocal {
             -AgendaLocalId id
             String localId
@@ -169,13 +219,38 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         ValueObject AgendaLocalId { String valor }
         ValueObject ReservaLocalId { String valor }
         ValueObject IndisponibilidadeLocalId { String valor }
+        ValueObject LayoutLocalId { String valor }
+        ValueObject AvaliacaoContextualLocalId { String valor }
         ValueObject StatusLocal { String valor }
+        ValueObject ResumoDesempenhoContextualLocal {
+            BigDecimal notaMediaGeral
+            BigDecimal notaMediaContexto
+            int totalAvaliacoesLocal
+            int totalAvaliacoesContexto
+            boolean baixaBaseHistoricaContexto
+            String classificacaoGeral
+            String classificacaoContextual
+        }
 
         Service LocalService {
             @Local cadastrarLocal(String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             void desativarLocal(String id);
             List<Local> listarLocais();
+        }
+
+        Service LayoutLocalService {
+            @LayoutLocal cadastrarLayout(String localId, String nome, String descricao, int capacidadeMaxima, String usuarioResponsavel);
+            @LayoutLocal atualizarLayout(String localId, String layoutId, String nome, String descricao, int capacidadeMaxima, String usuarioResponsavel);
+            List<LayoutLocal> listarLayouts(String localId);
+            List<CompatibilidadeLayoutEvento> analisarCompatibilidadeParaEvento(String eventoId, String localId);
+            void associarLayoutAoEvento(String eventoId, String localId, String layoutId, String justificativaExcecao, String usuarioResponsavel);
+        }
+
+        Service AvaliacaoContextualLocalService {
+            @AvaliacaoContextualLocal registrarAvaliacao(String eventoId, String localId, Map<String, int> notasPorCriterio, String justificativa, String usuarioResponsavel);
+            @ResumoDesempenhoContextualLocal consultarResumo(String localId, TipoEvento tipoEvento, PorteEvento porteEvento);
+            List<AvaliacaoContextualLocal> listarHistorico(String localId);
         }
     }
 
