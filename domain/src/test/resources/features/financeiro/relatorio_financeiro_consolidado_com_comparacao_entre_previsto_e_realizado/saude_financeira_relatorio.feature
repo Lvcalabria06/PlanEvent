@@ -4,7 +4,6 @@ Feature: Saúde financeira do relatório consolidado
   Quero que o relatório calcule automaticamente um score de saúde financeira do evento
   Para apresentar uma visão sintética e ponderada do estado orçamentário aos stakeholders
 
-  # ──── Score SAUDAVEL (≥ 80 pontos) ───────────────────────────────────
 
   Scenario: Relatório com todas categorias dentro do orçamento tem saúde SAUDAVEL
     Given existe um evento válido para relatório
@@ -15,7 +14,6 @@ Feature: Saúde financeira do relatório consolidado
     Then o score de saúde financeira deve ser maior ou igual a 80.0
     And a classificação de saúde do relatório deve ser "SAUDAVEL"
 
-  # ──── Score ATENÇÃO (60–79 pontos) ───────────────────────────────────
 
   Scenario: Relatório com categoria em desvio moderado tem saúde ATENCAO
     Given existe um evento válido para relatório
@@ -26,7 +24,6 @@ Feature: Saúde financeira do relatório consolidado
     Then o score de saúde financeira deve ser menor que 80.0
     And a classificação de saúde do relatório deve ser "ATENCAO"
 
-  # ──── Score CRITICO (< 60 pontos) ────────────────────────────────────
 
   Scenario: Relatório com categoria em desvio severo tem saúde CRITICO
     Given existe um evento válido para relatório
@@ -37,7 +34,6 @@ Feature: Saúde financeira do relatório consolidado
     Then o score de saúde financeira deve ser menor que 60.0
     And a classificação de saúde do relatório deve ser "CRITICO"
 
-  # ──── Ponderação por peso orçamentário ───────────────────────────────
 
   Scenario: Score é ponderado pelo peso orçamentário de cada categoria
     Given existe um evento válido para relatório
