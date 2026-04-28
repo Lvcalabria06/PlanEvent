@@ -1,4 +1,6 @@
-Domain PlanEvent {}
+Domain PlanEvent {
+    domainVisionStatement "EventFlow é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo. Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e quantidade estimada de participantes. No cadastro, o sistema registra identificador único imutável, data de criação e data de atualização. A preparação inicial reúne informações básicas; o Evento nasce com preparação não confirmada e, até lá, o Gestor pode cadastrar, visualizar e editar conforme regras do domínio. A confirmação da preparação inicial ocorre uma única vez; após isso, não se altera nem remove livremente o Local vinculado quando houver vínculo. A escolha do Local inclui análise de Locais ativos para um Evento existente: custo frente ao teto, capacidade, situação do Local e disponibilidade na Agenda quando existir janela ou período de uso. Os candidatos são classificados (recomendado, viável com ressalva, inadequado, indisponível) com justificativa. O Gestor define Local principal e alternativas de contingência antes da confirmação da preparação inicial; após a confirmação, só há alteração do vínculo por fluxo de contingência registrado (data, hora, usuário, motivo). O sistema gerencia recursos via Previsão de Consumo e Reservas com consistência de estoque; controla Orçamentos e Despesas com desvios e relatórios; organiza Funcionários, Equipes e Tarefas com dependências; Agenda com Compromissos e Lembretes; Contratos com status e Conciliação com despesas; Locais com manutenção, bloqueios/indisponibilidades e agenda de reservas validando sobreposições. Operações relevantes registram rastreabilidade. Nota de modelagem: o texto de domínio prevê avaliação de adequação do Local após conclusão do Evento; essa capacidade pode evoluir em ciclo futuro — o núcleo atual prioriza o planejamento inteligente de alocação e contingência em substituição de fluxos legados de apenas bloqueio/avaliação isolados."
+}
 
 BoundedContext PlanejamentoContext implements PlanEvent {
 
@@ -14,6 +16,10 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             String localId
             boolean planejamentoConfirmado
             boolean concluido
+            Date janelaInicioPlanejamento
+            Date janelaFimPlanejamento
+            BigDecimal tetoCustoEspacoInformado
+            String requisitosInfraestrutura
             Date dataCriacao
             Date dataAtualizacao
 
@@ -32,9 +38,20 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             @Evento concluirEvento();
         }
 
+        Service PlanejamentoAlocacaoLocalService {
+            ResultadoAnaliseAlocacao analisarLocaisParaEvento();
+            Evento registrarParametrosPlanejamento();
+            Evento fixarLocalPrincipal();
+            Evento registrarAlternativasContingencia();
+            AlertaRiscoAlocacao avaliarRiscoAlocacaoPrincipal();
+            Evento executarTrocaPrincipalPorContingencia();
+        }
+
         ValueObject EventoId { String valor }
         ValueObject TipoEvento { String valor }
         ValueObject PorteEvento { String valor }
+        ValueObject ResultadoAnaliseAlocacao { String eventoId }
+        ValueObject AlertaRiscoAlocacao { String eventoId, String localPrincipalId }
     }
 
     Aggregate Tarefa {
@@ -148,25 +165,10 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             }
         }
 
-        Entity AvaliacaoLocalEvento {
-            -AvaliacaoLocalEventoId id
-            String eventoId
-            String localId
-            -NivelAdequacao nivelAdequacao
-            String justificativa
-            String registradoPorUsuarioId
-            Date dataAvaliacao
-            Repository AvaliacaoLocalEventoRepository {
-                @AvaliacaoLocalEvento buscar(@AvaliacaoLocalEventoId id);
-            }
-        }
-
         ValueObject LocalId { String valor }
         ValueObject AgendaLocalId { String valor }
         ValueObject ReservaLocalId { String valor }
         ValueObject IndisponibilidadeLocalId { String valor }
-        ValueObject AvaliacaoLocalEventoId { String valor }
-        ValueObject NivelAdequacao { String valor }
         ValueObject StatusLocal { String valor }
 
         Service LocalService {
@@ -174,19 +176,6 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             void desativarLocal(String id);
             List<Local> listarLocais();
-        }
-
-        Service IndisponibilidadeLocalService {
-            @IndisponibilidadeLocal registrarIndisponibilidade();
-        }
-
-        Service ReservaLocalService {
-            @ReservaLocal reservar();
-        }
-
-        Service AvaliacaoLocalEventoService {
-            @AvaliacaoLocalEvento registrarAvaliacao();
-            List<AvaliacaoLocalEvento> listarAvaliacoesDoLocal();
         }
     }
 

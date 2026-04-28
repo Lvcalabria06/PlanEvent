@@ -1,9 +1,15 @@
 package domain.evento.entity;
 
+import domain.evento.planejamento.TrocaLocalPlanejamento;
 import domain.evento.valueobject.PorteEvento;
 import domain.evento.valueobject.TipoEvento;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Evento {
@@ -16,11 +22,19 @@ public class Evento {
     private String localId;
     private boolean planejamentoConfirmado;
     private boolean concluido;
+    private LocalDateTime janelaInicioPlanejamento;
+    private LocalDateTime janelaFimPlanejamento;
+    private BigDecimal tetoCustoEspacoInformado;
+    private String requisitosInfraestrutura;
+    private final List<String> locaisContingenciaOrdenados;
+    private final List<TrocaLocalPlanejamento> historicoTrocasLocal;
     private final LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
     public Evento() {
         this.id = UUID.randomUUID().toString();
+        this.locaisContingenciaOrdenados = new ArrayList<>();
+        this.historicoTrocasLocal = new ArrayList<>();
         this.dataCriacao = LocalDateTime.now();
         this.dataAtualizacao = this.dataCriacao;
     }
@@ -35,6 +49,8 @@ public class Evento {
         this.objetivo = objetivo;
         this.localId = localId;
         this.planejamentoConfirmado = false;
+        this.locaisContingenciaOrdenados = new ArrayList<>();
+        this.historicoTrocasLocal = new ArrayList<>();
         this.dataCriacao = LocalDateTime.now();
         this.dataAtualizacao = this.dataCriacao;
     }
@@ -65,6 +81,74 @@ public class Evento {
             throw new IllegalStateException("Não é possível alterar o local após confirmar o planejamento.");
         }
         this.localId = novoLocalId;
+        this.atualizarData();
+    }
+
+    public void definirJanelaPlanejamento(LocalDateTime inicio, LocalDateTime fim) {
+        if (this.planejamentoConfirmado) {
+            throw new IllegalStateException("Não é possível alterar a janela após confirmar o planejamento.");
+        }
+        if (inicio == null || fim == null || !inicio.isBefore(fim)) {
+            throw new IllegalArgumentException("Janela de planejamento inválida.");
+        }
+        this.janelaInicioPlanejamento = inicio;
+        this.janelaFimPlanejamento = fim;
+        this.atualizarData();
+    }
+
+    public void definirTetoCustoEspacoInformado(BigDecimal teto) {
+        if (teto == null || teto.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Teto de custo deve ser maior ou igual a zero.");
+        }
+        this.tetoCustoEspacoInformado = teto;
+        this.atualizarData();
+    }
+
+    public void definirRequisitosInfraestrutura(String requisitos) {
+        if (this.planejamentoConfirmado) {
+            throw new IllegalStateException("Não é possível alterar requisitos após confirmar o planejamento.");
+        }
+        this.requisitosInfraestrutura = requisitos != null && requisitos.isBlank() ? null : requisitos;
+        this.atualizarData();
+    }
+
+    public void definirAlternativasContingenciaOrdenadas(List<String> localIdsOrdenados) {
+        Objects.requireNonNull(localIdsOrdenados, "Lista de alternativas é obrigatória.");
+        List<String> copia = new ArrayList<>(localIdsOrdenados);
+        if (localId != null) {
+            for (String id : copia) {
+                if (localId.equals(id)) {
+                    throw new IllegalArgumentException("Alternativa de contingência não pode repetir o local principal.");
+                }
+            }
+        }
+        this.locaisContingenciaOrdenados.clear();
+        this.locaisContingenciaOrdenados.addAll(copia);
+        this.atualizarData();
+    }
+
+    public void substituirLocalPrincipalPorContingenciaDocumentada(
+            String novoLocalId,
+            String usuarioId,
+            String motivo) {
+        if (!this.planejamentoConfirmado) {
+            throw new IllegalStateException(
+                    "Troca documentada por contingência só se aplica após confirmação da preparação inicial.");
+        }
+        if (novoLocalId == null || novoLocalId.isBlank()) {
+            throw new IllegalArgumentException("Novo local é obrigatório.");
+        }
+        if (usuarioId == null || usuarioId.isBlank() || motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("Usuário e motivo da troca são obrigatórios.");
+        }
+        String anterior = this.localId;
+        this.localId = novoLocalId;
+        this.historicoTrocasLocal.add(new TrocaLocalPlanejamento(
+                LocalDateTime.now(),
+                usuarioId,
+                motivo,
+                anterior,
+                novoLocalId));
         this.atualizarData();
     }
 
@@ -113,4 +197,28 @@ public class Evento {
     public boolean isConcluido() { return concluido; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
+
+    public LocalDateTime getJanelaInicioPlanejamento() {
+        return janelaInicioPlanejamento;
+    }
+
+    public LocalDateTime getJanelaFimPlanejamento() {
+        return janelaFimPlanejamento;
+    }
+
+    public BigDecimal getTetoCustoEspacoInformado() {
+        return tetoCustoEspacoInformado;
+    }
+
+    public String getRequisitosInfraestrutura() {
+        return requisitosInfraestrutura;
+    }
+
+    public List<String> getLocaisContingenciaOrdenados() {
+        return Collections.unmodifiableList(locaisContingenciaOrdenados);
+    }
+
+    public List<TrocaLocalPlanejamento> getHistoricoTrocasLocal() {
+        return Collections.unmodifiableList(historicoTrocasLocal);
+    }
 }
