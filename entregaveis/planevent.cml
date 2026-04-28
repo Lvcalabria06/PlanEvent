@@ -1,5 +1,5 @@
 Domain PlanEvent {
-    domainVisionStatement "EventFlow é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo. Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e quantidade estimada de participantes. No cadastro, o sistema registra identificador único imutável, data de criação e data de atualização. A preparação inicial reúne informações básicas; o Evento nasce com preparação não confirmada e, até lá, o Gestor pode cadastrar, visualizar e editar conforme regras do domínio. A confirmação da preparação inicial ocorre uma única vez; após isso, não se altera nem remove livremente o Local vinculado quando houver vínculo. A escolha do Local inclui análise de Locais ativos para um Evento existente: custo frente ao teto, capacidade, situação do Local e disponibilidade na Agenda quando existir janela ou período de uso. Os candidatos são classificados (recomendado, viável com ressalva, inadequado, indisponível) com justificativa. O Gestor define Local principal e alternativas de contingência antes da confirmação da preparação inicial; após a confirmação, só há alteração do vínculo por fluxo de contingência registrado (data, hora, usuário, motivo). O sistema gerencia recursos via Previsão de Consumo e Reservas com consistência de estoque; controla Orçamentos e Despesas com desvios e relatórios; organiza Funcionários, Equipes e Tarefas com dependências; Agenda com Compromissos e Lembretes; Contratos com status e Conciliação com despesas; Locais com manutenção, bloqueios/indisponibilidades e agenda de reservas validando sobreposições. Operações relevantes registram rastreabilidade. Nota de modelagem: o texto de domínio prevê avaliação de adequação do Local após conclusão do Evento; essa capacidade pode evoluir em ciclo futuro — o núcleo atual prioriza o planejamento inteligente de alocação e contingência em substituição de fluxos legados de apenas bloqueio/avaliação isolados."
+    domainVisionStatement "EventFlow é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo. Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e quantidade estimada de participantes. No cadastro, o sistema registra identificador único imutável, data de criação e data de atualização. A preparação inicial reúne informações básicas; o Evento nasce com preparação não confirmada e, até lá, o Gestor pode cadastrar, visualizar e editar conforme regras do domínio. A confirmação da preparação inicial ocorre uma única vez; após isso, não se altera nem remove livremente o Local vinculado quando houver vínculo. A escolha do Local inclui análise de Locais ativos para um Evento existente: custo frente ao teto, capacidade, situação do Local e disponibilidade na Agenda quando existir janela ou período de uso. Os candidatos são classificados (recomendado, viável com ressalva, inadequado, indisponível) com justificativa. O Gestor define Local principal e alternativas de contingência antes da confirmação da preparação inicial; após a confirmação, só há alteração do vínculo por fluxo de contingência registrado (data, hora, usuário, motivo). Cada Local pode possuir múltiplas configurações de layout com capacidade máxima, permitindo validar compatibilidade por formato de uso e exigir justificativa em exceções de seleção incompatível. Alterações em participantes estimados ou capacidade de layout disparam revalidação para eventos não concluídos. Após a conclusão do evento, o gestor registra avaliação contextual de desempenho do local com critérios operacionais, notas de 0 a 5, justificativa obrigatória e rastreabilidade; o sistema calcula nota geral e nota por contexto (tipo e porte), sinalizando baixa base histórica quando necessário. O sistema também gerencia recursos via Previsão de Consumo e Reservas com consistência de estoque; controla Orçamentos e Despesas com desvios e relatórios; organiza Funcionários, Equipes e Tarefas com dependências; Agenda com Compromissos e Lembretes; Contratos com status e Conciliação com despesas; Locais com manutenção, bloqueios/indisponibilidades e agenda de reservas validando sobreposições. Operações relevantes registram rastreabilidade."
 }
 
 BoundedContext PlanejamentoContext implements PlanEvent {
@@ -14,6 +14,9 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             int quantidadeEstimadaParticipantes
             String objetivo
             String localId
+            String layoutLocalId
+            String justificativaExcecaoLayout
+            boolean validacaoLayoutPendente
             boolean planejamentoConfirmado
             boolean concluido
             Date janelaInicioPlanejamento
@@ -47,11 +50,24 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             Evento executarTrocaPrincipalPorContingencia();
         }
 
+        Service PlanejamentoLayoutEventoService {
+            List<CompatibilidadeLayoutEvento> analisarCompatibilidadeLayouts();
+            Evento associarLayoutAoEvento();
+            Evento marcarRevalidacaoLayoutPendente();
+        }
+
         ValueObject EventoId { String valor }
         ValueObject TipoEvento { String valor }
         ValueObject PorteEvento { String valor }
         ValueObject ResultadoAnaliseAlocacao { String eventoId }
         ValueObject AlertaRiscoAlocacao { String eventoId, String localPrincipalId }
+        ValueObject CompatibilidadeLayoutEvento {
+            String layoutId
+            String nomeLayout
+            int capacidadeMaxima
+            boolean compativel
+            String justificativa
+        }
     }
 
     Aggregate Tarefa {
@@ -135,6 +151,40 @@ BoundedContext PlanejamentoContext implements PlanEvent {
             }
         }
 
+        Entity LayoutLocal {
+            -LayoutLocalId id
+            String localId
+            String nome
+            String descricao
+            int capacidadeMaxima
+            String usuarioCriacao
+            String usuarioAtualizacao
+            Date dataCriacao
+            Date dataAtualizacao
+            Repository LayoutLocalRepository {
+                @LayoutLocal buscar(@LayoutLocalId id);
+                List<LayoutLocal> listarPorLocal(String localId);
+            }
+        }
+
+        Entity AvaliacaoContextualLocal {
+            -AvaliacaoContextualLocalId id
+            String eventoId
+            String localId
+            -TipoEvento tipoEvento
+            -PorteEvento porteEvento
+            int participantesContexto
+            Map<String, int> notasPorCriterio
+            BigDecimal notaFinal
+            String justificativa
+            String usuarioResponsavel
+            Date dataHoraRegistro
+            Repository AvaliacaoContextualLocalRepository {
+                @AvaliacaoContextualLocal buscar(@AvaliacaoContextualLocalId id);
+                List<AvaliacaoContextualLocal> listarPorLocal(String localId);
+            }
+        }
+
         Entity AgendaLocal {
             -AgendaLocalId id
             String localId
@@ -169,13 +219,38 @@ BoundedContext PlanejamentoContext implements PlanEvent {
         ValueObject AgendaLocalId { String valor }
         ValueObject ReservaLocalId { String valor }
         ValueObject IndisponibilidadeLocalId { String valor }
+        ValueObject LayoutLocalId { String valor }
+        ValueObject AvaliacaoContextualLocalId { String valor }
         ValueObject StatusLocal { String valor }
+        ValueObject ResumoDesempenhoContextualLocal {
+            BigDecimal notaMediaGeral
+            BigDecimal notaMediaContexto
+            int totalAvaliacoesLocal
+            int totalAvaliacoesContexto
+            boolean baixaBaseHistoricaContexto
+            String classificacaoGeral
+            String classificacaoContextual
+        }
 
         Service LocalService {
             @Local cadastrarLocal(String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             @Local editarLocal(String id, String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo);
             void desativarLocal(String id);
             List<Local> listarLocais();
+        }
+
+        Service LayoutLocalService {
+            @LayoutLocal cadastrarLayout(String localId, String nome, String descricao, int capacidadeMaxima, String usuarioResponsavel);
+            @LayoutLocal atualizarLayout(String localId, String layoutId, String nome, String descricao, int capacidadeMaxima, String usuarioResponsavel);
+            List<LayoutLocal> listarLayouts(String localId);
+            List<CompatibilidadeLayoutEvento> analisarCompatibilidadeParaEvento(String eventoId, String localId);
+            void associarLayoutAoEvento(String eventoId, String localId, String layoutId, String justificativaExcecao, String usuarioResponsavel);
+        }
+
+        Service AvaliacaoContextualLocalService {
+            @AvaliacaoContextualLocal registrarAvaliacao(String eventoId, String localId, Map<String, int> notasPorCriterio, String justificativa, String usuarioResponsavel);
+            @ResumoDesempenhoContextualLocal consultarResumo(String localId, TipoEvento tipoEvento, PorteEvento porteEvento);
+            List<AvaliacaoContextualLocal> listarHistorico(String localId);
         }
     }
 
