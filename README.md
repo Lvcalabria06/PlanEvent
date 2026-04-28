@@ -22,7 +22,7 @@ O protótipo foi criado para validar os fluxos principais do sistema e garantir 
 O arquivo .cml foi elaborado com o Context Mapper, respeitando os princípios de Bounded Contexts e Ubiquitous Language.
 
 **Localização no repositório:**
-`entregaveis/planevent.cml`
+`entregaveis/eventos.cml`
 
 ## 5. Definição de Funcionalidades, User Stories e Regras de Negócio
 Este documento apresenta a descrição detalhada das funcionalidades do sistema, acompanhada das respectivas histórias de usuário (User Stories) e regras de negócio (Business Rules), construídas a partir da linguagem onipresente e das necessidades identificadas no domínio.
