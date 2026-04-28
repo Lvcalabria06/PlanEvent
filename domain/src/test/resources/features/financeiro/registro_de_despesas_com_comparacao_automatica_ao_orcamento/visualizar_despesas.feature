@@ -1,8 +1,8 @@
 Feature: Visualizar despesas do evento
 
   Como gestor financeiro
-  Quero visualizar as despesas registradas
-  Para acompanhar os gastos do evento
+  Quero visualizar as despesas registradas com seus respectivos status
+  Para acompanhar os gastos e o estado de aprovação de cada lançamento
 
   Scenario: Buscar despesa por identificador
     Given existe um evento válido para despesas
