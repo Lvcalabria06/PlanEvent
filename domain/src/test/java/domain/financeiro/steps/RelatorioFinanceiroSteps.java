@@ -12,6 +12,7 @@ import domain.financeiro.repository.RelatorioFinanceiroRepository;
 import domain.financeiro.service.RelatorioFinanceiroService;
 import domain.financeiro.service.RelatorioFinanceiroServiceImpl;
 import domain.financeiro.valueobject.CategoriaDespesa;
+import domain.financeiro.valueobject.ClassificacaoSaude;
 import domain.financeiro.valueobject.ItemRelatorioCategoria;
 
 import io.cucumber.java.Before;
@@ -79,9 +80,11 @@ public class RelatorioFinanceiroSteps {
 
         when(relatorioRepository.salvar(any(RelatorioFinanceiro.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(any(), any()))
+                .thenReturn(BigDecimal.ZERO);
     }
 
-
+    // ──── Givens de evento ────────────────────────────────────────────────
 
     @Given("existe um evento válido para relatório")
     public void existe_um_evento_valido_para_relatorio() {
@@ -93,6 +96,8 @@ public class RelatorioFinanceiroSteps {
     public void nao_existe_evento_valido_para_relatorio() {
         when(eventoRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
+
+    // ──── Givens de orçamento ─────────────────────────────────────────────
 
     @Given("existe um orçamento cadastrado para o evento do relatório com categorias")
     public void existe_um_orcamento_cadastrado_para_o_evento_do_relatorio_com_categorias() {
@@ -123,15 +128,20 @@ public class RelatorioFinanceiroSteps {
         CategoriaOrcamento co = new CategoriaOrcamento(
                 ID_ORCAMENTO, cat, BigDecimal.valueOf(valorPrevisto));
         categoriasOrcamento.add(co);
-        when(despesaRepository.somarValoresPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
                 .thenReturn(BigDecimal.ZERO);
+    }
+
+    @Given("foram registradas despesas ativas de {double} na categoria {string} para o relatório")
+    public void foram_registradas_despesas_ativas_de_na_categoria_para_o_relatorio(double total, String catStr) {
+        CategoriaDespesa cat = CategoriaDespesa.valueOf(catStr);
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(BigDecimal.valueOf(total));
     }
 
     @Given("foram registradas despesas de {double} na categoria {string} para o relatório")
     public void foram_registradas_despesas_de_na_categoria_para_o_relatorio(double total, String catStr) {
-        CategoriaDespesa cat = CategoriaDespesa.valueOf(catStr);
-        when(despesaRepository.somarValoresPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
-                .thenReturn(BigDecimal.valueOf(total));
+        foram_registradas_despesas_ativas_de_na_categoria_para_o_relatorio(total, catStr);
     }
 
     @Given("existe um relatório financeiro já gerado")
@@ -178,7 +188,7 @@ public class RelatorioFinanceiroSteps {
         when(relatorioRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
 
-
+    // ──── Whens ───────────────────────────────────────────────────────────
 
     @When("eu gerar o relatório financeiro do evento")
     public void eu_gerar_o_relatorio_financeiro_do_evento() {
@@ -257,7 +267,7 @@ public class RelatorioFinanceiroSteps {
         }
     }
 
-
+    // ──── Thens de geração e dados ────────────────────────────────────────
 
     @Then("o relatório é gerado e persistido com sucesso")
     public void o_relatorio_e_gerado_com_sucesso() {
@@ -272,8 +282,7 @@ public class RelatorioFinanceiroSteps {
         assertNull(excecaoLancada);
         assertNotNull(relatorioEmContexto.getTotalGeralPrevisto());
         assertNotNull(relatorioEmContexto.getTotalGeralRealizado());
-        assertTrue(relatorioEmContexto.getTotalGeralPrevisto()
-                .compareTo(BigDecimal.ZERO) > 0);
+        assertTrue(relatorioEmContexto.getTotalGeralPrevisto().compareTo(BigDecimal.ZERO) > 0);
     }
 
     @Then("o relatório deve conter itens por categoria")
@@ -303,17 +312,53 @@ public class RelatorioFinanceiroSteps {
     @Then("o relatório deve conter a data de geração e o usuário responsável")
     public void o_relatorio_deve_conter_data_e_usuario() {
         assertNull(excecaoLancada);
-        assertNotNull(relatorioEmContexto.getDataGeracao(),
-                "dataGeracao deve ser preenchida automaticamente.");
-        assertNotNull(relatorioEmContexto.getGeradoPorUsuarioId(),
-                "geradoPorUsuarioId deve estar preenchido.");
+        assertNotNull(relatorioEmContexto.getDataGeracao());
+        assertNotNull(relatorioEmContexto.getGeradoPorUsuarioId());
         assertEquals(ID_USUARIO, relatorioEmContexto.getGeradoPorUsuarioId());
     }
+
+    // ──── Thens de saúde financeira ───────────────────────────────────────
+
+    @Then("o score de saúde financeira deve ser maior ou igual a {double}")
+    public void o_score_de_saude_deve_ser_maior_ou_igual(double minScore) {
+        assertNull(excecaoLancada);
+        assertNotNull(relatorioEmContexto.getSaudeFinanceira());
+        assertTrue(relatorioEmContexto.getSaudeFinanceira().getScore() >= minScore,
+                "Score esperado >= " + minScore + " mas foi: "
+                        + relatorioEmContexto.getSaudeFinanceira().getScore());
+    }
+
+    @Then("o score de saúde financeira deve ser menor que {double}")
+    public void o_score_de_saude_deve_ser_menor_que(double maxScore) {
+        assertNull(excecaoLancada);
+        assertNotNull(relatorioEmContexto.getSaudeFinanceira());
+        assertTrue(relatorioEmContexto.getSaudeFinanceira().getScore() < maxScore,
+                "Score esperado < " + maxScore + " mas foi: "
+                        + relatorioEmContexto.getSaudeFinanceira().getScore());
+    }
+
+    @Then("a classificação de saúde do relatório deve ser {string}")
+    public void a_classificacao_de_saude_deve_ser(String esperado) {
+        assertNull(excecaoLancada);
+        assertNotNull(relatorioEmContexto.getSaudeFinanceira());
+        assertEquals(ClassificacaoSaude.valueOf(esperado),
+                relatorioEmContexto.getSaudeFinanceira().getClassificacao());
+    }
+
+    @Then("o relatório deve conter o score de saúde financeira calculado")
+    public void o_relatorio_deve_conter_o_score_de_saude() {
+        assertNull(excecaoLancada);
+        assertNotNull(relatorioEmContexto.getSaudeFinanceira());
+        assertTrue(relatorioEmContexto.getSaudeFinanceira().getScore() >= 0.0);
+        assertTrue(relatorioEmContexto.getSaudeFinanceira().getScore() <= 100.0);
+    }
+
+    // ──── Thens de imutabilidade e auditoria ─────────────────────────────
 
     @Then("o sistema deve impedir a edição do relatório")
     public void o_sistema_deve_impedir_a_edicao() {
         assertNull(excecaoLancada,
-                "RelatorioFinanceiro expõe setters, o que viola RN7.");
+                "RelatorioFinanceiro expõe setters, o que viola a imutabilidade.");
         assertThrows(UnsupportedOperationException.class, () ->
                 relatorioEmContexto.getItensPorCategoria().clear());
     }

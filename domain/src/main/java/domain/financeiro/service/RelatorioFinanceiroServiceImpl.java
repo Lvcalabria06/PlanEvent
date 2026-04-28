@@ -13,8 +13,6 @@ import domain.financeiro.valueobject.ItemRelatorioCategoria;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 
 public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroService {
 
@@ -40,18 +38,15 @@ public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroServic
     @Override
     public RelatorioFinanceiro gerarRelatorio(String eventoId, String usuarioId) {
 
-
         eventoRepository.buscarPorId(eventoId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Evento inválido ou não encontrado."));
 
-   
         OrcamentoEvento orcamento = orcamentoEventoRepository
                 .buscarPorEventoId(eventoId)
                 .orElseThrow(() -> new IllegalStateException(
                         "Orçamento não encontrado para o evento. " +
                         "Cadastre o orçamento previsto por categoria antes de gerar o relatório."));
-
 
         List<CategoriaOrcamento> categorias = categoriaOrcamentoRepository
                 .listarPorOrcamentoId(orcamento.getId());
@@ -63,13 +58,12 @@ public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroServic
         }
 
         List<ItemRelatorioCategoria> itens = new ArrayList<>();
-        BigDecimal totalGeralPrevisto = BigDecimal.ZERO;
+        BigDecimal totalGeralPrevisto  = BigDecimal.ZERO;
         BigDecimal totalGeralRealizado = BigDecimal.ZERO;
 
         for (CategoriaOrcamento cat : categorias) {
-
             BigDecimal realizado = despesaRepository
-                    .somarValoresPorEventoECategoria(eventoId, cat.getNome());
+                    .somarValoresAtivosPorEventoECategoria(eventoId, cat.getNome());
 
             BigDecimal realizadoFinal = realizado != null ? realizado : BigDecimal.ZERO;
 
@@ -78,7 +72,7 @@ public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroServic
                     cat.getValorPrevisto(),
                     realizadoFinal));
 
-            totalGeralPrevisto = totalGeralPrevisto.add(cat.getValorPrevisto());
+            totalGeralPrevisto  = totalGeralPrevisto.add(cat.getValorPrevisto());
             totalGeralRealizado = totalGeralRealizado.add(realizadoFinal);
         }
 
