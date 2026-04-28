@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 
 public class DesvioOrcamentario {
 
+    private static final double LIMIAR_ATENCAO = 10.0;
     private static final double LIMIAR_CRITICO = 20.0;
 
     private final CategoriaDespesa categoria;
@@ -33,7 +34,9 @@ public class DesvioOrcamentario {
         this.desvioPercentual = calcularDesvioPercentual(valorPrevisto, valorRealizado);
         this.classificacao = desvioPercentual > LIMIAR_CRITICO
                 ? ClassificacaoDesvio.CRITICO
-                : ClassificacaoDesvio.NORMAL;
+                : desvioPercentual >= LIMIAR_ATENCAO
+                        ? ClassificacaoDesvio.ATENCAO
+                        : ClassificacaoDesvio.NORMAL;
     }
 
     private static double calcularDesvioPercentual(BigDecimal previsto, BigDecimal realizado) {

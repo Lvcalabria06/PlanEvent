@@ -1,7 +1,7 @@
 package domain.financeiro.valueobject;
 
-public enum ClassificacaoDesvio {
-    NORMAL,
+public enum ClassificacaoSaude {
+    SAUDAVEL,
     ATENCAO,
     CRITICO
 }
