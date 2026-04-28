@@ -17,6 +17,7 @@ public interface DespesaRepository {
 
     List<Despesa> listarPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
 
-    //RN7
     BigDecimal somarValoresPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
+
+    BigDecimal somarValoresAtivosPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
 }

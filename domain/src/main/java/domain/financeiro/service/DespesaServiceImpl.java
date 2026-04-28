@@ -4,6 +4,7 @@ import domain.evento.repository.EventoRepository;
 import domain.financeiro.entity.CategoriaOrcamento;
 import domain.financeiro.entity.Despesa;
 import domain.financeiro.entity.OrcamentoEvento;
+import domain.financeiro.exception.CategoriaOrcamentoEsgotadaException;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
@@ -14,8 +15,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class DespesaServiceImpl implements DespesaService {
+
+    private static final BigDecimal PERCENTUAL_BLOQUEIO  = new BigDecimal("1.00");
+    private static final BigDecimal PERCENTUAL_APROVACAO = new BigDecimal("0.80");
 
     private final DespesaRepository despesaRepository;
     private final OrcamentoEventoRepository orcamentoEventoRepository;
@@ -43,11 +46,30 @@ public class DespesaServiceImpl implements DespesaService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Orçamento não encontrado para o evento. Cadastre o orçamento antes de registrar despesas."));
 
-        categoriaOrcamentoRepository
+        CategoriaOrcamento categoriaOrc = categoriaOrcamentoRepository
                 .buscarPorOrcamentoECategoria(orcamento.getId(), despesa.getCategoria())
                 .orElseThrow(() -> new IllegalStateException(
                         "Categoria '" + despesa.getCategoria()
                                 + "' não possui orçamento previsto cadastrado para este evento."));
+
+        BigDecimal totalAtivo = despesaRepository
+                .somarValoresAtivosPorEventoECategoria(despesa.getEventoId(), despesa.getCategoria());
+        if (totalAtivo == null) totalAtivo = BigDecimal.ZERO;
+
+        BigDecimal previsto  = categoriaOrc.getValorPrevisto();
+        BigDecimal novoTotal = totalAtivo.add(despesa.getValor());
+
+        if (novoTotal.compareTo(previsto.multiply(PERCENTUAL_BLOQUEIO)) > 0) {
+            throw new CategoriaOrcamentoEsgotadaException(
+                    "Despesa bloqueada: o total acumulado de " + totalAtivo
+                            + " mais o novo valor de " + despesa.getValor()
+                            + " ultrapassa o orçamento previsto de " + previsto
+                            + " para a categoria '" + despesa.getCategoria() + "'.");
+        }
+
+        if (novoTotal.compareTo(previsto.multiply(PERCENTUAL_APROVACAO)) >= 0) {
+            despesa.marcarPendente();
+        }
 
         return despesaRepository.salvar(despesa);
     }
@@ -75,13 +97,13 @@ public class DespesaServiceImpl implements DespesaService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Orçamento para a categoria '" + categoria + "' não encontrado."));
 
-        BigDecimal totalRealizado = despesaRepository
-                .somarValoresPorEventoECategoria(eventoId, categoria);
+        BigDecimal totalAtivo = despesaRepository
+                .somarValoresAtivosPorEventoECategoria(eventoId, categoria);
 
         return new DesvioOrcamentario(
                 categoria,
                 categoriaOrcamento.getValorPrevisto(),
-                totalRealizado != null ? totalRealizado : BigDecimal.ZERO);
+                totalAtivo != null ? totalAtivo : BigDecimal.ZERO);
     }
 
     @Override
@@ -96,14 +118,30 @@ public class DespesaServiceImpl implements DespesaService {
 
         List<DesvioOrcamentario> desvios = new ArrayList<>();
         for (CategoriaOrcamento cat : categorias) {
-            BigDecimal totalRealizado = despesaRepository
-                    .somarValoresPorEventoECategoria(eventoId, cat.getNome());
+            BigDecimal totalAtivo = despesaRepository
+                    .somarValoresAtivosPorEventoECategoria(eventoId, cat.getNome());
 
             desvios.add(new DesvioOrcamentario(
                     cat.getNome(),
                     cat.getValorPrevisto(),
-                    totalRealizado != null ? totalRealizado : BigDecimal.ZERO));
+                    totalAtivo != null ? totalAtivo : BigDecimal.ZERO));
         }
         return desvios;
+    }
+
+    @Override
+    public Despesa aprovarDespesa(String despesaId, String aprovadorId) {
+        Despesa despesa = despesaRepository.buscarPorId(despesaId)
+                .orElseThrow(() -> new IllegalArgumentException("Despesa não encontrada."));
+        despesa.aprovar(aprovadorId);
+        return despesaRepository.salvar(despesa);
+    }
+
+    @Override
+    public Despesa rejeitarDespesa(String despesaId, String aprovadorId, String motivo) {
+        Despesa despesa = despesaRepository.buscarPorId(despesaId)
+                .orElseThrow(() -> new IllegalArgumentException("Despesa não encontrada."));
+        despesa.rejeitar(aprovadorId, motivo);
+        return despesaRepository.salvar(despesa);
     }
 }

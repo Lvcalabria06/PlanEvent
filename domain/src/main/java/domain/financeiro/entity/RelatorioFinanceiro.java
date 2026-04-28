@@ -1,6 +1,7 @@
 package domain.financeiro.entity;
 
 import domain.financeiro.valueobject.ItemRelatorioCategoria;
+import domain.financeiro.valueobject.SaudeFinanceira;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class RelatorioFinanceiro {
     private final BigDecimal totalGeralPrevisto;
     private final BigDecimal totalGeralRealizado;
     private final List<ItemRelatorioCategoria> itensPorCategoria;
+    private final SaudeFinanceira saudeFinanceira;
     private final String conteudo;
 
     public RelatorioFinanceiro(String eventoId,
@@ -41,18 +43,20 @@ public class RelatorioFinanceiro {
         this.eventoId = eventoId;
         this.geradoPorUsuarioId = geradoPorUsuarioId;
         this.dataGeracao = LocalDateTime.now();
-        this.totalGeralPrevisto = totalGeralPrevisto != null ? totalGeralPrevisto : BigDecimal.ZERO;
+        this.totalGeralPrevisto  = totalGeralPrevisto  != null ? totalGeralPrevisto  : BigDecimal.ZERO;
         this.totalGeralRealizado = totalGeralRealizado != null ? totalGeralRealizado : BigDecimal.ZERO;
         this.itensPorCategoria = Collections.unmodifiableList(itensPorCategoria);
+        this.saudeFinanceira = new SaudeFinanceira(itensPorCategoria);
         this.conteudo = conteudo;
     }
 
-    public String getId() { return id; }
-    public String getEventoId() { return eventoId; }
-    public String getGeradoPorUsuarioId() { return geradoPorUsuarioId; }
-    public LocalDateTime getDataGeracao() { return dataGeracao; }
-    public BigDecimal getTotalGeralPrevisto() { return totalGeralPrevisto; }
-    public BigDecimal getTotalGeralRealizado() { return totalGeralRealizado; }
-    public List<ItemRelatorioCategoria> getItensPorCategoria() { return itensPorCategoria; }
-    public String getConteudo() { return conteudo; }
+    public String getId()                                        { return id; }
+    public String getEventoId()                                  { return eventoId; }
+    public String getGeradoPorUsuarioId()                        { return geradoPorUsuarioId; }
+    public LocalDateTime getDataGeracao()                        { return dataGeracao; }
+    public BigDecimal getTotalGeralPrevisto()                    { return totalGeralPrevisto; }
+    public BigDecimal getTotalGeralRealizado()                   { return totalGeralRealizado; }
+    public List<ItemRelatorioCategoria> getItensPorCategoria()   { return itensPorCategoria; }
+    public SaudeFinanceira getSaudeFinanceira()                  { return saudeFinanceira; }
+    public String getConteudo()                                  { return conteudo; }
 }

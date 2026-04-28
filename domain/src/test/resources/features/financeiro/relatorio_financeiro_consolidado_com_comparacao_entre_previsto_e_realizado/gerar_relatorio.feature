@@ -1,14 +1,16 @@
-Feature: Gerar relatório financeiro consolidado
+Feature: Gerar relatório financeiro consolidado com comparação entre previsto e realizado
 
   Como controller
   Quero gerar um relatório financeiro consolidado do evento
   Para apresentar análise de custos com dados confiáveis e auditáveis
 
+  # ──── Geração com sucesso ─────────────────────────────────────────────
+
   Scenario: Gerar relatório com sucesso
     Given existe um evento válido para relatório
     And existe um orçamento cadastrado para o evento do relatório com categorias
     And o orçamento da categoria "ALIMENTACAO" é de 1000.0 para o relatório
-    And foram registradas despesas de 800.00 na categoria "ALIMENTACAO" para o relatório
+    And foram registradas despesas ativas de 800.00 na categoria "ALIMENTACAO" para o relatório
     When eu gerar o relatório financeiro do evento
     Then o relatório é gerado e persistido com sucesso
 
@@ -16,7 +18,7 @@ Feature: Gerar relatório financeiro consolidado
     Given existe um evento válido para relatório
     And existe um orçamento cadastrado para o evento do relatório com categorias
     And o orçamento da categoria "DECORACAO" é de 500.0 para o relatório
-    And foram registradas despesas de 600.00 na categoria "DECORACAO" para o relatório
+    And foram registradas despesas ativas de 600.00 na categoria "DECORACAO" para o relatório
     When eu gerar o relatório financeiro do evento
     Then o relatório deve conter o total geral previsto e realizado
 
@@ -24,10 +26,19 @@ Feature: Gerar relatório financeiro consolidado
     Given existe um evento válido para relatório
     And existe um orçamento cadastrado para o evento do relatório com categorias
     And o orçamento da categoria "LOGISTICA" é de 2000.0 para o relatório
-    And foram registradas despesas de 2600.00 na categoria "LOGISTICA" para o relatório
+    And foram registradas despesas ativas de 2600.00 na categoria "LOGISTICA" para o relatório
     When eu gerar o relatório financeiro do evento
     Then o relatório deve conter itens por categoria
     And o percentual de variação da categoria "LOGISTICA" deve ser de 30.0 porcento
+
+  Scenario: Relatório registra data de geração e usuário responsável automaticamente
+    Given existe um evento válido para relatório
+    And existe um orçamento cadastrado para o evento do relatório com categorias
+    And o orçamento da categoria "SERVICO" é de 3000.0 para o relatório
+    When eu gerar o relatório financeiro do evento
+    Then o relatório deve conter a data de geração e o usuário responsável
+
+  # ──── Restrições de geração ──────────────────────────────────────────
 
   Scenario: Impedir geração de relatório sem orçamento cadastrado
     Given existe um evento válido para relatório
@@ -45,10 +56,3 @@ Feature: Gerar relatório financeiro consolidado
     Given não existe evento válido para relatório
     When eu tentar gerar o relatório com evento inválido
     Then o sistema deve impedir a geração do relatório
-
-  Scenario: Relatório registra data de geração e usuário responsável automaticamente
-    Given existe um evento válido para relatório
-    And existe um orçamento cadastrado para o evento do relatório com categorias
-    And o orçamento da categoria "SERVICO" é de 3000.0 para o relatório
-    When eu gerar o relatório financeiro do evento
-    Then o relatório deve conter a data de geração e o usuário responsável
