@@ -4,7 +4,6 @@ Feature: Calcular desvio orçamentário por categoria
   Quero que o sistema calcule automaticamente o desvio entre o realizado e o previsto
   Para identificar extrapolações no orçamento do evento e agir preventivamente
 
-  # ──── Classificação NORMAL (desvio até 10%) ──────────────────────────
 
   Scenario: Calcular desvio dentro do limite normal até 10 porcento
     Given existe um evento válido para despesas
@@ -24,7 +23,6 @@ Feature: Calcular desvio orçamentário por categoria
     Then o desvio percentual calculado deve ser de 0.0 porcento
     And a classificação deve ser "NORMAL"
 
-  # ──── Classificação ATENÇÃO (desvio entre 10% e 20%) ─────────────────
 
   Scenario: Calcular desvio entre 10 e 20 porcento classifica como ATENCAO
     Given existe um evento válido para despesas
@@ -44,7 +42,6 @@ Feature: Calcular desvio orçamentário por categoria
     Then o desvio percentual calculado deve ser de 20.0 porcento
     And a classificação deve ser "ATENCAO"
 
-  # ──── Classificação CRÍTICO (desvio acima de 20%) ────────────────────
 
   Scenario: Calcular desvio crítico acima de 20 porcento
     Given existe um evento válido para despesas
@@ -64,7 +61,6 @@ Feature: Calcular desvio orçamentário por categoria
     Then o desvio percentual calculado deve ser de 25.0 porcento
     And a classificação deve ser "CRITICO"
 
-  # ──── Erros e casos especiais ─────────────────────────────────────────
 
   Scenario: Calcular desvio sem orçamento previsto para o evento retorna erro
     Given existe um evento válido para despesas

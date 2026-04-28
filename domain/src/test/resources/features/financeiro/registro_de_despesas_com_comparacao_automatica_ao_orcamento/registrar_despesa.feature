@@ -4,7 +4,6 @@ Feature: Registrar despesa com comparação automática ao orçamento
   Quero registrar despesas do evento categorizadas por tipo e associadas a fornecedores
   Para que o sistema compare automaticamente os valores realizados com o orçamento previsto
 
-  # ──── Fluxo principal ────────────────────────────────────────────────────
 
   Scenario: Registrar despesa com sucesso dentro do limite seguro
     Given existe um evento válido para despesas
@@ -23,7 +22,6 @@ Feature: Registrar despesa com comparação automática ao orçamento
     When eu registrar uma despesa de 1000.00 na categoria "EQUIPAMENTO" com fornecedor e usuário válidos
     Then a despesa deve conter data, hora e usuário responsável pelo lançamento
 
-  # ──── Validações de campos obrigatórios (CA4) ─────────────────────────
 
   Scenario: Impedir registro de despesa sem evento válido
     Given não existe evento válido para despesas
@@ -77,7 +75,6 @@ Feature: Registrar despesa com comparação automática ao orçamento
     When eu tentar registrar uma despesa sem data
     Then o sistema deve impedir o registro da despesa
 
-  # ──── Bloqueio automático de categoria esgotada ───────────────────────
 
   Scenario: Bloquear despesa que ultrapassaria o orçamento da categoria
     Given existe um evento válido para despesas
@@ -104,7 +101,6 @@ Feature: Registrar despesa com comparação automática ao orçamento
     Then a despesa é salva com sucesso
     And o status da despesa deve ser "PENDENTE_APROVACAO"
 
-  # ──── Workflow de aprovação (despesa que atinge 80% do orçamento) ─────
 
   Scenario: Despesa que ultrapassa 80 porcento do orçamento fica PENDENTE_APROVACAO
     Given existe um evento válido para despesas

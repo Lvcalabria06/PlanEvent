@@ -4,7 +4,6 @@ Feature: Gerar relatório financeiro consolidado com comparação entre previsto
   Quero gerar um relatório financeiro consolidado do evento
   Para apresentar análise de custos com dados confiáveis e auditáveis
 
-  # ──── Geração com sucesso ─────────────────────────────────────────────
 
   Scenario: Gerar relatório com sucesso
     Given existe um evento válido para relatório
@@ -38,7 +37,6 @@ Feature: Gerar relatório financeiro consolidado com comparação entre previsto
     When eu gerar o relatório financeiro do evento
     Then o relatório deve conter a data de geração e o usuário responsável
 
-  # ──── Restrições de geração ──────────────────────────────────────────
 
   Scenario: Impedir geração de relatório sem orçamento cadastrado
     Given existe um evento válido para relatório
