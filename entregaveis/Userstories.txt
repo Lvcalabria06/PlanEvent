@@ -30,122 +30,190 @@ CA1: Deve permitir cadastrar um evento com nome, tipo, porte, quantidade estimad
  CA6: Deve permitir confirmar a preparação inicial do evento apenas uma vez.
  CA7: Deve impedir a alteração ou remoção do local após a confirmação da preparação inicial, quando houver local vinculado.
 
-Escolha de local com filtro por teto de custo
+Planejamento inteligente de alocação e contingência de local
 Descrição
- Apoio à escolha do espaço: filtra locais pelo custo do próprio local e pela capacidade, usando um teto máximo informado pelo gestor. Não substitui o controle financeiro do evento.
+Funcionalidade de apoio à decisão na escolha do espaço: o sistema analisa locais candidatos ao mesmo evento já existente, combinando critérios já previstos no domínio, como custo frente a um teto, capacidade, situação do local, disponibilidade na agenda, bloqueios, indisponibilidade, manutenção e reservas quando houver período de uso ou janela pretendida informada. Produz uma classificação com justificativa objetiva e permite ao gestor fixar um local principal e uma lista ordenada de alternativas de contingência antes da confirmação da preparação inicial.
+Após a confirmação da preparação inicial, replica as regras já fixadas no domínio: não se altera livremente o vínculo do espaço; só faz sentido substituição em cenário de contingência, com registro explícito, alertas e eventual troca documentada, conforme abaixo.
+Não substitui o cadastro do evento nem o controle financeiro global do evento; limita-se ao planejamento operacional do espaço com os dados do evento e dos locais já disponíveis no sistema.
 Histórias de usuário
-Como gestor, quero informar um teto máximo de custo do espaço, para listar apenas locais cujo custo não ultrapasse esse valor.
- Como gestor, quero listar locais ativos com custo menor ou igual ao teto e capacidade maior ou igual à quantidade estimada de participantes do evento, para enxugar opções inviáveis.
- Como gestor, quero selecionar um local entre os filtrados e vinculá-lo ao evento, para definir onde o evento ocorrerá.
- Como gestor, quero alterar ou remover o local vinculado enquanto a preparação inicial não estiver confirmada, para ajustar a escolha antes do bloqueio.
+Como gestor, quero que o sistema analise locais compatíveis com um evento existente, considerando custos, capacidade e situação na agenda quando aplicável, para fundamentar a escolha do espaço.
+Como gestor, quero ver os candidatos ordenados ou classificados com motivo, para entender prioridade e riscos.
+Como gestor, quero definir local principal e alternativas de contingência em ordem preferencial, para ter plano B antes de confirmar a preparação inicial.
+Como gestor, quero ser alertado quando o local principal deixar de ser adequado ou disponível diante dos dados atuais, como teto, participantes, agenda ou bloqueios, para corrigir ou confirmar troca.
+Como gestor, quero que o sistema sugira o melhor substituto entre as alternativas ainda válidas, quando o principal estiver em risco.
+Como gestor, quero ver por escrito o motivo da classificação ou do alerta, como custo, capacidade, agenda, manutenção ou bloqueio.
 Regras de negócio
-RN1: O teto informado deve ser um valor monetário maior ou igual a zero e serve apenas como critério para escolha do local.
- RN2: O filtro considera apenas locais ativos, com capacidade maior ou igual à quantidade estimada de participantes e custo do local menor ou igual ao teto informado.
- RN3: O vínculo deve usar identificador de local existente e válido no cadastro de locais.
- RN4: Enquanto a preparação inicial não estiver confirmada, é permitido vincular, alterar ou remover o local.
- RN5: Após a confirmação da preparação inicial, não é permitido vincular, alterar ou remover o local.
+Contexto e vínculo
+RN1: A análise refere-se sempre a um Evento existente e identificável no sistema.
+RN2: Só entram na análise locais ativos cadastrados.
+RN3: Devem ser considerados, no mínimo: capacidade em relação aos participantes estimados do evento, custo em relação ao teto informado, infraestrutura cadastrada do local quando relacionada aos requisitos do evento, e disponibilidade na agenda do local sempre que existir período, janela de uso definida ou reserva pretendida associada ao planejamento.
+Teto e custo
+RN4: O gestor pode informar teto máximo de custo do espaço, que deve ser maior ou igual a zero.
+RN5: Locais com custo acima do teto não são elegíveis como principal; podem aparecer na análise como fora do limite, com justificativa.
+Capacidade e agenda
+RN6: Capacidade inferior à quantidade estimada de participantes torna o local inadequado para uso como principal.
+RN7: Se houver conflito com bloqueio, indisponibilidade, manutenção ou reserva já existente na mesma janela necessária ao evento, o local deve ser tratado como indisponível para essa janela.
+Classificação
+RN8: Cada local analisado recebe uma classificação do tipo: recomendado, viável com ressalva, inadequado ou indisponível, ajustável a um enum no sistema.
+RN9: Toda classificação deve ter justificativa objetiva, indicando critérios cumpridos e critérios que falharam ou limitam a escolha.
+Principal e contingência antes da confirmação da preparação inicial
+RN10: O gestor só pode fixar como principal um local classificado como recomendado ou viável com ressalva e que não esteja indisponível para a janela considerada.
+RN11: O gestor pode registrar uma lista ordenada de alternativas entre candidatos ainda aceitáveis como contingência.
+RN12: Em cada momento existe no máximo um local principal ativo no planejamento desse evento.
+RN13: Alternativa não substitui o principal sem ação explícita do gestor, como confirmação de troca ou fluxo de contingência.
+Alertas e substituição
+RN14: Se o principal passar a violar teto, capacidade, disponibilidade na agenda ou outra regra de adequação diante dos dados atuais, o sistema deve gerar alerta de risco de alocação.
+RN15: O alerta deve informar o motivo.
+RN16: Havendo alerta, o sistema deve apontar o melhor substituto entre alternativas ainda válidas segundo a mesma política de priorização definida no serviço de análise.
+RN17: Qualquer troca do local principal deve registrar data, hora, usuário responsável e motivo.
+Preparação inicial confirmada
+RN18: Enquanto a preparação inicial não estiver confirmada, o gestor pode alterar principal e alternativas respeitando as classificações e regras acima, alinhado ao que já existe para vínculo de local.
+RN19: Após confirmação da preparação inicial, não é permitida alteração livre do espaço; só troca por contingência registrada, quando as regras do sistema permitirem esse fluxo.
+Reanálise
+RN20: Alterações relevantes em participantes estimados, teto, janela ou período de uso, ou dados de agenda, manutenção ou bloqueio dos locais envolvidos devem disparar nova análise ou reativar alertas sobre o principal e as alternativas.
 Critérios de aceitação
-CA1: Deve permitir informar teto maior ou igual a zero e exibir lista filtrada por custo do local e capacidade.
- CA2: Deve excluir da lista locais inativos, com capacidade inferior à quantidade estimada de participantes ou com custo superior ao teto.
- CA3: Deve permitir vincular ao evento um local apresentado pelo filtro.
- CA4: Deve permitir trocar ou remover o local vinculado antes da confirmação da preparação inicial.
- CA5: Deve impedir vínculo a local inexistente ou inválido.
- CA6: Deve impedir vínculo, alteração ou remoção do local após a confirmação da preparação inicial.
- CA7: Deve impedir teto negativo.
+CA1: Permitir executar a análise para um evento existente.
+CA2: Incorporar na análise custo em relação ao teto, capacidade, infraestrutura cadastrada do local quando aplicável e disponibilidade na agenda quando houver período, janela ou equivalente no sistema.
+CA3: Rejeitar teto negativo.
+CA4: Exibir classificação conforme RN8.
+CA5: Exibir justificativa por local analisado.
+CA6: Local inativo não entra como opção válida.
+CA7: Local indisponível para a janela necessária não pode ser escolhido como principal.
+CA8: Garantir no máximo um principal por evento no contexto deste planejamento.
+CA9: Permitir registrar alternativas ordenadas como contingência.
+CA10: Gerar alerta quando o principal deixar de ser compatível com os dados atuais.
+CA11: Exibir alerta com motivo explícito, como teto, capacidade, agenda, manutenção ou bloqueio.
+CA12: Sugerir melhor alternativa válida quando houver risco no principal.
+CA13: Impedir substituição automática do principal sem confirmação do gestor.
+CA14: Registrar data, hora, usuário e motivo em toda troca do principal.
+CA15: Reprocessar análise ou alertas quando mudarem dados relevantes.
+CA16: Após confirmação da preparação inicial, impedir mudança livre do local; só fluxo de contingência explícito.
+
+
+
+
 
 2 – GESTÃO DE ESTOQUE
-1. Previsão de consumo baseada em histórico
+Previsão de consumo baseada em histórico
 História de usuário
- Como gestor, quero que o sistema estime automaticamente a quantidade de recursos necessários com base em eventos anteriores, para planejar melhor o estoque e reduzir faltas ou excessos.
+ Como gestor, quero que o sistema estime automaticamente a quantidade de recursos necessários com base em eventos historicamente similares, para planejar melhor o estoque e reduzir faltas ou excessos com maior precisão.
 Regras de negócio
- RN1: A previsão de consumo deve considerar o histórico de eventos anteriores, o tipo de evento e o porte estimado.
- RN2: O sistema deve utilizar apenas eventos concluídos e com dados de consumo válidos como base de cálculo.
- RN3: A previsão deve gerar uma lista estimada de itens e respectivas quantidades necessárias para o evento atual.
- RN4: O sistema deve indicar quando a previsão foi baseada em histórico insuficiente ou inexistente.
- RN5: O gestor poderá ajustar manualmente as quantidades previstas antes da confirmação da reserva.
- RN6: Toda previsão gerada deve ficar vinculada ao evento e registrar data, hora e usuário responsável.
- RN7: Caso o evento tenha alterações significativas de porte ou escopo, a previsão deverá poder ser recalculada.
- RN8: O sistema deve preservar o histórico da previsão original e das alterações manuais realizadas.
+ RN1: A previsão deve considerar eventos históricos similares com base em tipo, porte e categoria de consumo.
+ RN2: O sistema deve utilizar apenas eventos concluídos e com dados válidos, descartando automaticamente registros inconsistentes ou incompletos.
+ RN3: O cálculo da previsão deve aplicar normalização por porte (ex: consumo por participante), ajustando os valores ao contexto do evento atual.
+ RN4: A previsão deve ser baseada em média ponderada, priorizando eventos mais recentes e mais similares ao evento atual.
+ RN5: O sistema deve identificar e desconsiderar outliers com base em regras estatísticas definidas.
+ RN6: Quando não houver histórico suficiente, o sistema deve aplicar fallback utilizando parâmetros padrão ou médias globais por categoria.
+ RN7: A previsão deve gerar, para cada item, quantidade estimada e intervalo de variação (mínimo e máximo).
+ RN8: Cada item previsto deve conter a explicação do cálculo, incluindo eventos utilizados, pesos aplicados e fatores de ajuste.
+ RN9: Alterações em dados relevantes do evento (porte, tipo, duração) devem invalidar automaticamente a previsão existente.
+ RN10: O sistema deve permitir o versionamento da previsão, mantendo histórico da versão original e das recalculadas.
+ RN11: Ajustes manuais devem sobrescrever a previsão calculada e registrar usuário, data, hora e justificativa.
+ RN12: Toda previsão deve ser vinculada ao evento e armazenar metadados de geração (data, hora e responsável).
 Critérios de aceitação
- CA1: Deve gerar previsão de itens e quantidades com base em eventos anteriores.
- CA2: Deve indicar quando o histórico for insuficiente.
- CA3: Deve permitir ajuste manual antes da confirmação.
- CA4: Deve registrar a previsão vinculada ao evento.
- CA5: Deve permitir recálculo quando houver mudança relevante no evento.
-2. Verificação de disponibilidade com reserva concorrente
+ CA1: Deve gerar previsão com base em eventos similares utilizando média ponderada.
+ CA2: Deve normalizar consumo de acordo com o porte do evento.
+ CA3: Deve desconsiderar automaticamente outliers no cálculo.
+ CA4: Deve indicar quando houver uso de fallback por falta de histórico suficiente.
+ CA5: Deve apresentar explicação detalhada do cálculo por item previsto.
+ CA6: Deve permitir ajustes manuais com rastreabilidade completa.
+ CA7: Deve invalidar automaticamente previsões ao alterar dados relevantes do evento.
+ CA8: Deve manter versionamento das previsões.
+
+2. Otimização e redistribuição de estoque entre eventos
 História de usuário
- Como gestor, quero que o sistema verifique conflitos de reserva de itens entre eventos, para evitar alocações duplicadas e garantir a disponibilidade real do estoque.
+ Como gestor, quero que o sistema redistribua automaticamente os recursos disponíveis entre eventos concorrentes, para maximizar o atendimento das demandas e minimizar faltas críticas.
 Regras de negócio
- RN1: O sistema deve verificar a disponibilidade de cada item considerando o período do evento e as reservas já existentes.
- RN2: Caso o mesmo item esteja reservado para o mesmo período em quantidade que comprometa a nova solicitação, o sistema deverá bloquear ou sinalizar conflito.
- RN3: A verificação deve considerar quantidade total em estoque, quantidade já reservada e quantidade solicitada.
- RN4: Reservas pendentes, confirmadas ou em uso devem ser consideradas no cálculo de disponibilidade.
- RN5: O gestor poderá visualizar quais itens estão em conflito e em quais eventos eles já se encontram reservados.
- RN6: O sistema não deve permitir confirmação de reserva que ultrapasse a disponibilidade real sem justificativa e autorização específica, se prevista no sistema.
- RN7: Toda reserva confirmada deve ficar vinculada ao evento e aos respectivos itens.
- RN8: Alterações no período do evento ou na quantidade solicitada devem disparar nova validação de disponibilidade.
+ RN1: O sistema deve analisar simultaneamente todas as reservas e previsões de eventos ativos em um mesmo período.
+ RN2: A redistribuição deve considerar prioridade entre eventos com base em critérios como proximidade da data, porte e criticidade definida.
+ RN3: O sistema deve identificar cenários de escassez global de recursos e calcular a melhor distribuição possível dos itens disponíveis.
+ RN4: A alocação deve buscar minimizar o impacto total, priorizando garantir o mínimo necessário para eventos mais críticos antes de atender completamente eventos menos prioritários.
+ RN5: O sistema deve permitir redistribuição parcial de itens já reservados, desde que ainda não estejam em uso e respeitando regras de prioridade.
+ RN6: A redistribuição deve considerar alternativas de substituição de itens equivalentes, quando disponíveis.
+ RN7: O sistema deve gerar cenários de alocação, incluindo:
+cenário atual
+cenário otimizado sugerido
+impacto por evento (ex: déficit ou excesso)
+RN8: Nenhuma redistribuição deve ser aplicada automaticamente sem confirmação do gestor.
+ RN9: Ao aplicar redistribuição, o sistema deve atualizar todas as reservas impactadas de forma consistente e transacional.
+ RN10: O sistema deve registrar histórico completo da redistribuição, incluindo eventos afetados, itens alterados, valores antes/depois, data, hora e usuário responsável.
+ RN11: Caso novas reservas ou alterações ocorram após uma redistribuição, o sistema deve invalidar o cenário anterior e permitir novo cálculo.
+ RN12: O sistema deve impedir redistribuição de itens já consumidos, em uso ou vinculados a eventos em execução.
 Critérios de aceitação
- CA1: Deve verificar conflitos de reserva por item, quantidade e período.
- CA2: Deve bloquear ou sinalizar conflito quando não houver disponibilidade suficiente.
- CA3: Deve exibir os itens em conflito ao gestor.
- CA4: Deve registrar reservas confirmadas vinculadas ao evento.
- CA5: Deve recalcular a disponibilidade após alterações na solicitação.
+ CA1: Deve identificar cenários de escassez de recursos entre múltiplos eventos.
+ CA2: Deve sugerir redistribuição de estoque com base em critérios de prioridade.
+ CA3: Deve apresentar impacto da redistribuição por evento.
+ CA4: Deve permitir confirmação manual da redistribuição antes de aplicar alterações.
+ CA5: Deve atualizar reservas de forma consistente após redistribuição.
+ CA6: Deve impedir redistribuição de itens já em uso ou consumidos.
+ CA7: Deve recalcular cenário ao ocorrerem alterações relevantes.
+ CA8: Deve manter histórico completo das redistribuições realizadas.
+
+
+
 
 3 - GARANTIR CONTROLE FINANCEIRO DO EVENTO
 1. Registro de despesas com comparação automática ao orçamento
-Como gestor financeiro, quero registrar despesas do evento categorizadas por tipo e as	associadas a fornecedores, para que o sistema compare automaticamente os valores realizados com o orçamento previsto e aponte desvios percentuais.
+Como gestor financeiro, quero registrar despesas do evento categorizadas por tipo e associadas a fornecedores, para que o sistema compare automaticamente os valores realizados com o orçamento previsto, aponte desvios percentuais e aplique controle proativo sobre o consumo orçamentário por categoria.
 
-Regras de negócio 
-RN1: Toda despesa deve estar obrigatoriamente vinculada a um evento existente e válido. 
-RN2: O registro de despesa deve conter, no mínimo, categoria, fornecedor, valor e data. 
-RN3:A categoria da despesa deve pertencer a um conjunto de valores predefinidos no sistema. 
-RN4: O sistema deve calcular automaticamente o desvio percentual entre o valor realizado e o orçamento previsto por categoria. 
-RN5: Desvios superiores a 20% em relação ao orçamento previsto da categoria devem ser automaticamente classificados como "CRÍTICO". 
-RN6: O orçamento previsto por categoria deve estar cadastrado antes do registro de despesas para permitir a comparação. 
-RN7: O sistema deve acumular os valores de despesas da mesma categoria para cálculo do desvio consolidado. 
-RN8: Não é permitido registrar despesas com valor igual ou inferior a zero. 
-RN9: Toda despesa registrada deve permanecer vinculada ao evento e registrar data, hora e usuário responsável pelo lançamento. 
+Regras de negócio
+RN1: Toda despesa deve estar obrigatoriamente vinculada a um evento existente e válido.
+RN2: O registro de despesa deve conter, no mínimo, categoria, fornecedor, valor e data.
+RN3: A categoria da despesa deve pertencer a um conjunto de valores predefinidos no sistema (ALIMENTACAO, DECORACAO, EQUIPAMENTO, LOGISTICA, MARKETING, SERVICO, OUTRO).
+RN4: O sistema deve calcular automaticamente o desvio percentual entre o valor realizado acumulado e o orçamento previsto por categoria, usando a fórmula ((realizado − previsto) / previsto) × 100.
+RN5: O desvio orçamentário é classificado em três níveis: NORMAL para desvios inferiores a 10%; ATENÇÃO para desvios entre 10% e 20% (inclusive); CRÍTICO para desvios superiores a 20%.
+RN6: O orçamento previsto por categoria deve estar cadastrado antes do registro de despesas para permitir a comparação.
+RN7: O sistema deve acumular apenas os valores de despesas ativas (REGISTRADAS, PENDENTES ou APROVADAS) da mesma categoria para o cálculo do desvio consolidado. Despesas REJEITADAS não contam no acumulado.
+RN8: Não é permitido registrar despesas com valor igual ou inferior a zero.
+RN9: Toda despesa registrada deve permanecer vinculada ao evento e registrar automaticamente data, hora e usuário responsável pelo lançamento.
+RN10: Quando o total acumulado ativo mais o valor da nova despesa ultrapassar 100% do orçamento previsto da categoria, o registro deve ser bloqueado pelo sistema com exceção de domínio específica (CategoriaOrcamentoEsgotadaException).
+RN11: Quando o total acumulado ativo mais o valor da nova despesa atingir ou ultrapassar 80% do orçamento previsto da categoria, a despesa deve ser registrada com status PENDENTE_APROVACAO, aguardando aprovação de um gestor autorizado.
+RN12: O aprovador pode aprovar ou rejeitar uma despesa PENDENTE_APROVACAO. A aprovação muda o status para APROVADA e registra o identificador do aprovador. A rejeição muda o status para REJEITADA e registra o aprovador e o motivo da rejeição.
+RN13: Apenas despesas com status PENDENTE_APROVACAO podem ser aprovadas ou rejeitadas. Transições de estado inválidas devem ser impedidas pelo domínio.
 
-Critérios de aceitação: 
-CA1: Deve persistir a despesa com categoria, fornecedor, valor e data obrigatoriamente preenchidos. 
-CA2: Deve calcular o desvio percentual em relação ao orçamento previsto por categoria após cada registro. 
-CA3: Deve classificar como "CRÍTICO" os desvios superiores a 20% na consulta de relatório. 
-CA4: Deve impedir o registro de despesas com valor inválido ou campos obrigatórios ausentes. 
-CA5: Deve acumular o total realizado por categoria ao longo dos registros do evento. 
-CA6: Deve registrar data, hora e usuário responsável por cada despesa lançada. 
+Critérios de aceitação:
+CA1: Deve persistir a despesa com categoria, fornecedor, valor e data obrigatoriamente preenchidos.
+CA2: Deve calcular o desvio percentual em relação ao orçamento previsto por categoria após cada registro, considerando apenas despesas ativas no acumulado.
+CA3: Deve classificar o desvio em três níveis: NORMAL (< 10%), ATENÇÃO (10% a 20%), CRÍTICO (> 20%).
+CA4: Deve impedir o registro de despesas com valor inválido, campos obrigatórios ausentes, evento inexistente ou orçamento da categoria não cadastrado.
+CA5: Deve acumular o total realizado ativo por categoria ao longo dos registros do evento, excluindo despesas rejeitadas.
+CA6: Deve registrar automaticamente data, hora e usuário responsável por cada despesa lançada.
+CA7: Deve bloquear o registro de despesa cuja soma com o acumulado ativo ultrapasse 100% do orçamento previsto da categoria, lançando exceção de domínio específica.
+CA8: Deve registrar a despesa com status PENDENTE_APROVACAO quando a soma com o acumulado ativo atingir ou ultrapassar 80% do orçamento previsto da categoria.
+CA9: Deve permitir que um aprovador aprove ou rejeite despesas pendentes, registrando o responsável e, na rejeição, o motivo. Deve impedir transições de estado inválidas.
 
-2. Visualização do fluxo de caixa com identificação de estouro orçamentário  REMOVIDA 
-Como diretor financeiro, quero visualizar o fluxo de caixa do evento com entradas e saídas agrupadas por período, e que o sistema identifique automaticamente quando os gastos estão ultrapassando o orçamento previsto para agir rapidamente e tomar decisões sobre remanejamento de verba antes do encerramento.
 
-Critérios de aceitação: o fluxo deve ser calculado com base nas despesas e receitas persistidas; a consulta deve permitir filtro por período; o saldo acumulado deve ser calculado cronologicamente e retornado como lista ordenada por data.
-extra.
- 3. Relatório financeiro consolidado com comparação entre previsto e realizado 
-Como controller, quero gerar um relatório financeiro consolidado do evento comparando orçamento previsto versus realizado por categoria, para que eu possa apresentar a análise de custos aos stakeholders com dados confiáveis e auditáveis. 
+ 2. Relatório financeiro consolidado com comparação entre previsto e realizado
+Como gestor, quero visualizar um relatório financeiro consolidado do evento comparando orçamento previsto versus realizado por categoria, para que eu possa apresentar a análise de custos aos stakeholders com dados confiáveis, auditáveis e com indicador sintético de saúde financeira do evento.
 
-Regras de negócio 
-RN1: O relatório deve buscar os dados diretamente do banco de dados via JPQL, garantindo consistência e rastreabilidade das informações. 
-RN2: O relatório deve incluir o total geral do evento, o total por categoria e o percentual de variação entre previsto e realizado em cada categoria. 
-RN3: O relatório gerado deve ser persistido no sistema com data de geração e identificação do usuário responsável, para fins de auditoria. 
-RN4: Não deve ser possível gerar o relatório caso o evento não possua orçamento previsto cadastrado por categoria. 
-RN5: O relatório deve refletir o estado atual das despesas e receitas no momento da geração, sem alterações retroativas após persistência. 
-RN6: Um mesmo evento pode possuir múltiplos relatórios gerados em momentos distintos, sendo cada um identificado individualmente com sua data e responsável. 
-RN7: O relatório persistido não pode ser editado após sua geração, garantindo a integridade do registro para auditoria. 
-RN8: O percentual de variação deve ser calculado por categoria com base na fórmula: ((realizado - previsto) / previsto) × 100.
-Critérios de aceitação 
+Regras de negócio
+RN1: O relatório deve buscar os dados diretamente do banco de dados via JPQL, garantindo consistência e rastreabilidade das informações.
+RN2: O relatório deve incluir o total geral do evento, o total por categoria e o percentual de variação entre previsto e realizado em cada categoria.
+RN3: O relatório gerado deve ser persistido no sistema com data de geração e identificação do usuário responsável, para fins de auditoria.
+RN4: Não deve ser possível gerar o relatório caso o evento não possua orçamento previsto cadastrado por categoria.
+RN5: O relatório deve refletir o estado atual das despesas no momento da geração, sem alterações retroativas após persistência. Apenas despesas ativas (não rejeitadas) devem compor os totais.
+RN6: Um mesmo evento pode possuir múltiplos relatórios gerados em momentos distintos, sendo cada um identificado individualmente com sua data e responsável.
+RN7: O relatório persistido não pode ser editado após sua geração, garantindo a integridade do registro para auditoria. Todos os campos são imutáveis e a coleção de itens por categoria é protegida contra modificações.
+RN8: O percentual de variação deve ser calculado por categoria com base na fórmula: ((realizado − previsto) / previsto) × 100.
+RN9: O relatório deve calcular automaticamente um score de saúde financeira do evento (0 a 100), ponderado pelo peso orçamentário de cada categoria. O score é classificado em: SAUDAVEL (score ≥ 80), ATENÇÃO (60 ≤ score < 80) e CRÍTICO (score < 60). Categorias com desvio positivo (gasto acima do previsto) reduzem o score proporcionalmente ao desvio e ao seu peso no orçamento total.
+
+Critérios de aceitação
 CA1: Deve buscar os dados financeiros do evento diretamente do banco via JPQL.
-CA2: Deve incluir total geral, total por categoria e percentual de variação no relatório gerado. 
-CA3: Deve persistir o relatório com data de geração e usuário responsável. 
-CA4: Deve impedir a geração do relatório caso o orçamento previsto por categoria não esteja cadastrado. 
-CA5: Deve manter o relatório gerado imutável após sua persistência. 
+CA2: Deve incluir total geral, total por categoria e percentual de variação no relatório gerado, considerando apenas despesas ativas no acumulado.
+CA3: Deve persistir o relatório com data de geração e usuário responsável.
+CA4: Deve impedir a geração do relatório caso o orçamento previsto por categoria não esteja cadastrado.
+CA5: Deve manter o relatório gerado imutável após sua persistência, com campos finais e coleção de itens não modificável.
 CA6: Deve permitir a geração de múltiplos relatórios para o mesmo evento em momentos distintos, identificando cada um individualmente.
+CA7: Deve calcular e incluir no relatório o score de saúde financeira ponderado pelo peso orçamentário de cada categoria, classificando o evento como SAUDAVEL, ATENÇÃO ou CRÍTICO.
+
 
 4 – GARANTIR ORGANIZAÇÃO DA EQUIPE DO EVENTO
 PASSO 1: gerenciar funcionários
 histórias de usuário:
 Como gestor, quero cadastrar funcionário no sistema
-Como gestor, quero editar funcionário no sistema  
-Como gestor, quero excluir funcionário no sistema  
-Como gestor, quero visualizar funcionários no sistema  
+Como gestor, quero editar funcionário no sistema
+Como gestor, quero excluir funcionário no sistema
+Como gestor, quero visualizar funcionários no sistema
 regras de negócio:
 RN1: O nome do funcionário deve ser obrigatório, conter no mínimo 3 caracteres e não pode possuir números ou caracteres inválidos.
 RN2: O cargo deve pertencer a um conjunto de valores permitidos e qualquer alteração deve atualizar automaticamente o campo updatedAt.
@@ -155,6 +223,20 @@ RN5: Um funcionário não pode ser removido se estiver vinculado a outras entida
 RN6: A exclusão de funcionário deve ser lógica (soft delete), impedindo remoção física e bloqueando edições caso esteja inativo.
 RN7: Toda atualização deve garantir a consistência do objeto, impedindo alterações que deixem o funcionário em estado inválido.
 RN8: O identificador (id) deve ser único, gerado automaticamente e imutável após a criação.
+critérios de aceitação:
+CA1: Deve permitir cadastrar funcionário apenas quando nome, cargo e disponibilidade forem válidos.
+CA2: Deve impedir o cadastro de funcionário com nome vazio, com menos de 3 caracteres, com números ou caracteres inválidos.
+CA3: Deve impedir o cadastro ou atualização de funcionário com cargo fora do conjunto de valores permitidos.
+CA4: Deve impedir o cadastro ou atualização de funcionário com disponibilidade fora do padrão definido.
+CA5: Deve gerar automaticamente um identificador único e imutável para cada funcionário cadastrado.
+CA6: Deve preencher automaticamente o campo createdAt no momento da criação do funcionário.
+CA7: Deve atualizar automaticamente o campo updatedAt sempre que houver alteração válida nos dados do funcionário.
+CA8: Deve impedir alteração manual externa dos campos id, createdAt e updatedAt.
+CA9: Deve impedir qualquer atualização que deixe o funcionário em estado inválido.
+CA10: Deve impedir a edição de funcionário inativo.
+CA11: Deve realizar a exclusão de funcionário de forma lógica, marcando-o como inativo, sem removê-lo fisicamente do sistema.
+CA12: Deve impedir a exclusão de funcionário vinculado a eventos ou equipes.
+CA13: Deve permitir visualizar os funcionários cadastrados, considerando o estado ativo ou inativo conforme a regra definida pelo sistema.
 
 PASSO 2: gerenciar equipe do evento
  Como gestor, quero cadastrar uma equipe para um evento, para organizar os funcionários responsáveis pela execução.
@@ -171,7 +253,22 @@ RN5: Cada equipe deve possuir no máximo um responsável (líder), que deve ser 
 RN6: Não é permitido excluir uma equipe que possua tarefas ou atividades em andamento.
 RN7: A edição de uma equipe deve garantir que ela não fique sem funcionários vinculados após a alteração.
 RN8: Caso o responsável (líder) seja removido da equipe, outro responsável deve ser definido obrigatoriamente antes da conclusão da operação.
-
+critérios de aceitação:
+CA1: Deve permitir cadastrar equipe apenas quando ela estiver associada a um evento existente e válido.
+CA2: Deve impedir o cadastro de equipe sem evento associado ou com evento inválido.
+CA3: Deve impedir o cadastro de equipe com nome duplicado dentro do mesmo evento.
+CA4: Deve permitir nomes iguais apenas quando as equipes pertencerem a eventos diferentes.
+CA5: Deve impedir o cadastro de equipe sem pelo menos um funcionário vinculado.
+CA6: Deve impedir que um funcionário seja alocado em mais de uma equipe dentro do mesmo evento.
+CA7: Deve permitir que o funcionário participe de equipes em eventos diferentes, desde que não viole outras regras do sistema.
+CA8: Deve permitir definir no máximo um responsável/líder por equipe.
+CA9: Deve impedir que o responsável/líder seja um funcionário que não pertence à equipe.
+CA10: Deve impedir a exclusão de equipe que possua tarefas ou atividades em andamento.
+CA11: Deve permitir excluir equipe apenas quando não houver tarefas ou atividades em andamento vinculadas a ela.
+CA12: Deve impedir edição que deixe a equipe sem funcionários vinculados.
+CA13: Deve impedir a remoção do responsável/líder sem que outro responsável válido seja definido antes da conclusão da operação.
+CA14: Deve permitir visualizar as equipes vinculadas a um evento.
+CA15: Deve garantir que toda alteração na equipe mantenha a consistência das regras de evento, funcionários e responsável.
 5 – GARANTIR EXECUÇÃO DE ATIVIDADES DO EVENTO
 PASSO 1: gerenciar tarefas
 histórias de usuário:
@@ -182,7 +279,7 @@ Como gestor, quero remover uma tarefa, para corrigir ou reorganizar o planejamen
 
 Como gestor, quero visualizar as tarefas do evento, para acompanhar o andamento das atividades.
 Regras de negócio:
-RN1: Toda tarefa deve estar obrigatoriamente associada a uma equipe válida, que por sua vez deve pertencer a um evento existente. 
+RN1: Toda tarefa deve estar obrigatoriamente associada a uma equipe válida, que por sua vez deve pertencer a um evento existente.
 RN2: O título da tarefa deve ser obrigatório e único dentro da mesma equipe.
 RN3: Toda tarefa deve possuir data de início e fim válidas, não sendo permitido que a data de fim seja anterior à de início.
 RN4: Apenas funcionários pertencentes à equipe da tarefa podem ser atribuídos como responsáveis por sua execução.
@@ -190,7 +287,24 @@ RN5: Uma tarefa só pode ser iniciada se houver pelo menos um funcionário da eq
 RN6: O status da tarefa deve seguir um fluxo controlado (ex: PENDENTE → EM_ANDAMENTO → CONCLUIDA), não sendo permitido pular etapas.
 RN7: Não é permitido excluir uma tarefa que já esteja em andamento ou concluída.
 RN8: Uma tarefa não pode ser editada após ser concluída, garantindo a integridade do histórico das atividades.
-PASSO 2: gerenciar dependência entre tarefas
+CA1: Deve permitir cadastrar tarefa apenas quando estiver associada a uma equipe válida pertencente a um evento existente.
+CA2: Deve impedir o cadastro de tarefa sem equipe válida ou com equipe que não pertença a um evento.
+CA3: Deve exigir que o título da tarefa seja obrigatório e único dentro da mesma equipe.
+CA4: Deve impedir o cadastro ou edição de tarefa com título duplicado dentro da mesma equipe.
+CA5: Deve exigir que toda tarefa possua data de início e data de fim válidas.
+CA6: Deve impedir o cadastro ou edição de tarefa quando a data de fim for anterior à data de início.
+CA7: Deve permitir atribuir como responsáveis apenas funcionários que pertencem à equipe da tarefa.
+CA8: Deve impedir a atribuição de funcionários que não fazem parte da equipe.
+CA9: Deve permitir iniciar uma tarefa apenas quando houver pelo menos um responsável atribuído.
+CA10: Deve impedir a mudança de status para "EM_ANDAMENTO" sem responsáveis atribuídos.
+CA11: Deve garantir que o status da tarefa siga o fluxo definido (PENDENTE → EM_ANDAMENTO → CONCLUIDA).
+CA12: Deve impedir transições de status que pulem etapas do fluxo.
+CA13: Deve impedir a exclusão de tarefa que esteja com status "EM_ANDAMENTO" ou "CONCLUIDA".
+CA14: Deve permitir excluir tarefa apenas quando estiver com status "PENDENTE".
+CA15: Deve permitir editar tarefa apenas enquanto não estiver concluída.
+CA16: Deve impedir qualquer edição de tarefa com status "CONCLUIDA".
+CA17: Deve permitir visualizar todas as tarefas associadas ao evento, com seus respectivos status e responsáveis.
+PASSO 2: gerenciar dependência entre tarefas (Lucas Calabria)
 histórias de usuário:
 Como gestor, quero definir dependências entre tarefas, para garantir que atividades sejam executadas na ordem correta.
 Como gestor, quero remover uma dependência entre tarefas, para reorganizar o fluxo de execução do evento.
@@ -201,13 +315,24 @@ RN1: Uma tarefa só pode ser iniciada se todas as tarefas das quais ela depende 
 RN2: Não é permitido criar dependência entre tarefas que pertençam a eventos diferentes.
 RN3: O sistema deve impedir a criação de dependências cíclicas entre tarefas (ex: A depende de B e B depende de A, direta ou indiretamente).
 RN4: Uma tarefa pode depender de múltiplas tarefas, desde que todas sejam válidas e pertençam ao mesmo evento.
-
 RN5: Não é permitido remover uma tarefa que seja dependência de outra, a menos que a dependência seja removida previamente.
 RN6: Ao adicionar uma dependência, o sistema deve validar se a tarefa dependente possui datas compatíveis (ex: não pode iniciar antes da tarefa predecessora terminar).
-
 RN7: Caso a data de conclusão de uma tarefa predecessora seja alterada, o sistema deve refletir o impacto nas tarefas dependentes (ex: marcar como potencialmente atrasadas).
-
 RN8: Uma tarefa não pode depender de si mesma em nenhuma circunstância.
+CA1: Deve permitir criar dependência apenas entre tarefas que pertençam ao mesmo evento.
+CA2: Deve impedir a criação de dependência entre tarefas de eventos diferentes.
+CA3: Deve impedir que uma tarefa dependa de si mesma.
+CA4: Deve permitir que uma tarefa tenha múltiplas dependências válidas.
+CA5: Deve impedir a criação de dependências cíclicas diretas ou indiretas entre tarefas.
+CA6: Deve permitir iniciar uma tarefa apenas quando todas as suas tarefas predecessoras estiverem com status "CONCLUIDA".
+CA7: Deve impedir a mudança de status para "EM_ANDAMENTO" caso existam dependências não concluídas.
+CA8: Deve validar, ao criar dependência, se as datas são compatíveis, impedindo que a tarefa dependente inicie antes da predecessora terminar.
+CA9: Deve permitir remover dependência entre tarefas existentes.
+CA10: Deve impedir a remoção de uma tarefa que seja dependência de outra sem remover previamente a dependência.
+CA11: Deve refletir automaticamente impactos em tarefas dependentes quando a data de conclusão de uma tarefa predecessora for alterada.
+CA12: Deve sinalizar tarefas dependentes como potencialmente atrasadas quando houver impacto no cronograma.
+CA13: Deve permitir visualizar todas as dependências de uma tarefa.
+CA14: Deve permitir visualizar todas as tarefas que dependem de uma tarefa específica.
 
 6 – ORGANIZAÇÃO DA AGENDA
 PASSO 1: gerenciar compromissos do gestor 
@@ -229,6 +354,18 @@ RN6: Não é permitido editar compromissos que já foram concluídos.
 RN7: Compromissos em andamento não podem ser excluídos.
 RN8: Toda alteração deve atualizar automaticamente o registro de modificação (ex: updatedAt).
 
+Critérios de aceitação
+
+CA1: O sistema deve validar e garantir que todo compromisso esteja associado a um gestor válido cadastrado no sistema.
+CA2: Deve impedir o cadastro ou edição de compromissos cujo horário de término seja anterior ou igual ao horário de início.
+CA3: Deve bloquear a criação de novos compromissos cujos intervalos de horário coincidam ou se sobreponham a compromissos já existentes para o mesmo gestor.
+CA4: Deve validar a obrigatoriedade e preenchimento do campo de título do compromisso antes de permitir o salvamento.
+CA5: Deve impedir o agendamento de compromissos em datas e horários anteriores ao momento atual.
+CA6: Deve bloquear qualquer tentativa de edição de informações em compromissos que possuam o status de "concluído".
+CA7: Deve impedir a exclusão de compromissos cujo horário atual esteja compreendido entre o início e o fim do agendamento (em andamento).
+CA8: O sistema deve atualizar automaticamente o campo de registro de modificação (updatedAt) sempre que houver alteração nos dados do compromisso.
+
+
 PASSO 2: gerenciar lembretes e alertas de compromissos
 histórias de usuário
 Como gestor, quero criar um lembrete vinculado a um compromisso para ser notificado antes do horário definido.
@@ -246,7 +383,16 @@ RN7 - Lembretes associados a compromissos já finalizados não podem ser alterad
 RN8- Ao excluir um compromisso, todos os lembretes vinculados a ele devem ser automaticamente removidos.
 
 
+Critérios de aceitação
 
+CA1: Deve garantir que um lembrete só seja criado se estiver vinculado a um ID de compromisso existente e válido .
+CA2: Deve validar se o horário configurado para o lembrete é estritamente anterior ao horário de início do compromisso associado.
+CA3: Deve impedir a criação de lembretes com data/hora retroativa em relação ao momento da operação.
+CA4: Deve permitir a existência de vários lembretes para um único compromisso, desde que não existam dois lembretes com o mesmo horário exato .
+CA5: Deve bloquear a edição de lembretes que já foram disparados/processados pelo sistema (status "notificado").
+CA6: O sistema deve realizar a transição automática do status do lembrete para "notificado" imediatamente após o envio do alerta.
+CA7: Deve impedir alterações em lembretes cujos compromissos pai já estejam com status de finalizados.
+CA8: Ao processar a remoção de um compromisso, o sistema deve realizar a exclusão em cascata de todos os lembretes a ele vinculados.
 
 7 – GARANTIR CONTROLE JURÍDICO E ADMINISTRATIVO
 PASSO 1: gerenciar contratos
@@ -262,27 +408,56 @@ RN3: A data de início do contrato deve ser anterior à data de término.
 RN4: Um contrato não pode ser finalizado caso esteja com informações incompletas ou inconsistentes.
 RN5: O identificador do contrato deve ser único, gerado automaticamente e imutável.
 RN6: Toda alteração deve atualizar automaticamente o campo de modificação (updatedAt).
+CA1: Cadastrar contrato com sucesso (evento válido, dados completos).
+CA2: Impedir cadastro quando não existe evento válido para contrato.
+CA3: Impedir cadastro sem objeto.
+CA4: Impedir cadastro sem valor.
+CA5: Impedir cadastro com vigência inválida (data de término não posterior à de início).
+CA6: Impedir cadastro com menos de duas partes (apenas uma parte).
+CA7: Editar contrato com sucesso (ex.: alteração do objeto).
+CA8: Impedir edição de contrato inexistente (id informado não corresponde a contrato).
+CA9: Impedir edição que deixa o contrato inconsistente (ex.: valor zero).
+CA10: Impedir edição quando o contrato está encerrado.
+CA11: Buscar contrato por identificador e obter objeto esperado.
+CA12: Listar contratos do evento com ao menos um item quando existir cadastro.
+CA13: Impedir visualização bem-sucedida ao buscar contrato por id inexistente.
+CA14: Encerrar contrato completo com sucesso (status ENCERRADO).
+CA15: Impedir encerramento quando as informações do contrato estão incompletas para encerramento.
+CA16: Impedir novo encerramento quando o contrato já está encerrado.
 
-PASSO 2: controlar ciclo de vida dos contratos
-histórias de usuário:
-Como gestor, quero acompanhar o status dos contratos, para saber em que etapa eles se encontram.
-Como gestor, quero visualizar contratos próximos do vencimento, para tomar ações preventivas.
-regras de negócio:
-RN1: O contrato deve seguir os seguintes estados: criado, ativo, próximo do vencimento, vencido e encerrado.
-RN2: A transição entre estados deve respeitar as datas de vigência do contrato.
-RN3: Um contrato deve ser automaticamente marcado como “próximo do vencimento” com base em um período pré-definido.
-RN4: Um contrato vencido não pode retornar para estados anteriores.
-RN5: Um contrato encerrado não pode ser editado.
-PASSO 3: gerenciar riscos contratuais
-histórias de usuário:
-Como gestor, quero identificar contratos com risco, para evitar problemas no evento.
-Como gestor, quero receber alertas de contratos críticos, para agir rapidamente.
-regras de negócio:
-RN1: Contratos próximos do vencimento sem renovação devem ser classificados como risco alto.
-RN2: O sistema deve gerar alerta automático para contratos classificados como risco.
-RN3: Um contrato com renovação registrada não deve ser classificado como risco por vencimento.
-RN4: O alerta deve permanecer ativo até que o risco seja resolvido.
-PASSO 4: gerenciar documentos contratuais
+
+PASSO 2: Conciliação entre contratos e despesas do evento
+Histórias de usuário
+Como gestor, quero conciliar as despesas do evento com os contratos vigentes, para verificar se todos os gastos possuem cobertura contratual válida.
+Como gestor, quero visualizar despesas sem cobertura contratual, para identificar gastos que não estão amparados por nenhum contrato ativo do evento.
+Como gestor, quero visualizar contratos com valor comprometido superior ao contratado, para detectar extrapolações antes que se tornem um problema financeiro.
+Como gestor, quero registrar manualmente a associação entre uma despesa e um contrato, quando a conciliação automática não conseguir estabelecer o vínculo.
+Como gestor, quero visualizar o relatório de conciliação do evento, para ter uma visão consolidada da cobertura contratual de todas as despesas.
+Regras de negócio
+RN1: A conciliação deve cruzar as despesas registradas no evento com os contratos ativos vinculados ao mesmo evento, considerando categoria da despesa, fornecedor e período de vigência do contrato.
+RN2: Uma despesa é considerada coberta quando existe ao menos um contrato ativo no evento cujo fornecedor e categoria sejam compatíveis e cuja data da despesa esteja dentro do período de vigência contratual.
+RN3: Uma despesa é classificada como descoberta quando nenhum contrato ativo do evento atende simultaneamente aos critérios de fornecedor, categoria e período definidos na RN2.
+RN4: O sistema deve calcular, por contrato, o total de despesas conciliadas e compará-lo ao valor contratado, sinalizando como extrapolado todo contrato cujo total conciliado ultrapasse o valor contratado.
+RN5: Quando mais de um contrato for compatível com uma despesa, o sistema deve aplicar uma ordem de prioridade para sugerir o vínculo: primeiro por categoria exata, depois por menor valor residual disponível no contrato (valor contratado menos total já conciliado).
+RN6: O gestor pode substituir o vínculo sugerido automaticamente pelo sistema, desde que o contrato escolhido manualmente seja ativo, vigente na data da despesa e pertença ao mesmo evento.
+RN7: Uma despesa só pode estar conciliada a um único contrato por vez. A associação manual substitui o vínculo anterior e deve registrar o responsável pela alteração.
+RN8: Despesas com valor igual ou inferior a zero não devem participar da conciliação.
+RN9: Contratos encerrados ou vencidos não devem ser considerados na conciliação automática nem estar disponíveis para associação manual.
+RN10: Toda conciliação executada deve registrar data, hora, usuário responsável e o método utilizado (automático ou manual), para fins de rastreabilidade.
+RN11: Alterações em despesas já conciliadas (valor, categoria, fornecedor ou data) devem invalidar automaticamente o vínculo existente e exigir nova conciliação.
+RN12: O relatório de conciliação deve ser gerado sob demanda e persistido com data de geração e usuário responsável, sendo imutável após a persistência.
+Critérios de aceitação
+CA1: Deve identificar e listar todas as despesas do evento classificando-as como cobertas ou descobertas com base nos critérios da RN2.
+CA2: Deve calcular o total conciliado por contrato e sinalizar como extrapolado todo contrato cujo total conciliado ultrapasse o valor contratado.
+CA3: Deve sugerir automaticamente o vínculo entre despesa e contrato seguindo a ordem de prioridade definida na RN5, quando houver mais de um contrato compatível.
+CA4: Deve permitir que o gestor substitua o vínculo sugerido pelo sistema, registrando o responsável pela alteração manual.
+CA5: Deve impedir a associação manual de uma despesa a um contrato encerrado, vencido ou pertencente a outro evento.
+CA6: Deve impedir que uma despesa esteja conciliada a mais de um contrato simultaneamente.
+CA7: Deve invalidar automaticamente o vínculo de conciliação quando os dados da despesa forem alterados.
+CA8: Deve gerar e persistir o relatório de conciliação com data, usuário responsável e estado imutável após geração.
+CA9: Deve registrar o método de conciliação (automático ou manual), data, hora e usuário em cada vínculo estabelecido.
+CA10: Deve excluir da conciliação despesas com valor inválido e contratos que não estejam ativos e vigentes.
+PASSO 3: gerenciar documentos contratuais - REMOVIDA
 histórias de usuário:
 Como gestor, quero anexar documentos a um contrato, para manter os registros organizados.
 Como gestor, quero visualizar documentos de um contrato, para consultar informações.
@@ -302,6 +477,8 @@ Como gestor, quero cadastrar um local no sistema, para disponibilizá-lo para ev
  Como gestor, quero editar um local, para atualizar suas informações conforme necessário.
  Como gestor, quero visualizar locais cadastrados, para consultar suas características.
  Como gestor, quero desativar um local, para impedir seu uso sem perder o histórico.
+
+
 Regras de negócio
 RN1: Todo local deve possuir dados obrigatórios como nome, capacidade, endereço, tipo e infraestrutura disponível.
  RN2: A capacidade do local deve ser maior que zero.
@@ -347,42 +524,92 @@ CA1: Deve permitir cadastrar manutenção com dados válidos e vinculada a um lo
  CA7: Deve manter vínculo entre manutenção e local.
  CA8: Deve permitir remoção de manutenção respeitando as regras de integridade.
 
-3. Bloqueio inteligente de agenda por configuração do local
-História de usuário
- Como gestor, quero que o sistema bloqueie automaticamente horários indisponíveis de um local, para evitar agendamentos inválidos.
+3. Controle de capacidade por configuração de layout do local
+Histórias de usuário
+Como gestor, quero cadastrar diferentes configurações de layout para um local, para representar as formas possíveis de uso do espaço.
+Como gestor, quero informar a capacidade máxima de cada layout do local, para saber quantas pessoas o espaço comporta em cada configuração.
+Como gestor, quero associar um layout pretendido ao evento, para verificar se o local comporta a quantidade estimada de participantes naquele formato.
+Como gestor, quero que o sistema valide a capacidade do local conforme o layout escolhido, para evitar planejamento com ocupação acima do permitido.
+Como gestor, quero visualizar quais layouts de um local são compatíveis com o evento, para escolher a configuração mais adequada.
 Regras de negócio
- RN1: O sistema deve impedir novas reservas em horários previamente definidos como indisponíveis para o local.
- RN2: Eventos já agendados no local também devem ser considerados no bloqueio de novos agendamentos.
- RN3: O bloqueio deve considerar data, horário de início, horário de fim e intervalo completo da reserva.
- RN4: Não deve ser permitido salvar uma reserva que coincida total ou parcialmente com período indisponível.
- RN5: O sistema deve informar ao gestor o motivo do bloqueio do agendamento.
- RN6: Configurações de indisponibilidade do local devem permanecer vinculadas ao respectivo local.
- RN7: Alterações na agenda do local devem refletir imediatamente na validação de novas reservas.
- RN8: O sistema deve preservar a consistência da agenda mesmo em tentativas concorrentes de agendamento.
+RN1: Cada configuração de layout deve estar vinculada a um local existente e ativo.
+RN2: Um local pode possuir múltiplas configurações de layout.
+RN3: Cada layout deve possuir nome, descrição e capacidade máxima permitida.
+RN4: A capacidade máxima do layout deve ser maior que zero.
+RN5: Não deve ser permitido cadastrar dois layouts com o mesmo nome para o mesmo local.
+RN6: O sistema deve permitir layouts predefinidos, como auditório, sala de aula, mesas, coquetel, feira ou exposição.
+RN7: A validação de capacidade deve comparar a quantidade estimada de participantes do evento com a capacidade máxima do layout escolhido.
+RN8: Se a quantidade estimada de participantes for maior que a capacidade do layout, o layout deve ser considerado incompatível para o evento.
+RN9: Se a quantidade estimada de participantes for menor ou igual à capacidade do layout, o layout deve ser considerado compatível.
+RN10: Um local pode ser compatível em um layout e incompatível em outro.
+RN11: O sistema deve listar os layouts compatíveis e incompatíveis para o evento, informando a capacidade de cada um.
+RN12: O gestor só pode selecionar layout compatível para o evento, salvo regra excepcional registrada com justificativa.
+RN13: Alterações na quantidade estimada de participantes do evento devem exigir nova validação dos layouts.
+RN14: Alterações na capacidade de um layout devem exigir nova validação quando ele estiver associado a eventos ainda não concluídos.
+RN15: Toda criação ou alteração de layout deve registrar data, hora e usuário responsável.
 Critérios de aceitação
- CA1: Deve impedir reserva em horário marcado como indisponível.
- CA2: Deve impedir reserva com conflito de evento já agendado.
- CA3: Deve considerar o intervalo completo da solicitação na validação.
- CA4: Deve informar o motivo do bloqueio ao usuário.
- CA5: Deve revalidar a disponibilidade após alterações na agenda do local.
+CA1: Deve permitir cadastrar layout para local existente e ativo.
+CA2: Deve permitir múltiplos layouts para o mesmo local.
+CA3: Deve impedir cadastro de layout com capacidade menor ou igual a zero.
+CA4: Deve impedir cadastro de layout com nome duplicado no mesmo local.
+CA5: Deve permitir informar nome, descrição e capacidade máxima do layout.
+CA6: Deve validar a capacidade do layout em relação à quantidade estimada de participantes do evento.
+CA7: Deve classificar o layout como compatível quando sua capacidade for suficiente para o evento.
+CA8: Deve classificar o layout como incompatível quando sua capacidade for inferior à quantidade estimada de participantes.
+CA9: Deve permitir que um mesmo local tenha layouts compatíveis e incompatíveis para o mesmo evento.
+CA10: Deve listar layouts compatíveis e incompatíveis com suas respectivas capacidades.
+CA11: Deve impedir seleção de layout incompatível, salvo justificativa quando a regra excepcional for permitida.
+CA12: Deve exigir nova validação quando houver alteração na quantidade estimada de participantes do evento.
+CA13: Deve exigir nova validação quando houver alteração na capacidade de layout associado a evento ainda não concluído.
+CA14: Deve registrar data, hora e usuário responsável em toda criação ou alteração de layout.
 
-Sugestão automática de local com base nos dados do evento
-História de usuário
- Como gestor, quero que o sistema sugira automaticamente locais adequados com base nas características do evento, para agilizar a escolha do espaço.
+Avaliação contextual de desempenho do local
+Histórias de usuário
+Como gestor, quero avaliar o local utilizado após a conclusão do evento, para registrar o desempenho real do espaço no contexto em que ele foi utilizado.
+Como gestor, quero atribuir notas por critérios operacionais do local, para registrar de forma objetiva a experiência de uso do espaço.
+Como gestor, quero que a avaliação considere o tipo e o porte do evento realizado, para que o sistema não trate todos os usos do local da mesma forma.
+Como gestor, quero que o sistema calcule a nota média geral do local e também sua nota por contexto de uso, para diferenciar a adequação do espaço conforme o perfil do evento.
+Como gestor, quero visualizar em quais tipos ou portes de evento o local apresenta melhor desempenho, para tomar decisões mais seguras em planejamentos futuros.
+Como gestor, quero que a classificação contextual do local seja considerada em futuras análises de alocação, para evitar recomendações genéricas ou inadequadas.
 Regras de negócio
- RN1: A sugestão de locais deve considerar dados do evento, como tipo, número estimado de participantes, requisitos e data prevista.
- RN2: A sugestão deve considerar dados dos locais, como capacidade, infraestrutura, disponibilidade e custo.
- RN3: O sistema deve filtrar apenas os locais disponíveis na data informada.
- RN4: Locais com capacidade inferior à necessidade mínima do evento não devem ser priorizados como adequados.
- RN5: O sistema deve ordenar os locais sugeridos por nível de adequação calculado automaticamente.
- RN6: Cada sugestão deve apresentar justificativa objetiva, indicando os critérios atendidos e eventuais limitações identificadas.
- RN7: O gestor poderá selecionar um dos locais sugeridos para vinculá-lo ao evento.
- RN8: Alterações nos dados do evento devem permitir o recálculo da lista de sugestões.
- RN9: A sugestão gerada deve permanecer registrada no contexto do evento para consulta posterior.
+RN1: A avaliação deve estar vinculada a um evento existente e a um local vinculado a esse evento.
+RN2: A avaliação somente poderá ser registrada quando o evento estiver concluído ou quando a etapa de uso do local estiver finalizada.
+RN3: Não deve ser permitido avaliar local que não esteja vinculado ao evento.
+RN4: Cada evento pode possuir apenas uma avaliação principal para o local utilizado.
+RN5: A avaliação deve considerar o contexto do evento, incluindo tipo, porte e quantidade estimada ou real de participantes, quando disponível.
+RN6: A avaliação deve possuir critérios operacionais predefinidos, como estrutura, acesso, suporte, limpeza, conforto, capacidade percebida e adequação geral.
+RN7: Cada critério deve receber nota de 0 a 5.
+RN8: Não deve ser permitido registrar nota inferior a 0 ou superior a 5.
+RN9: A nota final da avaliação deve ser calculada automaticamente com base nas notas dos critérios avaliados.
+RN10: A avaliação deve conter justificativa descritiva obrigatória.
+RN11: Após o registro da avaliação, o sistema deve atualizar a nota média geral do local.
+RN12: Além da nota média geral, o sistema deve calcular a nota média contextual do local, agrupando avaliações por tipo e porte de evento.
+RN13: O local deve possuir uma classificação geral calculada com base na nota média geral.
+RN14: O local também deve possuir classificações contextuais, indicando seu desempenho em determinados perfis de evento.
+RN15: A classificação contextual deve permitir identificar situações como: recomendado para eventos pequenos, recomendado para eventos médios, recomendado para eventos corporativos, recomendado com ressalvas ou não recomendado para determinado perfil.
+RN16: Quando houver poucas avaliações para um contexto específico, o sistema deve indicar baixa base histórica.
+RN17: A baixa base histórica deve ocorrer quando o local possuir menos de três avaliações naquele contexto.
+RN18: Um local pode ser bem classificado em um contexto e mal classificado em outro.
+RN19: A classificação contextual deve ser considerada em futuras análises inteligentes de alocação de local.
+RN20: Se o local possuir classificação ruim ou crítica para um contexto semelhante ao evento em planejamento, o sistema não deve classificá-lo como recomendado sem apresentar ressalva.
+RN21: Avaliações registradas não devem ser excluídas fisicamente, para preservar o histórico do local.
+RN22: Toda avaliação deve registrar data, hora e usuário responsável.
 Critérios de aceitação
- CA1: Deve considerar a capacidade mínima necessária do evento.
- CA2: Deve filtrar apenas locais disponíveis na data informada.
- CA3: Deve comparar os requisitos do evento com a infraestrutura do local.
- CA4: Deve ordenar os locais por nível de adequação.
- CA5: Deve exibir justificativa da sugestão apresentada.
- CA6: Deve permitir que o usuário selecione um dos locais sugeridos.
+CA1: Deve permitir registrar avaliação para local vinculado a evento existente.
+CA2: Deve impedir avaliação de local não vinculado ao evento.
+CA3: Deve permitir avaliação apenas quando o evento estiver concluído ou quando a etapa de uso do local estiver finalizada.
+CA4: Deve impedir mais de uma avaliação principal para o mesmo local no mesmo evento.
+CA5: Deve permitir atribuir nota de 0 a 5 para critérios operacionais do local.
+CA6: Deve impedir notas inferiores a 0 ou superiores a 5.
+CA7: Deve calcular automaticamente a nota final da avaliação.
+CA8: Deve exigir justificativa descritiva para a avaliação registrada.
+CA9: Deve atualizar a nota média geral do local após nova avaliação válida.
+CA10: Deve calcular nota média contextual do local por tipo e porte de evento.
+CA11: Deve permitir que um mesmo local tenha classificações diferentes conforme o contexto de uso.
+CA12: Deve indicar baixa base histórica quando houver menos de três avaliações para determinado contexto.
+CA13: Deve permitir consultar a nota geral, a nota por contexto e o histórico de avaliações do local.
+CA14: Deve considerar a classificação contextual em futuras análises de alocação de local.
+CA15: Deve apresentar ressalva quando um local tiver desempenho ruim em contexto semelhante ao evento em planejamento.
+CA16: Deve manter avaliações registradas no histórico do local, sem exclusão física.
+CA17: Deve registrar data, hora e usuário responsável pela avaliação.
+
