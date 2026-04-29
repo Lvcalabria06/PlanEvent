@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 public class CompromissoSteps {
 
     private static final String ID_GESTOR = "gestor-artur-1";
+    private static final String ID_EVENTO = "evento-plan-1";
     private static final String TITULO_PADRAO = "Reunião de planejamento do evento";
 
     private CompromissoRepository compromissoRepository;
@@ -113,7 +114,7 @@ public class CompromissoSteps {
         compromissoEmContexto = novoCompromissoValido(ID_GESTOR);
         LocalDateTime inicio2 = LocalDateTime.now().plusDays(5);
         LocalDateTime fim2 = inicio2.plusHours(2);
-        segundoCompromisso = new Compromisso(ID_GESTOR, "Segunda reunião", "Desc", inicio2, fim2);
+        segundoCompromisso = new Compromisso(ID_GESTOR, ID_EVENTO, "Segunda reunião", "Desc", inicio2, fim2);
 
         when(compromissoRepository.buscarPorId(eq(compromissoEmContexto.getId())))
                 .thenReturn(Optional.of(compromissoEmContexto));
@@ -130,7 +131,7 @@ public class CompromissoSteps {
     public void existe_um_compromisso_com_lembretes_cadastrado_para_esse_gestor() {
         existe_um_compromisso_cadastrado_para_esse_gestor();
         LocalDateTime horarioLembrete = compromissoEmContexto.getDataInicio().minusMinutes(30);
-        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), horarioLembrete,
+        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horarioLembrete,
                 compromissoEmContexto.getDataInicio());
 
         List<Lembrete> lembretes = new ArrayList<>();
@@ -143,7 +144,7 @@ public class CompromissoSteps {
     @Given("existe um lembrete cadastrado para esse compromisso")
     public void existe_um_lembrete_cadastrado_para_esse_compromisso() {
         LocalDateTime horarioLembrete = compromissoEmContexto.getDataInicio().minusMinutes(30);
-        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), horarioLembrete,
+        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horarioLembrete,
                 compromissoEmContexto.getDataInicio());
 
         when(lembreteRepository.buscarPorId(eq(lembreteEmContexto.getId())))
@@ -165,7 +166,7 @@ public class CompromissoSteps {
     @Given("existe um lembrete cadastrado para esse compromisso finalizado")
     public void existe_um_lembrete_cadastrado_para_esse_compromisso_finalizado() {
         LocalDateTime horarioLembrete = compromissoEmContexto.getDataInicio().minusMinutes(30);
-        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), horarioLembrete,
+        lembreteEmContexto = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horarioLembrete,
                 compromissoEmContexto.getDataInicio());
 
         when(lembreteRepository.buscarPorId(eq(lembreteEmContexto.getId())))
@@ -192,7 +193,7 @@ public class CompromissoSteps {
         try {
             LocalDateTime inicio = LocalDateTime.now().plusDays(1);
             LocalDateTime fim = inicio.plusHours(2);
-            new Compromisso(null, TITULO_PADRAO, "Descrição", inicio, fim);
+            new Compromisso(null, ID_EVENTO, TITULO_PADRAO, "Descrição", inicio, fim);
         } catch (Exception e) {
             excecaoLancada = e;
         }
@@ -203,7 +204,7 @@ public class CompromissoSteps {
         try {
             LocalDateTime inicio = LocalDateTime.now().plusDays(1);
             LocalDateTime fim = inicio.plusHours(2);
-            new Compromisso(ID_GESTOR, null, "Descrição", inicio, fim);
+            new Compromisso(ID_GESTOR, ID_EVENTO, null, "Descrição", inicio, fim);
         } catch (Exception e) {
             excecaoLancada = e;
         }
@@ -214,7 +215,7 @@ public class CompromissoSteps {
         try {
             LocalDateTime inicio = LocalDateTime.now().plusDays(1);
             LocalDateTime fim = inicio.minusHours(1);
-            new Compromisso(ID_GESTOR, TITULO_PADRAO, "Descrição", inicio, fim);
+            new Compromisso(ID_GESTOR, ID_EVENTO, TITULO_PADRAO, "Descrição", inicio, fim);
         } catch (Exception e) {
             excecaoLancada = e;
         }
@@ -225,7 +226,7 @@ public class CompromissoSteps {
         try {
             LocalDateTime inicio = LocalDateTime.now().minusDays(1);
             LocalDateTime fim = inicio.plusHours(2);
-            new Compromisso(ID_GESTOR, TITULO_PADRAO, "Descrição", inicio, fim);
+            new Compromisso(ID_GESTOR, ID_EVENTO, TITULO_PADRAO, "Descrição", inicio, fim);
         } catch (Exception e) {
             excecaoLancada = e;
         }
@@ -236,7 +237,7 @@ public class CompromissoSteps {
         try {
             LocalDateTime inicio = compromissoEmContexto.getDataInicio().plusMinutes(30);
             LocalDateTime fim = compromissoEmContexto.getDataFim().plusMinutes(30);
-            Compromisso sobreposto = new Compromisso(ID_GESTOR, "Sobreposto", "Desc", inicio, fim);
+            Compromisso sobreposto = new Compromisso(ID_GESTOR, ID_EVENTO, "Sobreposto", "Desc", inicio, fim);
             compromissoService.criarCompromisso(sobreposto);
         } catch (Exception e) {
             excecaoLancada = e;
@@ -363,8 +364,19 @@ public class CompromissoSteps {
     public void eu_criar_um_lembrete_para_esse_compromisso() {
         try {
             LocalDateTime horario = compromissoEmContexto.getDataInicio().minusMinutes(15);
-            Lembrete lembrete = new Lembrete(compromissoEmContexto.getId(), horario,
+            Lembrete lembrete = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horario,
                     compromissoEmContexto.getDataInicio());
+            lembreteEmContexto = lembreteService.criarLembrete(lembrete);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @When("eu criar um lembrete vinculado apenas a um evento")
+    public void eu_criar_um_lembrete_vinculado_apenas_a_um_evento() {
+        try {
+            LocalDateTime horario = LocalDateTime.now().plusDays(2);
+            Lembrete lembrete = new Lembrete(null, ID_EVENTO, horario, horario.plusHours(1));
             lembreteEmContexto = lembreteService.criarLembrete(lembrete);
         } catch (Exception e) {
             excecaoLancada = e;
@@ -376,7 +388,7 @@ public class CompromissoSteps {
         try {
             when(compromissoRepository.buscarPorId(any())).thenReturn(Optional.empty());
             LocalDateTime horario = LocalDateTime.now().plusDays(1);
-            Lembrete lembrete = new Lembrete("inexistente-id", horario, horario.plusHours(1));
+            Lembrete lembrete = new Lembrete("inexistente-id", ID_EVENTO, horario, horario.plusHours(1));
             lembreteService.criarLembrete(lembrete);
         } catch (Exception e) {
             excecaoLancada = e;
@@ -387,7 +399,7 @@ public class CompromissoSteps {
     public void eu_tentar_criar_lembrete_com_horario_posterior_ao_compromisso() {
         try {
             LocalDateTime horarioDepois = compromissoEmContexto.getDataInicio().plusHours(1);
-            new Lembrete(compromissoEmContexto.getId(), horarioDepois,
+            new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horarioDepois,
                     compromissoEmContexto.getDataInicio());
         } catch (Exception e) {
             excecaoLancada = e;
@@ -397,7 +409,7 @@ public class CompromissoSteps {
     @When("eu tentar criar lembrete com o mesmo horário")
     public void eu_tentar_criar_lembrete_com_o_mesmo_horario() {
         try {
-            Lembrete duplicado = new Lembrete(compromissoEmContexto.getId(),
+            Lembrete duplicado = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO,
                     lembreteEmContexto.getHorario(), compromissoEmContexto.getDataInicio());
             lembreteService.criarLembrete(duplicado);
         } catch (Exception e) {
@@ -412,7 +424,7 @@ public class CompromissoSteps {
                     .thenReturn(Optional.of(compromissoEmContexto));
 
             LocalDateTime horario = compromissoEmContexto.getDataInicio().minusMinutes(15);
-            Lembrete lembrete = new Lembrete(compromissoEmContexto.getId(), horario,
+            Lembrete lembrete = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, horario,
                     compromissoEmContexto.getDataInicio());
             lembreteService.criarLembrete(lembrete);
         } catch (Exception e) {
@@ -426,7 +438,7 @@ public class CompromissoSteps {
     public void eu_editar_o_horario_desse_lembrete() {
         try {
             LocalDateTime novoHorario = compromissoEmContexto.getDataInicio().minusMinutes(45);
-            Lembrete editado = new Lembrete(compromissoEmContexto.getId(), novoHorario,
+            Lembrete editado = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, novoHorario,
                     compromissoEmContexto.getDataInicio());
             when(lembreteRepository.buscarPorId(eq(lembreteEmContexto.getId())))
                     .thenReturn(Optional.of(lembreteEmContexto));
@@ -451,7 +463,7 @@ public class CompromissoSteps {
     public void eu_tentar_editar_lembrete_de_compromisso_finalizado() {
         try {
             LocalDateTime novoHorario = compromissoEmContexto.getDataInicio().minusMinutes(45);
-            Lembrete editado = new Lembrete(compromissoEmContexto.getId(), novoHorario,
+            Lembrete editado = new Lembrete(compromissoEmContexto.getId(), ID_EVENTO, novoHorario,
                     compromissoEmContexto.getDataInicio());
 
             when(lembreteRepository.buscarPorId(eq(lembreteEmContexto.getId())))
@@ -584,6 +596,6 @@ public class CompromissoSteps {
     private Compromisso novoCompromissoValido(String gestorId) {
         LocalDateTime inicio = LocalDateTime.now().plusDays(1);
         LocalDateTime fim = inicio.plusHours(2);
-        return new Compromisso(gestorId, TITULO_PADRAO, "Descrição do compromisso", inicio, fim);
+        return new Compromisso(gestorId, ID_EVENTO, TITULO_PADRAO, "Descrição do compromisso", inicio, fim);
     }
 }

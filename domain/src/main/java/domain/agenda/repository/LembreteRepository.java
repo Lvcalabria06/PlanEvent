@@ -13,6 +13,8 @@ public interface LembreteRepository {
 
     List<Lembrete> listarPorCompromissoId(String compromissoId);
 
+    List<Lembrete> listarPorEventoId(String eventoId);
+
     void remover(String id);
 
     void removerPorCompromissoId(String compromissoId);

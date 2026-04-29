@@ -11,6 +11,7 @@ import java.util.UUID;
 public class Compromisso {
     private final String id;
     private final String gestorId;
+    private final String eventoId;
     private String titulo;
     private String descricao;
     private LocalDateTime dataInicio;
@@ -20,10 +21,10 @@ public class Compromisso {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public Compromisso(String gestorId, String titulo, String descricao,
+    public Compromisso(String gestorId, String eventoId, String titulo, String descricao,
                        LocalDateTime dataInicio, LocalDateTime dataFim) {
 
-        validarCamposObrigatorios(gestorId, titulo, dataInicio, dataFim);
+        validarCamposObrigatorios(gestorId, eventoId, titulo, dataInicio, dataFim);
 
         if (dataInicio.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Não é permitido criar compromissos em datas passadas.");
@@ -31,6 +32,7 @@ public class Compromisso {
 
         this.id = UUID.randomUUID().toString();
         this.gestorId = gestorId;
+        this.eventoId = eventoId;
         this.titulo = titulo.trim();
         this.descricao = descricao;
         this.dataInicio = dataInicio;
@@ -51,7 +53,7 @@ public class Compromisso {
             throw new IllegalStateException("Não é permitido editar compromissos cancelados.");
         }
 
-        validarCamposObrigatorios(this.gestorId, titulo, dataInicio, dataFim);
+        validarCamposObrigatorios(this.gestorId, this.eventoId, titulo, dataInicio, dataFim);
 
         this.titulo = titulo.trim();
         this.descricao = descricao;
@@ -118,10 +120,13 @@ public class Compromisso {
         return this.status == StatusCompromisso.REALIZADO || this.status == StatusCompromisso.CANCELADO;
     }
 
-    private static void validarCamposObrigatorios(String gestorId, String titulo,
+    private static void validarCamposObrigatorios(String gestorId, String eventoId, String titulo,
                                                    LocalDateTime dataInicio, LocalDateTime dataFim) {
         if (gestorId == null || gestorId.trim().isEmpty()) {
             throw new IllegalArgumentException("ID do gestor é obrigatório.");
+        }
+        if (eventoId == null || eventoId.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID do evento é obrigatório.");
         }
         if (titulo == null || titulo.trim().isEmpty()) {
             throw new IllegalArgumentException("Título é obrigatório.");
@@ -136,6 +141,7 @@ public class Compromisso {
 
     public String getId() { return id; }
     public String getGestorId() { return gestorId; }
+    public String getEventoId() { return eventoId; }
     public String getTitulo() { return titulo; }
     public String getDescricao() { return descricao; }
     public LocalDateTime getDataInicio() { return dataInicio; }
