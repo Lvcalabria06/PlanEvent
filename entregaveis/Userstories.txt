@@ -310,7 +310,7 @@ Como gestor, quero definir dependências entre tarefas, para garantir que ativid
 Como gestor, quero remover uma dependência entre tarefas, para reorganizar o fluxo de execução do evento.
 Como gestor, quero visualizar as dependências de uma tarefa, para entender quais atividades precisam ser concluídas antes dela.
 Como gestor, quero visualizar quais tarefas dependem de uma tarefa específica, para analisar o impacto de atrasos ou mudanças.
-Regra de negocio: 
+Regra de negocio:
 RN1: Uma tarefa só pode ser iniciada se todas as tarefas das quais ela depende estiverem com status CONCLUÍDA.
 RN2: Não é permitido criar dependência entre tarefas que pertençam a eventos diferentes.
 RN3: O sistema deve impedir a criação de dependências cíclicas entre tarefas (ex: A depende de B e B depende de A, direta ou indiretamente).
@@ -335,7 +335,7 @@ CA13: Deve permitir visualizar todas as dependências de uma tarefa.
 CA14: Deve permitir visualizar todas as tarefas que dependem de uma tarefa específica.
 
 6 – ORGANIZAÇÃO DA AGENDA
-PASSO 1: gerenciar compromissos do gestor 
+PASSO 1: gerenciar compromissos do gestor
 histórias do usuário:
 Como gestor, quero cadastrar compromissos na minha agenda, para organizar minhas atividades relacionadas ao evento.
 
@@ -344,7 +344,7 @@ Como gestor, quero cadastrar compromissos na minha agenda, para organizar minhas
  Como gestor, quero remover compromissos, para organizar minha agenda.
 
  Como gestor, quero visualizar meus compromissos, para acompanhar minha rotina e responsabilidades.
-Regras de negócio 
+Regras de negócio
 RN1: Todo compromisso deve estar associado a um gestor válido.
 RN2: Um compromisso deve possuir data e horário de início e fim válidos, não sendo permitido horário de fim anterior ao início.
 RN3: Não é permitido criar compromissos com sobreposição de horário para o mesmo gestor.
@@ -372,7 +372,7 @@ Como gestor, quero criar um lembrete vinculado a um compromisso para ser notific
 Como gestor, quero visualizar os lembretes de um compromisso para acompanhar os alertas configurados.
 Como gestor, quero editar um lembrete para alterar o horário ou configuração de notificação.
 Como gestor, quero excluir um lembrete para evitar notificações desnecessárias.
-regras de negócio 
+regras de negócio
 RN1- Todo lembrete deve estar obrigatoriamente vinculado a um compromisso existente.
 RN2- O horário do lembrete deve ser anterior ao horário de início do compromisso associado.
 RN3 - Não é permitido criar lembretes com horário no passado no momento da criação.
