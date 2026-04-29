@@ -10,32 +10,33 @@ import java.util.UUID;
 
 public class RegistroHistoricoPrevisao {
     private final String id;
+    private final int versao;
     private final TipoRegistroPrevisao tipoRegistro;
     private final String usuarioResponsavelId;
     private final LocalDateTime dataHora;
-    private final String observacao;
+    private final String justificativa;
     private final List<ItemPrevisaoHistorico> itens;
 
-    public RegistroHistoricoPrevisao(TipoRegistroPrevisao tipoRegistro,
+    public RegistroHistoricoPrevisao(int versao,
+                                     TipoRegistroPrevisao tipoRegistro,
                                      String usuarioResponsavelId,
-                                     String observacao,
+                                     String justificativa,
                                      List<ItemPrevisaoHistorico> itens) {
-        if (tipoRegistro == null) {
-            throw new IllegalArgumentException("Tipo de registro e obrigatorio.");
-        }
-        if (usuarioResponsavelId == null || usuarioResponsavelId.isBlank()) {
-            throw new IllegalArgumentException("Usuario responsavel e obrigatorio.");
-        }
         this.id = UUID.randomUUID().toString();
+        this.versao = versao;
         this.tipoRegistro = tipoRegistro;
         this.usuarioResponsavelId = usuarioResponsavelId;
         this.dataHora = LocalDateTime.now();
-        this.observacao = observacao;
+        this.justificativa = justificativa;
         this.itens = Collections.unmodifiableList(new ArrayList<>(itens));
     }
 
     public String getId() {
         return id;
+    }
+
+    public int getVersao() {
+        return versao;
     }
 
     public TipoRegistroPrevisao getTipoRegistro() {
@@ -50,8 +51,8 @@ public class RegistroHistoricoPrevisao {
         return dataHora;
     }
 
-    public String getObservacao() {
-        return observacao;
+    public String getJustificativa() {
+        return justificativa;
     }
 
     public List<ItemPrevisaoHistorico> getItens() {
