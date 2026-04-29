@@ -1,108 +1,51 @@
 Link de acesso ao documento: https://docs.google.com/document/d/1BjeNDoEgnlY3AC-fIM3TsCOQWZ3bHpamKh5VU_r2HNA/edit?tab=t.0#heading=h.l2i142tfq1pj
 
-Descrição do Domínio PlanEvent
+Descrição do Domínio EventOS
 
-O PlanEvent é um sistema inteligente de gestão de eventos que auxilia gestores
-a planejar, organizar e executar eventos de forma estruturada, garantindo
-controle operacional, financeiro, logístico e administrativo.
+O EventOS é um sistema inteligente de gestão de eventos que auxilia gestores a planejar, organizar e executar eventos de forma estruturada, garantindo controle operacional, financeiro, logístico e administrativo.
 
 Linguagem do Domínio
 
-Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa
-uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e
-quantidade estimada de participantes.
+Cada Gestor pode criar e administrar um ou mais Eventos. Um Evento representa uma ocorrência planejada, identificada por nome, tipo, porte, objetivo e quantidade estimada de participantes.
 
-No cadastro do Evento, o sistema deve registrar automaticamente um identificador
-único, gerado pelo próprio sistema e imutável. Também devem ser registradas
-automaticamente a data de criação e a data de atualização do evento.
+No cadastro do Evento, o sistema deve registrar automaticamente um identificador único, gerado pelo próprio sistema e imutável. Também devem ser registradas automaticamente a data de criação e a data de atualização do evento.
 
-A preparação inicial do Evento reúne as informações básicas necessárias para o
-cadastro inicial. Todo Evento deve ser criado com a preparação inicial ainda
-não confirmada. Enquanto a preparação inicial não estiver confirmada, o Gestor
-pode cadastrar, visualizar e editar os dados do Evento, respeitando as regras
-do domínio.
+A preparação inicial do Evento reúne as informações básicas necessárias para o cadastro inicial. Todo Evento deve ser criado com a preparação inicial ainda não confirmada. Enquanto a preparação inicial não estiver confirmada, o Gestor pode cadastrar, visualizar e editar os dados do Evento, respeitando as regras do domínio.
 
-A confirmação da preparação inicial somente pode ocorrer uma única vez. Após
-essa confirmação, não deve ser permitida a alteração ou remoção do Local
-vinculado ao Evento, quando houver Local vinculado.
+A confirmação da preparação inicial somente pode ocorrer uma única vez. Após essa confirmação, não deve ser permitida a alteração ou remoção do Local vinculado ao Evento, quando houver Local vinculado.
 
-A escolha do Local é tratada em funcionalidade própria, separada da preparação
-inicial do Evento. Para apoiar essa escolha, o Gestor pode informar um teto
-máximo de custo do espaço. Esse teto é utilizado apenas como critério para
-escolha do Local, não substituindo o controle financeiro do Evento.
+A escolha do Local é tratada em funcionalidade própria, separada da preparação inicial do Evento. O sistema analisa Locais ativos para um Evento já existente, considerando custo frente ao teto informado, capacidade, situação do Local e disponibilidade na Agenda do Local, quando houver período ou janela de uso definida.
 
-Com base no teto informado, o sistema lista apenas Locais ativos cujo custo seja
-menor ou igual ao teto e cuja capacidade seja maior ou igual à quantidade
-estimada de participantes do Evento. O vínculo do Local ao Evento deve utilizar
-um identificador de Local existente e válido no cadastro de Locais.
+Com base nessa análise, os Locais candidatos são classificados como recomendados, viáveis com ressalva, inadequados ou indisponíveis, sempre com justificativa objetiva. O Gestor pode definir um Local principal e alternativas de contingência antes da confirmação da preparação inicial.
 
-Enquanto a preparação inicial não estiver confirmada, o Gestor pode vincular,
-alterar ou remover o Local do Evento. Após a confirmação da preparação inicial,
-não é permitido vincular, alterar ou remover o Local.
+Enquanto a preparação inicial não estiver confirmada, o Gestor pode alterar o Local principal e as alternativas. Após a confirmação, não é permitida alteração livre do Local vinculado, salvo em fluxo de contingência registrado, com data, hora, usuário responsável e motivo.
 
-O sistema gerencia os Recursos necessários para o evento por meio de previsões
-baseadas em histórico. A Previsão de Consumo estima itens e quantidades com base
-em eventos anteriores semelhantes. Esses recursos podem ser reservados, sendo
-que cada Reserva considera a disponibilidade real e evita conflitos entre
-eventos concorrentes.
+O sistema gerencia os Recursos necessários para o evento por meio de previsões baseadas em histórico. A Previsão de Consumo estima itens e quantidades com base em eventos historicamente similares, aplicando normalização por porte, média ponderada e descarte de outliers. Cada previsão pode gerar intervalos de variação e explicações detalhadas do cálculo, sendo versionada e invalidada automaticamente quando houver alterações relevantes no evento. Ajustes manuais são permitidos, com rastreabilidade completa e preservação do histórico.
 
-A disponibilidade de recursos é controlada considerando o total em estoque, as
-quantidades já reservadas e o período do evento. Caso haja conflito, o sistema
-sinaliza ou bloqueia a operação, garantindo consistência e evitando alocações
-duplicadas.
+Os recursos previstos podem ser reservados e redistribuídos entre eventos. O sistema é capaz de analisar múltiplos eventos simultaneamente, identificando cenários de escassez global e sugerindo redistribuição otimizada de estoque com base em critérios de prioridade, como proximidade da data, porte e criticidade. A redistribuição pode ser parcial, considerar substituição de itens equivalentes e gerar cenários comparativos de alocação com impacto por evento.
 
-Cada Evento possui controle financeiro por meio de Orçamentos e Despesas. As
-despesas são registradas por categoria, fornecedor, valor e data, sendo
-automaticamente comparadas ao orçamento previsto. O sistema calcula desvios
-percentuais e classifica situações críticas quando os gastos ultrapassam limites
-definidos. Além disso, mantém um Fluxo de Caixa, registrando entradas e saídas
-ao longo do tempo, e permite gerar relatórios consolidados para análise e
-auditoria.
+Nenhuma redistribuição é aplicada automaticamente sem confirmação do gestor. Quando aplicada, o sistema atualiza todas as reservas impactadas de forma consistente e transacional, garantindo integridade dos dados. Alterações posteriores invalidam cenários anteriores, exigindo novo cálculo. Itens em uso, consumidos ou vinculados a eventos em execução não podem ser redistribuídos.
 
-A organização operacional é feita através de Funcionários e Equipes.
-Funcionários possuem dados como nome, cargo e disponibilidade, podendo ser
-alocados em Equipes específicas de um Evento. Cada Equipe possui um conjunto
-de membros e um responsável, garantindo organização e distribuição de
-responsabilidades.
+A disponibilidade de recursos continua sendo controlada considerando o total em estoque, as quantidades já alocadas e o período do evento, garantindo consistência e evitando alocações inválidas. Todas as operações relacionadas a previsão, reserva e redistribuição registram data, hora e responsável, assegurando rastreabilidade completa.
 
-As atividades do evento são representadas por Tarefas, que pertencem a uma
-Equipe e possuem título, responsáveis, datas e status. As Tarefas seguem um
-fluxo controlado de execução, podendo estar pendentes, em andamento ou
-concluídas, e podem possuir Dependências, garantindo que atividades sejam
-realizadas na ordem correta. O sistema impede inconsistências como dependências
-cíclicas ou execução fora de sequência.
+Cada Evento possui controle financeiro por meio de Orçamentos e Despesas. As despesas são registradas por categoria, fornecedor, valor e data, sendo automaticamente comparadas ao orçamento previsto. O sistema calcula desvios percentuais e classifica situações críticas quando os gastos ultrapassam limites definidos. Além disso, permite gerar relatórios consolidados para análise e auditoria.
 
-O gestor também possui uma Agenda, composta por Compromissos, que organizam
-suas atividades ao longo do tempo. Cada compromisso pode ter Lembretes, que
-notificam o gestor antes de eventos importantes, garantindo melhor organização
-e cumprimento de prazos.
+A organização operacional é feita através de Funcionários e Equipes. Funcionários possuem dados como nome, cargo e disponibilidade, podendo ser alocados em Equipes específicas de um Evento. Cada Equipe possui um conjunto de membros e um responsável, garantindo organização e distribuição de responsabilidades.
 
-No âmbito administrativo, o sistema gerencia Contratos, que formalizam acordos
-com fornecedores e parceiros. Cada contrato possui um ciclo de vida, podendo
-estar criado, ativo, próximo do vencimento, vencido ou encerrado, sendo
-monitorado automaticamente. O sistema identifica riscos contratuais e gera
-alertas para ações preventivas. Além disso, contratos podem possuir Documentos,
-com versionamento e histórico completo para auditoria.
+As atividades do evento são representadas por Tarefas, que pertencem a uma Equipe e possuem título, responsáveis, datas e status. As Tarefas seguem um fluxo controlado de execução, podendo estar pendentes, em andamento ou concluídas, e podem possuir Dependências, garantindo que atividades sejam realizadas na ordem correta. O sistema impede inconsistências como dependências cíclicas ou execução fora de sequência.
 
-Os Locais possuem gestão própria, com cadastro, controle de disponibilidade,
-períodos de manutenção e agenda de uso. Cada Local pode ter períodos de bloqueio
-registrados, sempre com motivo associado, durante os quais não poderá ser
-reservado.
+O gestor também possui uma Agenda, composta por Compromissos, que organizam suas atividades ao longo do tempo. Cada compromisso pode ter Lembretes, que notificam o gestor antes de eventos importantes, garantindo melhor organização e cumprimento de prazos.
 
-A Agenda do Local concentra as reservas vinculadas a Eventos, com data e horário
-de início e fim. Ao criar uma nova reserva, o sistema deve validar todo o
-intervalo solicitado. Se houver sobreposição com manutenção, bloqueio cadastrado
-ou outra reserva existente, a solicitação será recusada, informando ao Gestor o
-motivo do impedimento.
+Cada evento pode ter contratos com fornecedores e parceiros, com tipo, objeto, valor, vigência, partes e, quando fizer sentido, fornecedor vinculado. O contrato acompanha um status (rascunho, negociação, assinado, vigente, encerrado, cancelado) e o gestor pode cadastrar, alterar, consultar, listar por evento e encerrar o contrato. Encerrado e cancelado não entram em conciliação; os demais status previstos no modelo ainda entram, conforme a regra atual do serviço de conciliação.
 
-Após o uso do espaço, quando o Evento estiver concluído e houver Local vinculado,
-o Gestor poderá registrar uma avaliação de adequação do Local. A avaliação deve
-indicar um nível fixo do sistema, como adequado, parcialmente adequado ou
-inadequado, acompanhada de justificativa textual. Cada par Evento e Local utilizado
-pode possuir apenas uma avaliação principal, mantendo histórico consultável por
-Local, com data, hora e usuário responsável pelo registro.
+A conciliação amarra despesas a contratos do mesmo evento: o sistema cria um vínculo por despesa quando encontra um contrato compatível (vigente na data da despesa, mesmo fornecedor se o contrato tiver fornecedor). Pode ser automática (o sistema escolhe o contrato entre os compatíveis) ou manual (o gestor escolhe, com as mesmas validações). Se não houver contrato possível, o vínculo some e a despesa fica "descoberta". Dá ainda para ver contratos extrapolados (soma das despesas ligadas a um contrato acima do valor dele) e gerar relatório com o estado de cada despesa (coberta ou descoberta) naquele momento, gravado para consulta.
 
-O diferencial do sistema está na automação e inteligência aplicada às decisões,
-como previsão de consumo, validação de disponibilidade e identificação de riscos
-financeiros e contratuais. Todas as operações registram data, hora e responsável,
-garantindo rastreabilidade completa e suporte à tomada de decisão.
+Os Locais possuem cadastro, controle de disponibilidade e períodos de manutenção, conforme regras próprias dessas funcionalidades. Além disso, cada Local pode possuir diferentes configurações de layout, como auditório, sala de aula, mesas, coquetel, feira ou exposição, sendo que cada layout possui capacidade máxima própria.
+
+Antes da utilização do espaço, o sistema pode validar se o layout escolhido comporta a quantidade estimada de participantes do Evento. Assim, um mesmo Local pode ser compatível com determinado Evento em um layout e incompatível em outro. Alterações na quantidade estimada de participantes ou na capacidade do layout exigem nova validação quando estiverem relacionadas a Eventos ainda não concluídos.
+
+Após o uso do espaço, quando o Evento estiver concluído e houver Local vinculado, o Gestor poderá registrar uma avaliação contextual de desempenho do Local. Essa avaliação considera o tipo e o porte do Evento, além de critérios operacionais como estrutura, acesso, suporte, limpeza, conforto, capacidade percebida e adequação geral.
+
+Cada critério recebe nota de 0 a 5, e o sistema calcula a nota final da avaliação, a nota média geral do Local e notas médias por contexto de uso. As avaliações permanecem no histórico do Local, com justificativa, data, hora e usuário responsável.
+
+O diferencial do sistema está na automação e inteligência aplicada às decisões, como previsão de consumo, redistribuição otimizada de recursos e identificação de riscos financeiros e contratuais. Todas as operações registram data, hora e responsável, garantindo rastreabilidade completa e suporte à tomada de decisão.

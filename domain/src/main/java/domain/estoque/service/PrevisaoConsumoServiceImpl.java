@@ -9,13 +9,14 @@ import domain.estoque.repository.PrevisaoConsumoRepository;
 import domain.estoque.valueobject.StatusHistoricoPrevisao;
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
-import domain.evento.valueobject.PorteEvento;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PrevisaoConsumoServiceImpl implements PrevisaoConsumoService {
@@ -34,39 +35,52 @@ public class PrevisaoConsumoServiceImpl implements PrevisaoConsumoService {
 
     @Override
     public PrevisaoConsumo gerarPrevisao(String eventoId, String usuarioId) {
-        Evento evento = buscarEventoExistente(eventoId);
-        BaseCalculo baseCalculo = montarBaseCalculo(evento);
-
+        Evento eventoAtual = buscarEventoExistente(eventoId);
+        BaseCalculo baseCalculo = montarBaseCalculo(eventoAtual);
         PrevisaoConsumo previsao = new PrevisaoConsumo(
-                evento,
+                eventoAtual,
                 usuarioId,
-                baseCalculo.statusHistorico(),
-                baseCalculo.totalEventosBase(),
-                criarItensPrevisao(baseCalculo.quantidadesEstimadas(), null));
-
+                baseCalculo.statusHistorico,
+                baseCalculo.fallbackUtilizado,
+                baseCalculo.totalEventosBase,
+                baseCalculo.itens
+        );
         return previsaoConsumoRepository.salvar(previsao);
     }
 
     @Override
     public PrevisaoConsumo ajustarPrevisao(String previsaoId, Map<String, Integer> quantidadesAjustadas, String usuarioId) {
+        return ajustarPrevisao(previsaoId, quantidadesAjustadas, usuarioId, "Ajuste manual.");
+    }
+
+    @Override
+    public PrevisaoConsumo ajustarPrevisao(String previsaoId, Map<String, Integer> quantidadesAjustadas, String usuarioId, String justificativa) {
         PrevisaoConsumo previsao = buscarPrevisaoExistente(previsaoId);
-        previsao.ajustarQuantidades(quantidadesAjustadas, usuarioId);
+        previsao.ajustarQuantidades(quantidadesAjustadas, usuarioId, justificativa);
         return previsaoConsumoRepository.salvar(previsao);
     }
 
     @Override
     public PrevisaoConsumo recalcularPrevisao(String previsaoId, String usuarioId) {
         PrevisaoConsumo previsao = buscarPrevisaoExistente(previsaoId);
-        Evento evento = buscarEventoExistente(previsao.getEventoId());
-        BaseCalculo baseCalculo = montarBaseCalculo(evento);
-
+        Evento eventoAtual = buscarEventoExistente(previsao.getEventoId());
+        BaseCalculo baseCalculo = montarBaseCalculo(eventoAtual);
         previsao.recalcular(
-                evento,
+                eventoAtual,
                 usuarioId,
-                baseCalculo.statusHistorico(),
-                baseCalculo.totalEventosBase(),
-                criarItensPrevisao(baseCalculo.quantidadesEstimadas(), previsao.getId()));
+                baseCalculo.statusHistorico,
+                baseCalculo.fallbackUtilizado,
+                baseCalculo.totalEventosBase,
+                baseCalculo.itens
+        );
+        return previsaoConsumoRepository.salvar(previsao);
+    }
 
+    @Override
+    public PrevisaoConsumo invalidarPrevisaoPorAlteracaoEvento(String eventoId, String usuarioId) {
+        PrevisaoConsumo previsao = buscarPorEvento(eventoId);
+        Evento eventoAtual = buscarEventoExistente(eventoId);
+        previsao.invalidarPorAlteracaoEvento(eventoAtual, usuarioId);
         return previsaoConsumoRepository.salvar(previsao);
     }
 
@@ -77,71 +91,137 @@ public class PrevisaoConsumoServiceImpl implements PrevisaoConsumoService {
     }
 
     private BaseCalculo montarBaseCalculo(Evento eventoAtual) {
-        List<ConsumoEvento> consumosCompativeis = consumoEventoRepository.listarTodos().stream()
+        List<HistoricoConsumoNormalizado> historicosValidos = consumoEventoRepository.listarTodos().stream()
                 .filter(ConsumoEvento::isValido)
-                .filter(consumo -> consumo.getItensConsumidos() != null && !consumo.getItensConsumidos().isEmpty())
-                .filter(consumo -> eventoRepository.buscarPorId(consumo.getEventoId())
-                        .filter(Evento::isConcluido)
-                        .filter(eventoHistorico -> eventoHistorico.getTipo() == eventoAtual.getTipo())
-                        .isPresent())
+                .map(consumo -> montarHistorico(consumo, eventoAtual))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
 
-        if (consumosCompativeis.isEmpty()) {
-            return new BaseCalculo(StatusHistoricoPrevisao.INEXISTENTE, 0, new LinkedHashMap<>());
-        }
-
-        StatusHistoricoPrevisao statusHistorico = consumosCompativeis.size() >= 2
-                ? StatusHistoricoPrevisao.SUFICIENTE
-                : StatusHistoricoPrevisao.INSUFICIENTE;
-
-        Map<String, Double> somaPonderada = new LinkedHashMap<>();
-        Map<String, Double> somaPesos = new LinkedHashMap<>();
-
-        for (ConsumoEvento consumo : consumosCompativeis) {
-            Evento eventoHistorico = eventoRepository.buscarPorId(consumo.getEventoId()).orElseThrow();
-            double pesoPorte = calcularPesoPorte(eventoAtual.getPorte(), eventoHistorico.getPorte());
-            double fatorParticipantes = (double) eventoAtual.getQuantidadeEstimadaParticipantes()
-                    / eventoHistorico.getQuantidadeEstimadaParticipantes();
-
-            for (ItemConsumoEvento item : consumo.getItensConsumidos()) {
-                double quantidadeProjetada = item.getQuantidadeConsumida() * fatorParticipantes;
-                somaPonderada.merge(item.getItemEstoqueId(), quantidadeProjetada * pesoPorte, Double::sum);
-                somaPesos.merge(item.getItemEstoqueId(), pesoPorte, Double::sum);
-            }
-        }
-
-        Map<String, Integer> quantidadesEstimadas = somaPonderada.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-                .collect(LinkedHashMap::new, (mapa, entry) -> {
-                    double peso = somaPesos.getOrDefault(entry.getKey(), 1.0);
-                    int quantidade = (int) Math.round(entry.getValue() / peso);
-                    mapa.put(entry.getKey(), Math.max(0, quantidade));
-                }, LinkedHashMap::putAll);
-
-        return new BaseCalculo(statusHistorico, consumosCompativeis.size(), quantidadesEstimadas);
-    }
-
-    private List<ItemPrevisao> criarItensPrevisao(Map<String, Integer> quantidadesEstimadas, String previsaoId) {
-        String idPrevisao = previsaoId == null ? "previsao-em-geracao" : previsaoId;
+        boolean fallback = historicosValidos.size() < 2;
         List<ItemPrevisao> itens = new ArrayList<>();
-        for (Map.Entry<String, Integer> item : quantidadesEstimadas.entrySet()) {
-            itens.add(new ItemPrevisao(idPrevisao, item.getKey(), item.getValue()));
+
+        Map<String, List<HistoricoConsumoNormalizado>> agrupados = historicosValidos.stream()
+                .collect(Collectors.groupingBy(h -> h.itemId + "|" + h.categoria, LinkedHashMap::new, Collectors.toList()));
+
+        if (agrupados.isEmpty()) {
+            agrupados.put("fallback|global", List.of());
         }
-        return itens;
+
+        for (Map.Entry<String, List<HistoricoConsumoNormalizado>> entry : agrupados.entrySet()) {
+            String[] chave = entry.getKey().split("\\|");
+            String itemId = chave[0];
+            String categoria = chave.length > 1 ? chave[1] : chave[0];
+            List<HistoricoConsumoNormalizado> base = removerOutliers(entry.getValue());
+
+            if (base.size() < 2) {
+                fallback = true;
+                double mediaGlobal = calcularMediaGlobalPorCategoria(historicosValidos, categoria);
+                int estimada = (int) Math.round(mediaGlobal > 0 ? mediaGlobal : 10.0);
+                itens.add(new ItemPrevisao(
+                        "previsao-em-geracao",
+                        itemId,
+                        categoria,
+                        estimada,
+                        Math.max(0, (int) Math.floor(estimada * 0.9)),
+                        (int) Math.ceil(estimada * 1.1),
+                        "Fallback aplicado para categoria " + categoria + " por historico insuficiente."
+                ));
+                continue;
+            }
+
+            base.sort(Comparator.comparingDouble(HistoricoConsumoNormalizado::peso).reversed());
+            double somaPesos = base.stream().mapToDouble(HistoricoConsumoNormalizado::peso).sum();
+            double somaPonderada = base.stream().mapToDouble(h -> h.quantidadeNormalizada * h.peso).sum();
+            int estimada = (int) Math.round(somaPonderada / somaPesos);
+
+            List<Double> valores = base.stream().map(h -> h.quantidadeNormalizada).sorted().collect(Collectors.toList());
+            int minimo = (int) Math.floor(percentil(valores, 0.25));
+            int maximo = (int) Math.ceil(percentil(valores, 0.75));
+            String explicacao = "Eventos usados: "
+                    + base.stream().map(HistoricoConsumoNormalizado::eventoId).collect(Collectors.joining(", "))
+                    + ". Media ponderada com normalizacao por porte/duracao.";
+
+            itens.add(new ItemPrevisao(
+                    "previsao-em-geracao",
+                    itemId,
+                    categoria,
+                    estimada,
+                    Math.max(0, minimo),
+                    Math.max(estimada, maximo),
+                    explicacao
+            ));
+        }
+
+        return new BaseCalculo(
+                fallback ? StatusHistoricoPrevisao.FALLBACK : StatusHistoricoPrevisao.SUFICIENTE,
+                fallback,
+                historicosValidos.size(),
+                itens
+        );
     }
 
-    private double calcularPesoPorte(PorteEvento porteAtual, PorteEvento porteHistorico) {
-        int distancia = Math.abs(porteAtual.ordinal() - porteHistorico.ordinal());
-        if (distancia == 0) {
-            return 1.0;
+    private Optional<HistoricoConsumoNormalizado> montarHistorico(ConsumoEvento consumo, Evento eventoAtual) {
+        Optional<Evento> historico = eventoRepository.buscarPorId(consumo.getEventoId());
+        if (historico.isEmpty()) {
+            return Optional.empty();
         }
-        if (distancia == 1) {
-            return 0.75;
+        Evento eventoHistorico = historico.get();
+        if (!eventoHistorico.isConcluido() || eventoHistorico.getTipo() != eventoAtual.getTipo()) {
+            return Optional.empty();
         }
-        if (distancia == 2) {
-            return 0.5;
+
+        double pesoSimilaridade = eventoHistorico.getPorte() == eventoAtual.getPorte() ? 1.0 : 0.7;
+        double pesoRecencia = 1.0 / Math.max(1, Duration.between(eventoHistorico.getDataAtualizacao(), eventoAtual.getDataAtualizacao()).toDays() + 1);
+        double fatorNormalizacao = (double) (eventoAtual.getQuantidadeEstimadaParticipantes() * duracaoHoras(eventoAtual))
+                / (eventoHistorico.getQuantidadeEstimadaParticipantes() * duracaoHoras(eventoHistorico));
+
+        return consumo.getItensConsumidos().stream()
+                .findFirst()
+                .map(item -> new HistoricoConsumoNormalizado(
+                        consumo.getEventoId(),
+                        item.getItemEstoqueId(),
+                        item.getCategoriaConsumo(),
+                        item.getQuantidadeConsumida() * fatorNormalizacao,
+                        pesoSimilaridade + pesoRecencia
+                ));
+    }
+
+    private List<HistoricoConsumoNormalizado> removerOutliers(List<HistoricoConsumoNormalizado> base) {
+        if (base.size() < 4) {
+            return base;
         }
-        return 0.25;
+        List<Double> valores = base.stream().map(h -> h.quantidadeNormalizada).sorted().collect(Collectors.toList());
+        double q1 = percentil(valores, 0.25);
+        double q3 = percentil(valores, 0.75);
+        double iqr = q3 - q1;
+        double limiteSuperior = q3 + (1.5 * iqr);
+        return base.stream()
+                .filter(h -> h.quantidadeNormalizada <= limiteSuperior)
+                .collect(Collectors.toList());
+    }
+
+    private double calcularMediaGlobalPorCategoria(List<HistoricoConsumoNormalizado> historicos, String categoria) {
+        return historicos.stream()
+                .filter(h -> h.categoria.equals(categoria))
+                .mapToDouble(h -> h.quantidadeNormalizada)
+                .average()
+                .orElse(0.0);
+    }
+
+    private double percentil(List<Double> valores, double percentil) {
+        if (valores.isEmpty()) {
+            return 0.0;
+        }
+        int indice = (int) Math.floor((valores.size() - 1) * percentil);
+        return valores.get(indice);
+    }
+
+    private long duracaoHoras(Evento evento) {
+        if (evento.getJanelaInicioPlanejamento() != null && evento.getJanelaFimPlanejamento() != null) {
+            return Math.max(Duration.between(evento.getJanelaInicioPlanejamento(), evento.getJanelaFimPlanejamento()).toHours(), 1);
+        }
+        return 1;
     }
 
     private Evento buscarEventoExistente(String eventoId) {
@@ -156,27 +236,46 @@ public class PrevisaoConsumoServiceImpl implements PrevisaoConsumoService {
 
     private static class BaseCalculo {
         private final StatusHistoricoPrevisao statusHistorico;
+        private final boolean fallbackUtilizado;
         private final int totalEventosBase;
-        private final Map<String, Integer> quantidadesEstimadas;
+        private final List<ItemPrevisao> itens;
 
         private BaseCalculo(StatusHistoricoPrevisao statusHistorico,
+                            boolean fallbackUtilizado,
                             int totalEventosBase,
-                            Map<String, Integer> quantidadesEstimadas) {
+                            List<ItemPrevisao> itens) {
             this.statusHistorico = statusHistorico;
+            this.fallbackUtilizado = fallbackUtilizado;
             this.totalEventosBase = totalEventosBase;
-            this.quantidadesEstimadas = quantidadesEstimadas;
+            this.itens = itens;
+        }
+    }
+
+    private static class HistoricoConsumoNormalizado {
+        private final String eventoId;
+        private final String itemId;
+        private final String categoria;
+        private final double quantidadeNormalizada;
+        private final double peso;
+
+        private HistoricoConsumoNormalizado(String eventoId,
+                                            String itemId,
+                                            String categoria,
+                                            double quantidadeNormalizada,
+                                            double peso) {
+            this.eventoId = eventoId;
+            this.itemId = itemId;
+            this.categoria = categoria;
+            this.quantidadeNormalizada = quantidadeNormalizada;
+            this.peso = peso;
         }
 
-        private StatusHistoricoPrevisao statusHistorico() {
-            return statusHistorico;
+        private String eventoId() {
+            return eventoId;
         }
 
-        private int totalEventosBase() {
-            return totalEventosBase;
-        }
-
-        private Map<String, Integer> quantidadesEstimadas() {
-            return quantidadesEstimadas;
+        private double peso() {
+            return peso;
         }
     }
 }
