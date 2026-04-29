@@ -6,6 +6,7 @@ import java.math.RoundingMode;
 
 public class ItemRelatorioCategoria {
 
+    private static final double LIMIAR_ATENCAO = 10.0;
     private static final double LIMIAR_CRITICO = 20.0;
 
     private final CategoriaDespesa categoria;
@@ -33,7 +34,9 @@ public class ItemRelatorioCategoria {
         this.percentualVariacao = calcularPercentual(valorPrevisto, valorRealizado);
         this.classificacao = this.percentualVariacao > LIMIAR_CRITICO
                 ? ClassificacaoDesvio.CRITICO
-                : ClassificacaoDesvio.NORMAL;
+                : this.percentualVariacao >= LIMIAR_ATENCAO
+                        ? ClassificacaoDesvio.ATENCAO
+                        : ClassificacaoDesvio.NORMAL;
     }
 
 

@@ -5,6 +5,7 @@ import domain.evento.repository.EventoRepository;
 import domain.financeiro.entity.CategoriaOrcamento;
 import domain.financeiro.entity.Despesa;
 import domain.financeiro.entity.OrcamentoEvento;
+import domain.financeiro.exception.CategoriaOrcamentoEsgotadaException;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
@@ -13,6 +14,7 @@ import domain.financeiro.service.DespesaServiceImpl;
 import domain.financeiro.valueobject.CategoriaDespesa;
 import domain.financeiro.valueobject.ClassificacaoDesvio;
 import domain.financeiro.valueobject.DesvioOrcamentario;
+import domain.financeiro.valueobject.StatusDespesa;
 
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
@@ -35,25 +37,25 @@ import static org.mockito.Mockito.when;
 
 public class DespesaSteps {
 
-    private static final String ID_EVENTO      = "evento-fin-1";
-    private static final String ID_ORCAMENTO   = "orc-1";
-    private static final String ID_FORNECEDOR  = "fornecedor-1";
-    private static final String ID_USUARIO     = "usuario-gestor-1";
+    private static final String ID_EVENTO     = "evento-fin-1";
+    private static final String ID_ORCAMENTO  = "orc-1";
+    private static final String ID_FORNECEDOR = "fornecedor-1";
+    private static final String ID_USUARIO    = "usuario-gestor-1";
 
-    private EventoRepository            eventoRepository;
-    private OrcamentoEventoRepository   orcamentoEventoRepository;
+    private EventoRepository             eventoRepository;
+    private OrcamentoEventoRepository    orcamentoEventoRepository;
     private CategoriaOrcamentoRepository categoriaOrcamentoRepository;
-    private DespesaRepository           despesaRepository;
-    private DespesaService              despesaService;
+    private DespesaRepository            despesaRepository;
+    private DespesaService               despesaService;
 
-    private Exception          excecaoLancada;
-    private Despesa            despesaEmContexto;
-    private Despesa            despesaRetornadaBusca;
-    private List<Despesa>      listaDespesasRetornada;
-    private DesvioOrcamentario desvioRetornado;
+    private Exception               excecaoLancada;
+    private Despesa                 despesaEmContexto;
+    private Despesa                 despesaRetornadaBusca;
+    private List<Despesa>           listaDespesasRetornada;
+    private DesvioOrcamentario      desvioRetornado;
     private List<DesvioOrcamentario> listaDesviosRetornada;
 
-    private OrcamentoEvento    orcamentoEmContexto;
+    private OrcamentoEvento          orcamentoEmContexto;
     private List<CategoriaOrcamento> categoriasOrcamento = new ArrayList<>();
 
     @Before
@@ -80,8 +82,13 @@ public class DespesaSteps {
 
         when(despesaRepository.salvar(any(Despesa.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(any(), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(despesaRepository.somarValoresPorEventoECategoria(any(), any()))
+                .thenReturn(BigDecimal.ZERO);
     }
 
+    // ──── Givens de evento ────────────────────────────────────────────────
 
     @Given("existe um evento válido para despesas")
     public void existe_um_evento_valido_para_despesas() {
@@ -93,6 +100,8 @@ public class DespesaSteps {
     public void nao_existe_evento_valido_para_despesas() {
         when(eventoRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
+
+    // ──── Givens de orçamento ─────────────────────────────────────────────
 
     @Given("existe um orçamento cadastrado para o evento")
     public void existe_um_orcamento_cadastrado_para_o_evento() {
@@ -120,20 +129,34 @@ public class DespesaSteps {
 
         when(categoriaOrcamentoRepository.buscarPorOrcamentoECategoria(any(), eq(cat)))
                 .thenReturn(Optional.of(co));
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(BigDecimal.ZERO);
         when(despesaRepository.somarValoresPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
                 .thenReturn(BigDecimal.ZERO);
     }
 
+    @Given("o total acumulado ativo da categoria {string} é de {double}")
+    public void o_total_acumulado_ativo_da_categoria_e_de(String catStr, double total) {
+        CategoriaDespesa cat = CategoriaDespesa.valueOf(catStr);
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(BigDecimal.valueOf(total));
+    }
+
+    @Given("já foram registradas despesas ativas de {double} na categoria {string}")
+    public void ja_foram_registradas_despesas_ativas_de_na_categoria(double total, String catStr) {
+        CategoriaDespesa cat = CategoriaDespesa.valueOf(catStr);
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(BigDecimal.valueOf(total));
+    }
+
     @Given("já foram registradas despesas de {double} na categoria {string}")
     public void ja_foram_registradas_despesas_de_na_categoria(double total, String catStr) {
-        CategoriaDespesa cat = CategoriaDespesa.valueOf(catStr);
-        when(despesaRepository.somarValoresPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
-                .thenReturn(BigDecimal.valueOf(total));
+        ja_foram_registradas_despesas_ativas_de_na_categoria(total, catStr);
     }
 
     @Given("o total acumulado de despesas da categoria {string} é de {double}")
     public void o_total_acumulado_de_despesas_da_categoria_e_de(String catStr, double total) {
-        ja_foram_registradas_despesas_de_na_categoria(total, catStr);
+        ja_foram_registradas_despesas_ativas_de_na_categoria(total, catStr);
     }
 
     @Given("existe uma despesa registrada de {double} na categoria {string}")
@@ -152,7 +175,7 @@ public class DespesaSteps {
         when(despesaRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
 
-
+    // ──── Whens de registro ───────────────────────────────────────────────
 
     @When("eu registrar uma despesa de {double} na categoria {string} com fornecedor e usuário válidos")
     public void eu_registrar_uma_despesa_de_na_categoria(double valor, String catStr) {
@@ -248,6 +271,29 @@ public class DespesaSteps {
         }
     }
 
+    @When("eu tentar registrar uma despesa de {double} na categoria {string} que ultrapassaria o limite")
+    public void eu_tentar_registrar_despesa_que_ultrapassaria_limite(double valor, String catStr) {
+        try {
+            Despesa d = new Despesa(ID_EVENTO, CategoriaDespesa.valueOf(catStr),
+                    ID_FORNECEDOR, BigDecimal.valueOf(valor), LocalDateTime.now(), ID_USUARIO);
+            despesaService.registrarDespesa(d);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @When("eu tentar registrar uma despesa de {double} na categoria {string} com orçamento esgotado")
+    public void eu_tentar_registrar_despesa_com_orcamento_esgotado(double valor, String catStr) {
+        try {
+            Despesa d = new Despesa(ID_EVENTO, CategoriaDespesa.valueOf(catStr),
+                    ID_FORNECEDOR, BigDecimal.valueOf(valor), LocalDateTime.now(), ID_USUARIO);
+            despesaService.registrarDespesa(d);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    // ──── Whens de cálculo de desvio ──────────────────────────────────────
 
     @When("eu calcular o desvio da categoria {string}")
     public void eu_calcular_o_desvio_da_categoria(String catStr) {
@@ -272,7 +318,7 @@ public class DespesaSteps {
     public void eu_calcular_os_desvios_de_todas_as_categorias_do_evento() {
         try {
             for (CategoriaOrcamento co : categoriasOrcamento) {
-                when(despesaRepository.somarValoresPorEventoECategoria(
+                when(despesaRepository.somarValoresAtivosPorEventoECategoria(
                         eq(ID_EVENTO), eq(co.getNome())))
                         .thenReturn(BigDecimal.ZERO);
             }
@@ -282,6 +328,7 @@ public class DespesaSteps {
         }
     }
 
+    // ──── Whens de visualização ───────────────────────────────────────────
 
     @When("eu buscar essa despesa pelo id")
     public void eu_buscar_essa_despesa_pelo_id() {
@@ -310,6 +357,8 @@ public class DespesaSteps {
         }
     }
 
+    // ──── Thens ───────────────────────────────────────────────────────────
+
     @Then("a despesa é salva com sucesso")
     public void a_despesa_e_salva_com_sucesso() {
         assertNull(excecaoLancada,
@@ -317,17 +366,32 @@ public class DespesaSteps {
         assertNotNull(despesaEmContexto);
     }
 
+    @Then("o status da despesa deve ser {string}")
+    public void o_status_da_despesa_deve_ser(String esperado) {
+        assertNull(excecaoLancada);
+        assertNotNull(despesaEmContexto);
+        assertEquals(StatusDespesa.valueOf(esperado), despesaEmContexto.getStatus());
+    }
+
     @Then("o sistema deve impedir o registro da despesa")
     public void o_sistema_deve_impedir_o_registro_da_despesa() {
         assertNotNull(excecaoLancada, "Era esperada uma exceção, mas nenhuma foi lançada.");
+    }
+
+    @Then("o sistema deve bloquear o registro por orçamento esgotado")
+    public void o_sistema_deve_bloquear_o_registro_por_orcamento_esgotado() {
+        assertNotNull(excecaoLancada, "Era esperada CategoriaOrcamentoEsgotadaException.");
+        assertTrue(excecaoLancada instanceof CategoriaOrcamentoEsgotadaException,
+                "Esperado CategoriaOrcamentoEsgotadaException, mas foi: "
+                        + excecaoLancada.getClass().getSimpleName());
     }
 
     @Then("a despesa deve conter data, hora e usuário responsável pelo lançamento")
     public void a_despesa_deve_conter_data_hora_e_usuario() {
         assertNull(excecaoLancada);
         assertNotNull(despesaEmContexto);
-        assertNotNull(despesaEmContexto.getDataHoraLancamento(), "dataHoraLancamento deve ser preenchida automaticamente.");
-        assertNotNull(despesaEmContexto.getLancadoPorUsuarioId(), "lancadoPorUsuarioId deve estar preenchido.");
+        assertNotNull(despesaEmContexto.getDataHoraLancamento());
+        assertNotNull(despesaEmContexto.getLancadoPorUsuarioId());
         assertEquals(ID_USUARIO, despesaEmContexto.getLancadoPorUsuarioId());
     }
 
