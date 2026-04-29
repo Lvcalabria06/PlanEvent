@@ -384,6 +384,7 @@ BoundedContext PlanejamentoContext implements EventOS {
         Entity Compromisso {
             aggregateRoot
             -CompromissoId id
+            String eventoId
             String gestorId
             String titulo
             String descricao
@@ -392,9 +393,44 @@ BoundedContext PlanejamentoContext implements EventOS {
             -StatusCompromisso status
             Date createdAt
             Date updatedAt
+            
+            Repository CompromissoRepository {
+                @Compromisso buscar(@CompromissoId id);
+                List<Compromisso> listarPorGestor(String gestorId);
+            }
         }
-
+        Entity Lembrete {
+            -LembreteId id
+            String compromissoId
+            String eventoId
+            Date horario
+            String mensagem
+            boolean notificado
+            Date createdAt
+            Date updatedAt
+            
+            Repository LembreteRepository {
+                @Lembrete buscar(@LembreteId id);
+                List<Lembrete> listarPorCompromissoId(String compromissoId);
+                List<Lembrete> listarPorEventoId(String eventoId);
+            }
+        }
         ValueObject CompromissoId { String valor }
         ValueObject StatusCompromisso { String valor }
+        ValueObject LembreteId { String valor }
+        Service CompromissoService {
+            @Compromisso criarCompromisso(@Compromisso compromisso);
+            @Compromisso editarCompromisso(@Compromisso compromisso);
+            void removerCompromisso(String id);
+            @Compromisso buscarCompromisso(String id);
+            List<Compromisso> listarCompromissosDoGestor(String gestorId);
+        }
+        Service LembreteService {
+            @Lembrete criarLembrete(@Lembrete lembrete);
+            @Lembrete editarLembrete(@Lembrete lembrete);
+            void excluirLembrete(String id);
+            List<Lembrete> listarPorCompromisso(String compromissoId);
+            List<Lembrete> listarPorEvento(String eventoId);
+        }
     }
 }
