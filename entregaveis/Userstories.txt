@@ -53,9 +53,6 @@ CA1: Deve permitir informar teto maior ou igual a zero e exibir lista filtrada p
  CA6: Deve impedir vínculo, alteração ou remoção do local após a confirmação da preparação inicial.
  CA7: Deve impedir teto negativo.
 
-
-
-
 2 – GESTÃO DE ESTOQUE
 1. Previsão de consumo baseada em histórico
 História de usuário
@@ -93,8 +90,6 @@ Critérios de aceitação
  CA3: Deve exibir os itens em conflito ao gestor.
  CA4: Deve registrar reservas confirmadas vinculadas ao evento.
  CA5: Deve recalcular a disponibilidade após alterações na solicitação.
-
-
 
 3 - GARANTIR CONTROLE FINANCEIRO DO EVENTO
 1. Registro de despesas com comparação automática ao orçamento
@@ -234,7 +229,6 @@ RN6: Não é permitido editar compromissos que já foram concluídos.
 RN7: Compromissos em andamento não podem ser excluídos.
 RN8: Toda alteração deve atualizar automaticamente o registro de modificação (ex: updatedAt).
 
-
 PASSO 2: gerenciar lembretes e alertas de compromissos
 histórias de usuário
 Como gestor, quero criar um lembrete vinculado a um compromisso para ser notificado antes do horário definido.
@@ -372,13 +366,6 @@ Critérios de aceitação
  CA4: Deve informar o motivo do bloqueio ao usuário.
  CA5: Deve revalidar a disponibilidade após alterações na agenda do local.
 
-
-
-
-
-
-
-
 Sugestão automática de local com base nos dados do evento
 História de usuário
  Como gestor, quero que o sistema sugira automaticamente locais adequados com base nas características do evento, para agilizar a escolha do espaço.
@@ -399,5 +386,3 @@ Critérios de aceitação
  CA4: Deve ordenar os locais por nível de adequação.
  CA5: Deve exibir justificativa da sugestão apresentada.
  CA6: Deve permitir que o usuário selecione um dos locais sugeridos.
-
-
