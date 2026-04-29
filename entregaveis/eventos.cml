@@ -255,6 +255,7 @@ BoundedContext PlanejamentoContext implements EventOS {
     }
 
     Aggregate Financeiro {
+
         Entity OrcamentoEvento {
             aggregateRoot
             -OrcamentoEventoId id
@@ -263,12 +264,127 @@ BoundedContext PlanejamentoContext implements EventOS {
             Date dataCriacao
 
             Repository OrcamentoEventoRepository {
-                @OrcamentoEvento buscar(@OrcamentoEventoId id);
+                @OrcamentoEvento buscarPorId(String id);
+                @OrcamentoEvento buscarPorEventoId(String eventoId);
+            }
+        }
+
+        Entity CategoriaOrcamento {
+            -CategoriaOrcamentoId id
+            String orcamentoId
+            -CategoriaDespesa nome
+            BigDecimal valorPrevisto
+
+            Repository CategoriaOrcamentoRepository {
+                @CategoriaOrcamento salvar(@CategoriaOrcamento categoria);
+                @CategoriaOrcamento buscarPorOrcamentoECategoria(String orcamentoId, @CategoriaDespesa categoria);
+                List<CategoriaOrcamento> listarPorOrcamentoId(String orcamentoId);
+            }
+        }
+
+        Entity Despesa {
+            -DespesaId id
+            String eventoId
+            -CategoriaDespesa categoria
+            String fornecedorId
+            BigDecimal valor
+            Date data
+            String lancadoPorUsuarioId
+            Date dataHoraLancamento
+            -StatusDespesa status
+            String aprovadorId
+            String motivoRejeicao
+
+            Repository DespesaRepository {
+                @Despesa salvar(@Despesa despesa);
+                @Despesa buscarPorId(String id);
+                List<Despesa> listarPorEventoId(String eventoId);
+                List<Despesa> listarPorEventoECategoria(String eventoId, @CategoriaDespesa categoria);
+                BigDecimal somarValoresPorEventoECategoria(String eventoId, @CategoriaDespesa categoria);
+                BigDecimal somarValoresAtivosPorEventoECategoria(String eventoId, @CategoriaDespesa categoria);
+            }
+        }
+
+        Entity RelatorioFinanceiro {
+            -RelatorioFinanceiroId id
+            String eventoId
+            String geradoPorUsuarioId
+            Date dataGeracao
+            BigDecimal totalGeralPrevisto
+            BigDecimal totalGeralRealizado
+            List<ItemRelatorioCategoria> itensPorCategoria
+            -SaudeFinanceira saudeFinanceira
+            String conteudo
+
+            Repository RelatorioFinanceiroRepository {
+                @RelatorioFinanceiro salvar(@RelatorioFinanceiro relatorio);
+                @RelatorioFinanceiro buscarPorId(String id);
+                List<RelatorioFinanceiro> listarPorEventoId(String eventoId);
             }
         }
 
         ValueObject OrcamentoEventoId { String valor }
+        ValueObject CategoriaOrcamentoId { String valor }
+        ValueObject DespesaId { String valor }
+        ValueObject RelatorioFinanceiroId { String valor }
+
+        enum CategoriaDespesa {
+            ALIMENTACAO, DECORACAO, EQUIPAMENTO, LOGISTICA, MARKETING, SERVICO, OUTRO
+        }
+
+        enum StatusDespesa {
+            REGISTRADA,
+            PENDENTE_APROVACAO,
+            APROVADA,
+            REJEITADA
+        }
+
+        enum ClassificacaoDesvio {
+            NORMAL, ATENCAO, CRITICO
+        }
+
+        enum ClassificacaoSaude {
+            SAUDAVEL, ATENCAO, CRITICO
+        }
+
+        ValueObject DesvioOrcamentario {
+            -CategoriaDespesa categoria
+            BigDecimal valorPrevisto
+            BigDecimal valorRealizado
+            double desvioPercentual
+            -ClassificacaoDesvio classificacao
+        }
+
+        ValueObject ItemRelatorioCategoria {
+            -CategoriaDespesa categoria
+            BigDecimal valorPrevisto
+            BigDecimal valorRealizado
+            double percentualVariacao
+            -ClassificacaoDesvio classificacao
+        }
+
+        ValueObject SaudeFinanceira {
+            double score
+            -ClassificacaoSaude classificacao
+        }
+
+        Service DespesaService {
+            @Despesa registrarDespesa(@Despesa despesa);
+            @Despesa buscarDespesa(String id);
+            List<Despesa> listarDespesasPorEvento(String eventoId);
+            @DesvioOrcamentario calcularDesvio(String eventoId, @CategoriaDespesa categoria);
+            List<DesvioOrcamentario> calcularDesviosPorEvento(String eventoId);
+            @Despesa aprovarDespesa(String despesaId, String aprovadorId);
+            @Despesa rejeitarDespesa(String despesaId, String aprovadorId, String motivo);
+        }
+
+        Service RelatorioFinanceiroService {
+            @RelatorioFinanceiro gerarRelatorio(String eventoId, String usuarioId);
+            @RelatorioFinanceiro buscarRelatorio(String id);
+            List<RelatorioFinanceiro> listarRelatoriosPorEvento(String eventoId);
+        }
     }
+
 
     Aggregate Estoque {
         Entity ItemEstoque {
