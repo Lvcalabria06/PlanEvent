@@ -6,6 +6,7 @@ import domain.evento.entity.Evento;
 import domain.evento.valueobject.PorteEvento;
 import domain.evento.valueobject.TipoEvento;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,164 +21,138 @@ public class PrevisaoConsumo {
     private final String geradoPorUsuarioId;
     private final LocalDateTime dataGeracao;
     private StatusHistoricoPrevisao statusHistorico;
+    private boolean fallbackUtilizado;
+    private boolean invalidada;
+    private int versaoAtual;
     private int totalEventosBase;
     private TipoEvento tipoEventoReferencia;
     private PorteEvento porteEventoReferencia;
-    private int quantidadeParticipantesReferencia;
-    private String objetivoReferencia;
+    private long duracaoHorasReferencia;
     private List<ItemPrevisao> itens;
     private final List<RegistroHistoricoPrevisao> historicoRegistros;
 
     public PrevisaoConsumo(Evento evento,
                            String geradoPorUsuarioId,
                            StatusHistoricoPrevisao statusHistorico,
+                           boolean fallbackUtilizado,
                            int totalEventosBase,
                            List<ItemPrevisao> itensPrevistos) {
         if (evento == null) {
             throw new IllegalArgumentException("Evento e obrigatorio.");
-        }
-        if (geradoPorUsuarioId == null || geradoPorUsuarioId.isBlank()) {
-            throw new IllegalArgumentException("Usuario responsavel e obrigatorio.");
         }
         this.id = UUID.randomUUID().toString();
         this.eventoId = evento.getId();
         this.geradoPorUsuarioId = geradoPorUsuarioId;
         this.dataGeracao = LocalDateTime.now();
         this.statusHistorico = statusHistorico;
+        this.fallbackUtilizado = fallbackUtilizado;
+        this.invalidada = false;
+        this.versaoAtual = 1;
         this.totalEventosBase = totalEventosBase;
-        this.itens = itensPrevistos.stream()
-                .map(item -> {
-                    ItemPrevisao novoItem = new ItemPrevisao(this.id, item.getItemEstoqueId(), item.getQuantidadePrevista());
-                    if (item.getQuantidadeAjustada() != item.getQuantidadePrevista()) {
-                        novoItem.ajustarQuantidade(item.getQuantidadeAjustada());
-                    }
-                    return novoItem;
-                })
-                .collect(Collectors.toCollection(ArrayList::new));
+        this.itens = clonarItens(itensPrevistos);
         this.historicoRegistros = new ArrayList<>();
         atualizarReferenciaEvento(evento);
         registrarHistorico(TipoRegistroPrevisao.GERACAO_INICIAL, geradoPorUsuarioId, "Previsao inicial gerada.");
     }
 
-    public void ajustarQuantidades(Map<String, Integer> quantidadesAjustadas, String usuarioResponsavelId) {
-        if (quantidadesAjustadas == null || quantidadesAjustadas.isEmpty()) {
-            throw new IllegalArgumentException("Informe ao menos um item para ajuste manual.");
+    public void invalidarPorAlteracaoEvento(Evento evento, String usuarioId) {
+        if (!possuiMudancaRelevante(evento)) {
+            return;
         }
-        for (ItemPrevisao item : itens) {
-            Integer quantidadeAjustada = quantidadesAjustadas.get(item.getItemEstoqueId());
-            if (quantidadeAjustada != null) {
-                item.ajustarQuantidade(quantidadeAjustada);
-            }
-        }
-        registrarHistorico(TipoRegistroPrevisao.AJUSTE_MANUAL, usuarioResponsavelId, "Ajuste manual realizado.");
+        this.invalidada = true;
+        this.statusHistorico = StatusHistoricoPrevisao.INVALIDADA;
+        registrarHistorico(TipoRegistroPrevisao.INVALIDACAO, usuarioId, "Previsao invalidada por alteracao relevante do evento.");
     }
 
     public void recalcular(Evento evento,
-                           String usuarioResponsavelId,
-                           StatusHistoricoPrevisao novoStatusHistorico,
+                           String usuarioId,
+                           StatusHistoricoPrevisao novoStatus,
+                           boolean novoFallback,
                            int novoTotalEventosBase,
                            List<ItemPrevisao> novosItens) {
-        if (!possuiMudancaRelevante(evento)) {
-            throw new IllegalStateException("Nao ha alteracoes relevantes no evento para recalculo da previsao.");
-        }
-        this.statusHistorico = novoStatusHistorico;
+        this.versaoAtual += 1;
+        this.invalidada = false;
+        this.statusHistorico = novoStatus;
+        this.fallbackUtilizado = novoFallback;
         this.totalEventosBase = novoTotalEventosBase;
-        this.itens = novosItens.stream()
-                .map(item -> {
-                    ItemPrevisao novoItem = new ItemPrevisao(this.id, item.getItemEstoqueId(), item.getQuantidadePrevista());
-                    if (item.getQuantidadeAjustada() != item.getQuantidadePrevista()) {
-                        novoItem.ajustarQuantidade(item.getQuantidadeAjustada());
-                    }
-                    return novoItem;
-                })
-                .collect(Collectors.toCollection(ArrayList::new));
+        this.itens = clonarItens(novosItens);
         atualizarReferenciaEvento(evento);
-        registrarHistorico(TipoRegistroPrevisao.RECALCULO, usuarioResponsavelId, "Previsao recalculada por mudanca relevante.");
+        registrarHistorico(TipoRegistroPrevisao.RECALCULO, usuarioId, "Previsao recalculada.");
+    }
+
+    public void ajustarQuantidades(Map<String, Integer> quantidadesAjustadas, String usuarioId, String justificativa) {
+        for (ItemPrevisao item : itens) {
+            Integer quantidade = quantidadesAjustadas.get(item.getItemEstoqueId());
+            if (quantidade != null) {
+                item.sobrescreverQuantidadeFinal(quantidade);
+            }
+        }
+        registrarHistorico(TipoRegistroPrevisao.AJUSTE_MANUAL, usuarioId, justificativa);
     }
 
     public boolean possuiMudancaRelevante(Evento evento) {
         if (evento == null) {
             return false;
         }
-        if (evento.getTipo() != tipoEventoReferencia || evento.getPorte() != porteEventoReferencia) {
-            return true;
-        }
-        if (!normalizar(objetivoReferencia).equals(normalizar(evento.getObjetivo()))) {
-            return true;
-        }
-        if (quantidadeParticipantesReferencia == 0) {
-            return true;
-        }
-        int diferenca = Math.abs(evento.getQuantidadeEstimadaParticipantes() - quantidadeParticipantesReferencia);
-        return diferenca >= Math.ceil(quantidadeParticipantesReferencia * 0.2);
+        return evento.getTipo() != tipoEventoReferencia
+                || evento.getPorte() != porteEventoReferencia
+                || calcularDuracaoHoras(evento) != duracaoHorasReferencia;
     }
 
     private void atualizarReferenciaEvento(Evento evento) {
         this.tipoEventoReferencia = evento.getTipo();
         this.porteEventoReferencia = evento.getPorte();
-        this.quantidadeParticipantesReferencia = evento.getQuantidadeEstimadaParticipantes();
-        this.objetivoReferencia = evento.getObjetivo();
+        this.duracaoHorasReferencia = calcularDuracaoHoras(evento);
     }
 
-    private void registrarHistorico(TipoRegistroPrevisao tipoRegistro, String usuarioResponsavelId, String observacao) {
+    private long calcularDuracaoHoras(Evento evento) {
+        if (evento.getJanelaInicioPlanejamento() != null && evento.getJanelaFimPlanejamento() != null) {
+            long horas = Duration.between(evento.getJanelaInicioPlanejamento(), evento.getJanelaFimPlanejamento()).toHours();
+            return Math.max(horas, 1);
+        }
+        return 1;
+    }
+
+    private List<ItemPrevisao> clonarItens(List<ItemPrevisao> origem) {
+        return origem.stream()
+                .map(item -> {
+                    ItemPrevisao novo = new ItemPrevisao(
+                            this.id,
+                            item.getItemEstoqueId(),
+                            item.getCategoriaConsumo(),
+                            item.getQuantidadeEstimada(),
+                            item.getQuantidadeMinima(),
+                            item.getQuantidadeMaxima(),
+                            item.getExplicacaoCalculo()
+                    );
+                    if (item.getQuantidadeFinal() != item.getQuantidadeEstimada()) {
+                        novo.sobrescreverQuantidadeFinal(item.getQuantidadeFinal());
+                    }
+                    return novo;
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private void registrarHistorico(TipoRegistroPrevisao tipoRegistro, String usuarioId, String justificativa) {
         List<ItemPrevisaoHistorico> snapshot = itens.stream()
                 .map(item -> new ItemPrevisaoHistorico(
                         item.getItemEstoqueId(),
-                        item.getQuantidadePrevista(),
-                        item.getQuantidadeAjustada()))
+                        item.getCategoriaConsumo(),
+                        item.getQuantidadeEstimada(),
+                        item.getQuantidadeFinal()))
                 .collect(Collectors.toList());
-        historicoRegistros.add(new RegistroHistoricoPrevisao(tipoRegistro, usuarioResponsavelId, observacao, snapshot));
+        historicoRegistros.add(new RegistroHistoricoPrevisao(versaoAtual, tipoRegistro, usuarioId, justificativa, snapshot));
     }
 
-    private String normalizar(String texto) {
-        return texto == null ? "" : texto.trim().toLowerCase();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getEventoId() {
-        return eventoId;
-    }
-
-    public String getGeradoPorUsuarioId() {
-        return geradoPorUsuarioId;
-    }
-
-    public LocalDateTime getDataGeracao() {
-        return dataGeracao;
-    }
-
-    public StatusHistoricoPrevisao getStatusHistorico() {
-        return statusHistorico;
-    }
-
-    public int getTotalEventosBase() {
-        return totalEventosBase;
-    }
-
-    public List<ItemPrevisao> getItens() {
-        return Collections.unmodifiableList(itens);
-    }
-
-    public List<RegistroHistoricoPrevisao> getHistoricoRegistros() {
-        return Collections.unmodifiableList(historicoRegistros);
-    }
-
-    public TipoEvento getTipoEventoReferencia() {
-        return tipoEventoReferencia;
-    }
-
-    public PorteEvento getPorteEventoReferencia() {
-        return porteEventoReferencia;
-    }
-
-    public int getQuantidadeParticipantesReferencia() {
-        return quantidadeParticipantesReferencia;
-    }
-
-    public String getObjetivoReferencia() {
-        return objetivoReferencia;
-    }
+    public String getId() { return id; }
+    public String getEventoId() { return eventoId; }
+    public String getGeradoPorUsuarioId() { return geradoPorUsuarioId; }
+    public LocalDateTime getDataGeracao() { return dataGeracao; }
+    public StatusHistoricoPrevisao getStatusHistorico() { return statusHistorico; }
+    public boolean isFallbackUtilizado() { return fallbackUtilizado; }
+    public boolean isInvalidada() { return invalidada; }
+    public int getVersaoAtual() { return versaoAtual; }
+    public int getTotalEventosBase() { return totalEventosBase; }
+    public List<ItemPrevisao> getItens() { return Collections.unmodifiableList(itens); }
+    public List<RegistroHistoricoPrevisao> getHistoricoRegistros() { return Collections.unmodifiableList(historicoRegistros); }
 }
