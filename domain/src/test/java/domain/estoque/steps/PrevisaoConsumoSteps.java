@@ -206,7 +206,13 @@ public class PrevisaoConsumoSteps {
     @Then("cada item previsto deve apresentar explicacao detalhada com eventos pesos e ajustes")
     public void cadaItemPrevistoDeveApresentarExplicacaoDetalhadaComEventosPesosEAjustes() {
         assertNull(excecaoLancada);
-        assertTrue(previsaoEmContexto.getItens().get(0).getExplicacaoCalculo().contains("Eventos usados"));
+        String explicacao = previsaoEmContexto.getItens().get(0).getExplicacaoCalculo();
+        assertTrue(explicacao.contains("Eventos usados"),
+                "Explicacao deve listar os eventos usados: " + explicacao);
+        assertTrue(explicacao.contains("Pesos"),
+                "Explicacao deve detalhar os pesos aplicados: " + explicacao);
+        assertTrue(explicacao.contains("Ajustes"),
+                "Explicacao deve descrever os ajustes aplicados: " + explicacao);
     }
 
     @Then("o ajuste manual deve sobrescrever a previsao com usuario data hora e justificativa")

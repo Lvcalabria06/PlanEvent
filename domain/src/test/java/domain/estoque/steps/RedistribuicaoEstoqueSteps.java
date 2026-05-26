@@ -131,7 +131,7 @@ public class RedistribuicaoEstoqueSteps {
 
     @Given("o item {string} possui estoque total de {int} unidades para redistribuicao")
     public void oItemPossuiEstoqueTotalDeUnidadesParaRedistribuicao(String itemId, int quantidade) {
-        ItemEstoque item = new ItemEstoque(itemId, quantidade);
+        ItemEstoque item = new ItemEstoque(itemId, itemId, quantidade);
         itensEstoque.add(item);
         when(itemEstoqueRepository.buscarPorId(eq(itemId)))
                 .thenReturn(Optional.of(item));
@@ -216,7 +216,7 @@ public class RedistribuicaoEstoqueSteps {
                 .sum();
 
         ItemEstoque item = itensEstoque.stream()
-                .filter(i -> i.getNome().equals(itemId))
+                .filter(i -> i.getId().equals(itemId))
                 .findFirst()
                 .orElse(null);
         assertNotNull(item);
