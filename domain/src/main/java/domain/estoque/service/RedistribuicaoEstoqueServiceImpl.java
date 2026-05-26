@@ -3,20 +3,21 @@ package domain.estoque.service;
 import domain.estoque.entity.AlocacaoRedistribuicao;
 import domain.estoque.entity.CenarioRedistribuicao;
 import domain.estoque.entity.ItemEstoque;
+import domain.estoque.entity.ItemPrevisao;
 import domain.estoque.entity.ItemReserva;
 import domain.estoque.entity.ItemSubstituicao;
+import domain.estoque.entity.PrevisaoConsumo;
 import domain.estoque.entity.ReservaEstoque;
 import domain.estoque.repository.CenarioRedistribuicaoRepository;
 import domain.estoque.repository.ItemEstoqueRepository;
+import domain.estoque.repository.PrevisaoConsumoRepository;
 import domain.estoque.repository.ReservaEstoqueRepository;
-import domain.estoque.valueobject.CriticidadeEvento;
-import domain.estoque.valueobject.StatusRedistribuicao;
+import domain.estoque.strategy.EstrategiaPrioridadeEvento;
+import domain.estoque.strategy.PrioridadePadraoEventoStrategy;
 import domain.estoque.valueobject.StatusReservaEstoque;
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
-import domain.evento.valueobject.PorteEvento;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,15 +34,35 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
     private final ItemEstoqueRepository itemEstoqueRepository;
     private final EventoRepository eventoRepository;
     private final CenarioRedistribuicaoRepository cenarioRedistribuicaoRepository;
+    private final PrevisaoConsumoRepository previsaoConsumoRepository;
+    private final EstrategiaPrioridadeEvento estrategiaPrioridade;
 
     public RedistribuicaoEstoqueServiceImpl(ReservaEstoqueRepository reservaEstoqueRepository,
                                              ItemEstoqueRepository itemEstoqueRepository,
                                              EventoRepository eventoRepository,
                                              CenarioRedistribuicaoRepository cenarioRedistribuicaoRepository) {
+        this(reservaEstoqueRepository,
+                itemEstoqueRepository,
+                eventoRepository,
+                cenarioRedistribuicaoRepository,
+                null,
+                new PrioridadePadraoEventoStrategy());
+    }
+
+    public RedistribuicaoEstoqueServiceImpl(ReservaEstoqueRepository reservaEstoqueRepository,
+                                             ItemEstoqueRepository itemEstoqueRepository,
+                                             EventoRepository eventoRepository,
+                                             CenarioRedistribuicaoRepository cenarioRedistribuicaoRepository,
+                                             PrevisaoConsumoRepository previsaoConsumoRepository,
+                                             EstrategiaPrioridadeEvento estrategiaPrioridade) {
         this.reservaEstoqueRepository = reservaEstoqueRepository;
         this.itemEstoqueRepository = itemEstoqueRepository;
         this.eventoRepository = eventoRepository;
         this.cenarioRedistribuicaoRepository = cenarioRedistribuicaoRepository;
+        this.previsaoConsumoRepository = previsaoConsumoRepository;
+        this.estrategiaPrioridade = estrategiaPrioridade != null
+                ? estrategiaPrioridade
+                : new PrioridadePadraoEventoStrategy();
     }
 
     @Override
@@ -60,7 +81,7 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
         Map<String, Double> prioridadesPorEvento = calcularPrioridades(eventosMap, periodoInicio);
 
         List<ReservaEstoque> reservasRedistribuiveis = reservasNoPeriodo.stream()
-                .filter(r -> podeRedistribuir(r))
+                .filter(this::podeRedistribuir)
                 .collect(Collectors.toList());
 
         List<ReservaEstoque> reservasImutaveis = reservasNoPeriodo.stream()
@@ -70,8 +91,11 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
         List<AlocacaoRedistribuicao> alocacoesAtuais = montarAlocacoesAtuais(reservasNoPeriodo);
         Map<String, Integer> estoqueDisponivel = calcularEstoqueDisponivel(reservasImutaveis);
 
+        Map<String, List<DemandaEvento>> demandasPorItem = montarDemandas(
+                reservasRedistribuiveis, prioridadesPorEvento, reservasNoPeriodo, periodoInicio, periodoFim);
+
         List<AlocacaoRedistribuicao> alocacoesOtimizadas = calcularDistribuicaoOtimizada(
-                reservasRedistribuiveis, estoqueDisponivel, prioridadesPorEvento);
+                demandasPorItem, estoqueDisponivel);
 
         for (ReservaEstoque reservaImutavel : reservasImutaveis) {
             for (ItemReserva item : reservaImutavel.getItensReservados()) {
@@ -119,12 +143,13 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
         return buscarCenarioExistente(cenarioId);
     }
 
-    private List<AlocacaoRedistribuicao> calcularDistribuicaoOtimizada(
-            List<ReservaEstoque> reservasRedistribuiveis,
-            Map<String, Integer> estoqueDisponivel,
-            Map<String, Double> prioridadesPorEvento) {
-
+    private Map<String, List<DemandaEvento>> montarDemandas(List<ReservaEstoque> reservasRedistribuiveis,
+                                                             Map<String, Double> prioridadesPorEvento,
+                                                             List<ReservaEstoque> reservasNoPeriodo,
+                                                             LocalDateTime periodoInicio,
+                                                             LocalDateTime periodoFim) {
         Map<String, List<DemandaEvento>> demandasPorItem = new LinkedHashMap<>();
+
         for (ReservaEstoque reserva : reservasRedistribuiveis) {
             for (ItemReserva item : reserva.getItensReservados()) {
                 demandasPorItem.computeIfAbsent(item.getItemEstoqueId(), k -> new ArrayList<>())
@@ -136,6 +161,71 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
                         ));
             }
         }
+
+        adicionarDemandaPorPrevisao(
+                demandasPorItem, prioridadesPorEvento, reservasNoPeriodo, periodoInicio, periodoFim);
+
+        return demandasPorItem;
+    }
+
+    private void adicionarDemandaPorPrevisao(Map<String, List<DemandaEvento>> demandasPorItem,
+                                              Map<String, Double> prioridadesPorEvento,
+                                              List<ReservaEstoque> reservasNoPeriodo,
+                                              LocalDateTime periodoInicio,
+                                              LocalDateTime periodoFim) {
+        if (previsaoConsumoRepository == null) {
+            return;
+        }
+
+        java.util.Set<String> eventosComReserva = reservasNoPeriodo.stream()
+                .map(ReservaEstoque::getEventoId)
+                .collect(Collectors.toSet());
+
+        for (PrevisaoConsumo previsao : previsaoConsumoRepository.listarTodas()) {
+            if (previsao.isInvalidada() || eventosComReserva.contains(previsao.getEventoId())) {
+                continue;
+            }
+            eventoRepository.buscarPorId(previsao.getEventoId())
+                    .filter(evento -> sobrepoePeriodo(evento, periodoInicio, periodoFim))
+                    .ifPresent(evento -> mesclarItensPrevisao(
+                            demandasPorItem, prioridadesPorEvento, evento, previsao));
+        }
+    }
+
+    private void mesclarItensPrevisao(Map<String, List<DemandaEvento>> demandasPorItem,
+                                       Map<String, Double> prioridadesPorEvento,
+                                       Evento evento,
+                                       PrevisaoConsumo previsao) {
+        double prioridade = prioridadesPorEvento.computeIfAbsent(
+                evento.getId(), id -> estrategiaPrioridade.calcular(evento, LocalDateTime.now()));
+
+        for (ItemPrevisao item : previsao.getItens()) {
+            int quantidade = item.getQuantidadeFinal() > 0
+                    ? item.getQuantidadeFinal()
+                    : item.getQuantidadeEstimada();
+            if (quantidade <= 0) {
+                continue;
+            }
+            demandasPorItem.computeIfAbsent(item.getItemEstoqueId(), k -> new ArrayList<>())
+                    .add(new DemandaEvento(
+                            evento.getId(),
+                            item.getItemEstoqueId(),
+                            quantidade,
+                            prioridade));
+        }
+    }
+
+    private boolean sobrepoePeriodo(Evento evento, LocalDateTime inicio, LocalDateTime fim) {
+        if (evento.getJanelaInicioPlanejamento() == null || evento.getJanelaFimPlanejamento() == null) {
+            return false;
+        }
+        return !evento.getJanelaInicioPlanejamento().isAfter(fim)
+                && !inicio.isAfter(evento.getJanelaFimPlanejamento());
+    }
+
+    private List<AlocacaoRedistribuicao> calcularDistribuicaoOtimizada(
+            Map<String, List<DemandaEvento>> demandasPorItem,
+            Map<String, Integer> estoqueDisponivel) {
 
         List<AlocacaoRedistribuicao> alocacoes = new ArrayList<>();
         Map<String, Integer> estoqueRestante = new HashMap<>(estoqueDisponivel);
@@ -212,51 +302,9 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
                                                      LocalDateTime referencia) {
         Map<String, Double> prioridades = new HashMap<>();
         for (Map.Entry<String, Evento> entry : eventosMap.entrySet()) {
-            Evento evento = entry.getValue();
-            double pesoCriticidade = calcularPesoCriticidade(determinarCriticidade(evento));
-            double pesoProximidade = calcularPesoProximidade(evento, referencia);
-            double pesoPorte = calcularPesoPorte(evento.getPorte());
-            prioridades.put(entry.getKey(), pesoCriticidade * 0.5 + pesoProximidade * 0.3 + pesoPorte * 0.2);
+            prioridades.put(entry.getKey(), estrategiaPrioridade.calcular(entry.getValue(), referencia));
         }
         return prioridades;
-    }
-
-    private CriticidadeEvento determinarCriticidade(Evento evento) {
-        if (evento.isPlanejamentoConfirmado()) {
-            return evento.getPorte() == PorteEvento.MEGA || evento.getPorte() == PorteEvento.GRANDE
-                    ? CriticidadeEvento.CRITICA : CriticidadeEvento.ALTA;
-        }
-        return evento.getPorte() == PorteEvento.GRANDE || evento.getPorte() == PorteEvento.MEGA
-                ? CriticidadeEvento.MEDIA : CriticidadeEvento.BAIXA;
-    }
-
-    private double calcularPesoCriticidade(CriticidadeEvento criticidade) {
-        return switch (criticidade) {
-            case CRITICA -> 1.0;
-            case ALTA -> 0.75;
-            case MEDIA -> 0.5;
-            case BAIXA -> 0.25;
-        };
-    }
-
-    private double calcularPesoProximidade(Evento evento, LocalDateTime referencia) {
-        if (evento.getJanelaInicioPlanejamento() == null) {
-            return 0.5;
-        }
-        long diasAteEvento = Duration.between(referencia, evento.getJanelaInicioPlanejamento()).toDays();
-        if (diasAteEvento <= 0) return 1.0;
-        if (diasAteEvento <= 7) return 0.9;
-        if (diasAteEvento <= 30) return 0.6;
-        return 0.3;
-    }
-
-    private double calcularPesoPorte(PorteEvento porte) {
-        return switch (porte) {
-            case MEGA -> 1.0;
-            case GRANDE -> 0.75;
-            case MEDIO -> 0.5;
-            case PEQUENO -> 0.25;
-        };
     }
 
     private List<ReservaEstoque> obterReservasAtivasNoPeriodo(LocalDateTime periodoInicio, LocalDateTime periodoFim) {
@@ -306,7 +354,7 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
     private Map<String, Integer> calcularEstoqueDisponivel(List<ReservaEstoque> reservasImutaveis) {
         Map<String, Integer> estoque = new HashMap<>();
         for (ItemEstoque item : itemEstoqueRepository.listarTodos()) {
-            estoque.put(item.getNome(), item.getQuantidadeTotal());
+            estoque.put(item.getId(), item.getQuantidadeTotal());
         }
 
         for (ReservaEstoque reserva : reservasImutaveis) {
