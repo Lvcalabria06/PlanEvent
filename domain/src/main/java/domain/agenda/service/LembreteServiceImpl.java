@@ -2,6 +2,9 @@ package domain.agenda.service;
 
 import domain.agenda.entity.Compromisso;
 import domain.agenda.entity.Lembrete;
+import domain.agenda.observer.EnviarAlertaLembreteObserver;
+import domain.agenda.observer.LembreteNotificacaoSubject;
+import domain.agenda.observer.MarcarLembreteNotificadoObserver;
 import domain.agenda.repository.CompromissoRepository;
 import domain.agenda.repository.LembreteRepository;
 
@@ -12,11 +15,26 @@ public class LembreteServiceImpl implements LembreteService {
 
     private final LembreteRepository lembreteRepository;
     private final CompromissoRepository compromissoRepository;
+    private final LembreteNotificacaoSubject notificacaoSubject;
 
     public LembreteServiceImpl(LembreteRepository lembreteRepository,
                                CompromissoRepository compromissoRepository) {
+        this(lembreteRepository, compromissoRepository, criarSubjectPadrao(lembreteRepository));
+    }
+
+    public LembreteServiceImpl(LembreteRepository lembreteRepository,
+                               CompromissoRepository compromissoRepository,
+                               LembreteNotificacaoSubject notificacaoSubject) {
         this.lembreteRepository = lembreteRepository;
         this.compromissoRepository = compromissoRepository;
+        this.notificacaoSubject = notificacaoSubject;
+    }
+
+    private static LembreteNotificacaoSubject criarSubjectPadrao(LembreteRepository lembreteRepository) {
+        LembreteNotificacaoSubject subject = new LembreteNotificacaoSubject();
+        subject.registrar(new EnviarAlertaLembreteObserver());
+        subject.registrar(new MarcarLembreteNotificadoObserver(lembreteRepository));
+        return subject;
     }
 
     @Override
@@ -94,5 +112,18 @@ public class LembreteServiceImpl implements LembreteService {
                 .orElseThrow(() -> new IllegalArgumentException("Lembrete não encontrado."));
 
         lembreteRepository.remover(id);
+    }
+
+    @Override
+    public Lembrete dispararNotificacao(String lembreteId) {
+        Lembrete lembrete = lembreteRepository.buscarPorId(lembreteId)
+                .orElseThrow(() -> new IllegalArgumentException("Lembrete não encontrado."));
+
+        if (lembrete.isNotificado()) {
+            throw new IllegalStateException("Lembrete já foi notificado.");
+        }
+
+        notificacaoSubject.notificar(lembrete);
+        return lembrete;
     }
 }

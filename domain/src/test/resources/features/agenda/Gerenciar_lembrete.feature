@@ -79,3 +79,10 @@ Feature: Gestão de Lembretes
   Scenario: Criar lembrete vinculado apenas ao evento com sucesso
     When eu criar um lembrete vinculado apenas a um evento
     Then o lembrete é salvo com sucesso
+
+  Scenario: Marcar lembrete como notificado após disparo do alerta
+    Given existe um gestor válido para agenda
+    And existe um compromisso cadastrado para esse gestor
+    And existe um lembrete cadastrado para esse compromisso
+    When o sistema disparar a notificação desse lembrete
+    Then o lembrete é marcado como notificado
