@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Subject do padrao Observer: mantem observadores e os notifica quando um
- * lembrete e disparado pelo dominio.
- */
 public class LembreteNotificacaoSubject {
 
     private final List<LembreteObserver> observadores = new ArrayList<>();
