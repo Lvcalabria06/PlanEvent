@@ -15,4 +15,10 @@ public interface LembreteService {
     List<Lembrete> listarLembretesPorCompromisso(String compromissoId);
 
     void removerLembrete(String id);
+
+    /**
+     * Dispara a notificacao de um lembrete pendente (RN6 / CA6), notificando
+     * todos os observadores registrados (envio de alerta, marcacao, etc.).
+     */
+    Lembrete dispararNotificacao(String lembreteId);
 }

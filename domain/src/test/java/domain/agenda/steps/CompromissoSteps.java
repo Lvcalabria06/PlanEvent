@@ -519,6 +519,15 @@ public class CompromissoSteps {
         }
     }
 
+    @When("o sistema disparar a notificação desse lembrete")
+    public void o_sistema_disparar_a_notificacao_desse_lembrete() {
+        try {
+            lembreteRetornadoBusca = lembreteService.dispararNotificacao(lembreteEmContexto.getId());
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
 
 
     @Then("o compromisso é salvo com sucesso")
@@ -589,6 +598,15 @@ public class CompromissoSteps {
     public void o_lembrete_e_removido_com_sucesso() {
         assertNull(excecaoLancada, () -> "Não deveria ter lançado exceção: "
                 + (excecaoLancada != null ? excecaoLancada.getMessage() : ""));
+    }
+
+    @Then("o lembrete é marcado como notificado")
+    public void o_lembrete_e_marcado_como_notificado() {
+        assertNull(excecaoLancada, () -> "Não deveria ter lançado exceção: "
+                + (excecaoLancada != null ? excecaoLancada.getMessage() : ""));
+        assertNotNull(lembreteRetornadoBusca);
+        assertTrue(lembreteRetornadoBusca.isNotificado());
+        verify(lembreteRepository, times(1)).salvar(lembreteEmContexto);
     }
 
 
