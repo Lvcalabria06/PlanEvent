@@ -1,0 +1,19 @@
+# Exemplo de configuração do datasource PostgreSQL para a camada de persistência.
+# Copie/mescle estes valores no application.properties do módulo presentation-backend
+# (Fase 3) e ajuste host, porta, schema e credenciais conforme o ambiente.
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/planevent
+spring.datasource.username=planevent
+spring.datasource.password=planevent
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Sugestão de container local:
+#   docker run --name planevent-db -e POSTGRES_DB=planevent \
+#     -e POSTGRES_USER=planevent -e POSTGRES_PASSWORD=planevent \
+#     -p 5432:5432 -d postgres:16

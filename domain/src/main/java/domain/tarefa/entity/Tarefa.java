@@ -52,6 +52,39 @@ public class Tarefa {
         this.dataAtualizacao = this.dataCriacao;
     }
 
+    private Tarefa(String id, String equipeId, String titulo, String descricao,
+            LocalDateTime dataInicio, LocalDateTime dataFim, StatusTarefa status,
+            List<String> dependenciasIds, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        this.id = id;
+        this.equipeId = equipeId;
+        this.titulo = titulo;
+        this.descricao = descricao;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.status = status;
+        this.dependencias = new ArrayList<>();
+        if (dependenciasIds != null) {
+            for (String dependenciaId : dependenciasIds) {
+                this.dependencias.add(new DependenciaTarefa(dependenciaId));
+            }
+        }
+        this.dataCriacao = dataCriacao;
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    /**
+     * Reconstrói uma Tarefa a partir de dados já persistidos, preservando id,
+     * status, datas e dependências. Não revalida regras de criação, pois o estado
+     * já foi validado no momento da gravação. Usado exclusivamente pela camada de
+     * persistência (mapeamento objeto-relacional).
+     */
+    public static Tarefa reconstituir(String id, String equipeId, String titulo, String descricao,
+            LocalDateTime dataInicio, LocalDateTime dataFim, StatusTarefa status,
+            List<String> dependenciasIds, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        return new Tarefa(id, equipeId, titulo, descricao, dataInicio, dataFim, status,
+                dependenciasIds, dataCriacao, dataAtualizacao);
+    }
+
     public void iniciar() {
         if (this.status != StatusTarefa.PENDENTE) {
             throw new IllegalStateException("Apenas tarefas pendentes podem ser iniciadas.");
