@@ -135,6 +135,17 @@ public class TarefaServiceImpl implements TarefaService {
     }
 
     @Override
+    public void concluirTarefa(String tarefaId) {
+        Tarefa tarefa = tarefaRepository.buscarPorId(tarefaId)
+                .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
+
+        // RN6: fluxo controlado (EM_ANDAMENTO -> CONCLUIDA) validado na entidade
+        tarefa.concluir();
+
+        tarefaRepository.salvar(tarefa);
+    }
+
+    @Override
     public void atribuirResponsavel(String tarefaId, String funcionarioId) {
         Tarefa tarefa = tarefaRepository.buscarPorId(tarefaId)
                 .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
@@ -162,20 +173,10 @@ public class TarefaServiceImpl implements TarefaService {
         return tarefaRepository.listarPorEquipeId(equipeId);
     }
 
-    /**
-     * Lógica incorporada no serviço para verificar se o funcionário pertence à
-     * equipe
-     * (Implementado diretamente no service para compensar a ausência do
-     * MembroEquipeRepository)
-     */
     private boolean isFuncionarioNaEquipe(String equipeId, String funcionarioId) {
         Equipe equipe = equipeRepository.buscarPorId(equipeId)
                 .orElseThrow(() -> new IllegalArgumentException("Equipe não encontrada."));
 
-        // Simulação da regra de negócio incorporada:
-        // Como o repositório de associação DB não existe, validamos usando os dados da
-        // raiz (Ex: o Lider)
-        // ou outra premissa de domínio, ao invés de buscar membros por junção SQL.
-        return equipe.getLiderId() != null && equipe.getLiderId().equals(funcionarioId);
+        return equipe.possuiMembro(funcionarioId);
     }
 }

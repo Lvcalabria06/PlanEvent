@@ -22,6 +22,20 @@ public class ResponsavelTarefa {
         this.funcionarioId = funcionarioId;
     }
 
+    private ResponsavelTarefa(String id, String tarefaId, String funcionarioId) {
+        this.id = id;
+        this.tarefaId = tarefaId;
+        this.funcionarioId = funcionarioId;
+    }
+
+    /**
+     * Reconstrói o vínculo a partir de dados persistidos, preservando o id.
+     * Usado pela camada de persistência (mapeamento objeto-relacional).
+     */
+    public static ResponsavelTarefa reconstituir(String id, String tarefaId, String funcionarioId) {
+        return new ResponsavelTarefa(id, tarefaId, funcionarioId);
+    }
+
     // Getters
     public String getId() { return id; }
     public String getTarefaId() { return tarefaId; }

@@ -14,6 +14,8 @@ public interface TarefaService {
 
     void iniciarTarefa(String tarefaId);
 
+    void concluirTarefa(String tarefaId);
+
     void atribuirResponsavel(String tarefaId, String funcionarioId);
 
     List<Tarefa> listarPorEquipe(String equipeId);

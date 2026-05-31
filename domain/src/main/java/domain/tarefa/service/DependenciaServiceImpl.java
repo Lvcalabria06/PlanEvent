@@ -3,13 +3,10 @@ package domain.tarefa.service;
 import domain.equipe.entity.Equipe;
 import domain.equipe.repository.EquipeRepository;
 import domain.tarefa.entity.Tarefa;
+import domain.tarefa.iterator.GrafoDependencias;
 import domain.tarefa.repository.TarefaRepository;
-
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 public class DependenciaServiceImpl implements DependenciaService {
 
@@ -33,8 +30,10 @@ public class DependenciaServiceImpl implements DependenciaService {
         // Bloqueio Inter-eventos: Validar se pertencem ao mesmo evento
         validarMesmoEvento(tarefa, predecessora);
 
-        // Prevenção de Ciclos: Verificar se adicionar essa dependência cria um ciclo (DFS)
-        if (existeCaminho(tarefaPredecessoraId, tarefaId)) {
+        // Prevenção de Ciclos: se a tarefa base já é predecessora (transitiva) da
+        // predecessora, adicionar essa dependência fecharia um ciclo.
+        GrafoDependencias predecessorasDaPredecessora = new GrafoDependencias(tarefaRepository, tarefaPredecessoraId);
+        if (predecessorasDaPredecessora.contem(tarefaId)) {
             throw new IllegalStateException("A adição desta dependência criará um ciclo (Dependência Cíclica).");
         }
 
@@ -102,35 +101,5 @@ public class DependenciaServiceImpl implements DependenciaService {
         if (!e1.getEventoId().equals(e2.getEventoId())) {
             throw new IllegalStateException("Não é possível criar dependência entre tarefas de eventos diferentes.");
         }
-    }
-
-    /**
-     * Verifica se existe um caminho direcionado de 'startId' para 'targetId'.
-     * Usado para evitar ciclos: se B (start) já chega em A (target), A não pode depender de B.
-     */
-    private boolean existeCaminho(String startId, String targetId) {
-        return dfs(startId, targetId, new HashSet<>());
-    }
-
-    private boolean dfs(String currentId, String targetId, Set<String> visitados) {
-        if (currentId.equals(targetId)) {
-            return true;
-        }
-        visitados.add(currentId);
-
-        Optional<Tarefa> tarefaOpt = tarefaRepository.buscarPorId(currentId);
-        if (tarefaOpt.isEmpty()) {
-            return false;
-        }
-
-        List<String> dependencias = tarefaOpt.get().listarDependencias();
-        for (String proximoId : dependencias) {
-            if (!visitados.contains(proximoId)) {
-                if (dfs(proximoId, targetId, visitados)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }
