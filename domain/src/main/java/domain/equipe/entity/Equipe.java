@@ -1,10 +1,13 @@
 package domain.equipe.entity;
-
+ 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+
+import domain.equipe.interpreter.ExpressaoMembro;
+import domain.funcionario.repository.FuncionarioRepository;
 
 public class Equipe {
     private final String id;
@@ -180,6 +183,25 @@ public class Equipe {
     }
 
     public LocalDateTime getDataCriacao() { return dataCriacao; }
+ 
+     public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
 
-    public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
+    private Equipe(String id, String eventoId, String nome, List<MembroEquipe> membros, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.nome = nome;
+        this.membros = new ArrayList<>(membros);
+        this.dataCriacao = dataCriacao;
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public static Equipe reconstituir(String id, String eventoId, String nome, List<MembroEquipe> membros, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        return new Equipe(id, eventoId, nome, membros, dataCriacao, dataAtualizacao);
+    }
+
+    public List<MembroEquipe> filtrarMembros(ExpressaoMembro expressao, FuncionarioRepository repository) {
+        return this.membros.stream()
+                .filter(m -> expressao.interpretar(m, repository))
+                .toList();
+    }
 }

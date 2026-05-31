@@ -1,11 +1,13 @@
 package domain.equipe.service;
-
+ 
 import domain.equipe.entity.Equipe;
 import domain.equipe.entity.MembroEquipe;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.tarefa.repository.TarefaRepository;
+import domain.equipe.interpreter.ExpressaoMembro;
+import domain.equipe.interpreter.AnalisadorExpressaoMembro;
 
 import java.util.List;
 
@@ -119,5 +121,12 @@ public class EquipeServiceImpl implements EquipeService {
                 throw new IllegalStateException("Funcionário já está alocado em outra equipe deste evento.");
             }
         }
+    }
+
+    @Override
+    public List<MembroEquipe> filtrarMembros(String equipeId, String expressaoFiltragem) {
+        Equipe equipe = buscarEquipe(equipeId);
+        ExpressaoMembro expressao = AnalisadorExpressaoMembro.parse(expressaoFiltragem);
+        return equipe.filtrarMembros(expressao, funcionarioRepository);
     }
 }
