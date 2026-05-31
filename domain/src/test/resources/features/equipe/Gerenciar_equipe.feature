@@ -76,3 +76,12 @@ Feature: Gerenciar equipe do evento
         And existem equipes cadastradas para o evento
         When o gestor listar as equipes
         Then o sistema deve exibir as equipes do evento
+
+    Scenario: Filtrar membros da equipe por expressão lógica (Interpreter)
+        Given existe uma equipe cadastrada com os seguintes funcionários:
+            | nome        | cargo   | disponibilidade | lider |
+            | Maria Silva | garçom  | manhã           | false |
+            | João Pedro  | técnico | tarde           | true  |
+            | Ana Souza   | técnico | manhã           | false |
+        When o gestor filtrar os membros com a expressão "cargo = técnico AND lider = false"
+        Then o sistema deve retornar apenas o funcionário "Ana Souza"
