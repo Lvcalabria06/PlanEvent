@@ -11,6 +11,8 @@ import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
 import domain.financeiro.service.DespesaService;
 import domain.financeiro.service.DespesaServiceImpl;
+import domain.fornecedor.entity.Fornecedor;
+import domain.fornecedor.repository.FornecedorRepository;
 import domain.financeiro.valueobject.CategoriaDespesa;
 import domain.financeiro.valueobject.ClassificacaoDesvio;
 import domain.financeiro.valueobject.DesvioOrcamentario;
@@ -46,6 +48,7 @@ public class DespesaSteps {
     private OrcamentoEventoRepository    orcamentoEventoRepository;
     private CategoriaOrcamentoRepository categoriaOrcamentoRepository;
     private DespesaRepository            despesaRepository;
+    private FornecedorRepository         fornecedorRepository;
     private DespesaService               despesaService;
 
     private Exception               excecaoLancada;
@@ -64,12 +67,16 @@ public class DespesaSteps {
         orcamentoEventoRepository    = Mockito.mock(OrcamentoEventoRepository.class);
         categoriaOrcamentoRepository = Mockito.mock(CategoriaOrcamentoRepository.class);
         despesaRepository            = Mockito.mock(DespesaRepository.class);
+        fornecedorRepository         = Mockito.mock(FornecedorRepository.class);
+
+        configurarFornecedorAtivoPadrao();
 
         despesaService = new DespesaServiceImpl(
                 despesaRepository,
                 orcamentoEventoRepository,
                 categoriaOrcamentoRepository,
-                eventoRepository);
+                eventoRepository,
+                fornecedorRepository);
 
         excecaoLancada          = null;
         despesaEmContexto       = null;
@@ -86,6 +93,13 @@ public class DespesaSteps {
                 .thenReturn(BigDecimal.ZERO);
         when(despesaRepository.somarValoresPorEventoECategoria(any(), any()))
                 .thenReturn(BigDecimal.ZERO);
+    }
+
+    private void configurarFornecedorAtivoPadrao() {
+        Fornecedor fornecedor = Mockito.mock(Fornecedor.class);
+        when(fornecedor.isAtivo()).thenReturn(true);
+        when(fornecedorRepository.buscarPorId(ID_FORNECEDOR)).thenReturn(Optional.of(fornecedor));
+        when(fornecedorRepository.buscarPorId(any())).thenReturn(Optional.of(fornecedor));
     }
 
     // ──── Givens de evento ────────────────────────────────────────────────

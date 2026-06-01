@@ -395,35 +395,62 @@ CA7: Deve impedir alterações em lembretes cujos compromissos pai já estejam c
 CA8: Ao processar a remoção de um compromisso, o sistema deve realizar a exclusão em cascata de todos os lembretes a ele vinculados.
 
 7 – GARANTIR CONTROLE JURÍDICO E ADMINISTRATIVO
-PASSO 1: gerenciar contratos
-histórias de usuário:
-Como gestor, quero cadastrar contratos no sistema, para formalizar acordos relacionados ao evento.
+PASSO 1: Gerenciar contratos e fornecedores
+Histórias de usuário
+Fornecedores
+Como gestor, quero cadastrar um fornecedor no sistema, para disponibilizá-lo para vinculação em contratos e despesas do evento.
+Como gestor, quero editar os dados de um fornecedor, para manter as informações atualizadas.
+Como gestor, quero visualizar fornecedores cadastrados, para consultar suas informações antes de vinculá-los a um contrato ou despesa.
+Como gestor, quero desativar um fornecedor, para impedir seu uso em novos contratos e despesas sem perder o histórico.
+Contratos
+Como gestor, quero cadastrar contratos no sistema vinculados a um fornecedor ativo, para formalizar acordos relacionados ao evento.
 Como gestor, quero editar contratos, para atualizar informações conforme necessário.
 Como gestor, quero visualizar contratos, para acompanhar os dados e condições estabelecidas.
 Como gestor, quero encerrar contratos, para finalizar formalmente acordos concluídos.
-regras de negócio:
-RN1: Todo contrato deve possuir dados obrigatórios como tipo, partes envolvidas, objeto, valor e datas de vigência.
-RN2: Não é permitido criar ou atualizar contratos com ausência de campos obrigatórios.
-RN3: A data de início do contrato deve ser anterior à data de término.
-RN4: Um contrato não pode ser finalizado caso esteja com informações incompletas ou inconsistentes.
-RN5: O identificador do contrato deve ser único, gerado automaticamente e imutável.
-RN6: Toda alteração deve atualizar automaticamente o campo de modificação (updatedAt).
-CA1: Cadastrar contrato com sucesso (evento válido, dados completos).
-CA2: Impedir cadastro quando não existe evento válido para contrato.
-CA3: Impedir cadastro sem objeto.
-CA4: Impedir cadastro sem valor.
-CA5: Impedir cadastro com vigência inválida (data de término não posterior à de início).
-CA6: Impedir cadastro com menos de duas partes (apenas uma parte).
-CA7: Editar contrato com sucesso (ex.: alteração do objeto).
-CA8: Impedir edição de contrato inexistente (id informado não corresponde a contrato).
-CA9: Impedir edição que deixa o contrato inconsistente (ex.: valor zero).
-CA10: Impedir edição quando o contrato está encerrado.
-CA11: Buscar contrato por identificador e obter objeto esperado.
-CA12: Listar contratos do evento com ao menos um item quando existir cadastro.
-CA13: Impedir visualização bem-sucedida ao buscar contrato por id inexistente.
-CA14: Encerrar contrato completo com sucesso (status ENCERRADO).
-CA15: Impedir encerramento quando as informações do contrato estão incompletas para encerramento.
-CA16: Impedir novo encerramento quando o contrato já está encerrado.
+Regras de negócio
+Fornecedores
+RN1: Todo fornecedor deve possuir nome, CNPJ, categoria de serviço e contato obrigatoriamente preenchidos.
+RN2: O CNPJ do fornecedor deve ser único no sistema e válido conforme as regras de formatação.
+RN3: O identificador do fornecedor deve ser único, gerado automaticamente e imutável.
+RN4: A exclusão de um fornecedor deve ser lógica (soft delete), utilizando status ativo/inativo.
+RN5: Um fornecedor não pode ser desativado se possuir contratos ativos ou despesas registradas em eventos ainda não encerrados vinculadas a ele.
+RN6: Um fornecedor inativo não pode ser vinculado a novos contratos ou despesas.
+RN7: O vínculo do fornecedor com despesas deve usar identificador de fornecedor existente, válido e ativo no momento do registro da despesa.
+RN8: Toda alteração nos dados do fornecedor deve atualizar automaticamente o campo de modificação (updatedAt).
+Contratos
+RN9: Todo contrato deve possuir dados obrigatórios como tipo, objeto, valor e datas de vigência.
+RN10: Todo contrato deve estar obrigatoriamente vinculado a um evento existente e a um fornecedor ativo.
+RN11: Não é permitido criar ou atualizar contratos com ausência de campos obrigatórios.
+RN12: A data de início do contrato deve ser anterior à data de término.
+RN13: Um contrato não pode ser encerrado caso esteja com informações incompletas ou inconsistentes.
+RN14: O identificador do contrato deve ser único, gerado automaticamente e imutável.
+RN15: Toda alteração deve atualizar automaticamente o campo de modificação (updatedAt).
+RN16: Um contrato encerrado não pode ser editado.
+Critérios de aceitação
+Fornecedores
+CA1: Deve permitir cadastrar fornecedor com nome, CNPJ válido, categoria e contato preenchidos.
+CA2: Deve impedir cadastro de fornecedor com CNPJ inválido ou duplicado.
+CA3: Deve impedir cadastro com campos obrigatórios ausentes.
+CA4: Deve permitir editar dados de fornecedor ativo.
+CA5: Deve impedir edição de fornecedor inativo.
+CA6: Deve permitir visualizar fornecedor por identificador e listar fornecedores cadastrados.
+CA7: Deve impedir visualização bem-sucedida ao buscar fornecedor por id inexistente.
+CA8: Deve permitir desativar fornecedor que não possua contratos ativos nem despesas vinculadas a eventos em andamento.
+CA9: Deve impedir desativação de fornecedor com contratos ativos ou despesas vinculadas a eventos em andamento.
+CA10: Deve impedir vinculação de fornecedor inativo a novos contratos ou despesas.
+Contratos
+CA11: Deve permitir cadastrar contrato com sucesso quando vinculado a evento válido e fornecedor ativo.
+CA12: Deve impedir cadastro de contrato vinculado a fornecedor inativo ou inexistente.
+CA13: Deve impedir cadastro sem objeto, sem valor ou com vigência inválida.
+CA14: Deve impedir cadastro com menos de duas partes envolvidas.
+CA15: Deve permitir editar contrato ativo com dados válidos.
+CA16: Deve impedir edição de contrato encerrado.
+CA17: Deve impedir edição que deixe o contrato em estado inconsistente.
+CA18: Deve permitir buscar contrato por identificador e listar contratos do evento.
+CA19: Deve impedir visualização bem-sucedida ao buscar contrato por id inexistente.
+CA20: Deve permitir encerrar contrato com informações completas e consistentes.
+CA21: Deve impedir encerramento de contrato com informações incompletas.
+CA22: Deve impedir encerramento de contrato já encerrado.
 
 
 PASSO 2: Conciliação entre contratos e despesas do evento

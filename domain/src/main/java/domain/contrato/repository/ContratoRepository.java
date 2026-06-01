@@ -12,4 +12,6 @@ public interface ContratoRepository {
     Optional<Contrato> buscarPorId(String id);
 
     List<Contrato> listarPorEventoId(String eventoId);
+
+    boolean possuiContratoAtivoPorFornecedorId(String fornecedorId);
 }

@@ -20,4 +20,6 @@ public interface DespesaRepository {
     BigDecimal somarValoresPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
 
     BigDecimal somarValoresAtivosPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
+
+    List<Despesa> listarPorFornecedorId(String fornecedorId);
 }

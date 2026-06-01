@@ -402,9 +402,8 @@ public class ConciliacaoSteps {
         List<DadosParteContrato> partes = List.of(
                 new DadosParteContrato("Organização Evento", "Contratante"),
                 new DadosParteContrato("Fornecedor Parceiro", "Fornecedor"));
-        Contrato contrato = new Contrato(eventoId, TipoContrato.FORNECEDOR,
+        Contrato contrato = new Contrato(eventoId, fornecedorId, TipoContrato.FORNECEDOR,
                 "Objeto do contrato de teste", new BigDecimal("10000.00"), inicio, fim, partes);
-        contrato.definirFornecedor(fornecedorId);
         return contrato;
     }
 }
