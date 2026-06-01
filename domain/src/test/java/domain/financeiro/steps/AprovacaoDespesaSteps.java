@@ -7,6 +7,8 @@ import domain.financeiro.service.DespesaServiceImpl;
 import domain.financeiro.repository.OrcamentoEventoRepository;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.evento.repository.EventoRepository;
+import domain.fornecedor.entity.Fornecedor;
+import domain.fornecedor.repository.FornecedorRepository;
 import domain.financeiro.valueobject.CategoriaDespesa;
 import domain.financeiro.valueobject.StatusDespesa;
 
@@ -36,6 +38,7 @@ public class AprovacaoDespesaSteps {
     private OrcamentoEventoRepository    orcamentoEventoRepository;
     private CategoriaOrcamentoRepository categoriaOrcamentoRepository;
     private EventoRepository             eventoRepository;
+    private FornecedorRepository         fornecedorRepository;
     private DespesaService               despesaService;
 
     private Despesa   despesaEmContexto;
@@ -48,12 +51,19 @@ public class AprovacaoDespesaSteps {
         orcamentoEventoRepository    = Mockito.mock(OrcamentoEventoRepository.class);
         categoriaOrcamentoRepository = Mockito.mock(CategoriaOrcamentoRepository.class);
         despesaRepository            = Mockito.mock(DespesaRepository.class);
+        fornecedorRepository         = Mockito.mock(FornecedorRepository.class);
+
+        Fornecedor fornecedor = Mockito.mock(Fornecedor.class);
+        when(fornecedor.isAtivo()).thenReturn(true);
+        when(fornecedorRepository.buscarPorId(ID_FORNECEDOR)).thenReturn(Optional.of(fornecedor));
+        when(fornecedorRepository.buscarPorId(any())).thenReturn(Optional.of(fornecedor));
 
         despesaService = new DespesaServiceImpl(
                 despesaRepository,
                 orcamentoEventoRepository,
                 categoriaOrcamentoRepository,
-                eventoRepository);
+                eventoRepository,
+                fornecedorRepository);
 
         despesaEmContexto = null;
         despesaRetornada  = null;

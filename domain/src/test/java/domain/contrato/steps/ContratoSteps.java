@@ -9,6 +9,8 @@ import domain.contrato.valueobject.StatusContrato;
 import domain.contrato.valueobject.TipoContrato;
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
+import domain.fornecedor.entity.Fornecedor;
+import domain.fornecedor.repository.FornecedorRepository;
 
 import io.cucumber.java.Before;
 import io.cucumber.java.en.But;
@@ -40,23 +42,27 @@ public class ContratoSteps {
 
     private ContratoRepository contratoRepository;
     private EventoRepository eventoRepository;
+    private FornecedorRepository fornecedorRepository;
     private ContratoService contratoService;
 
     private Exception excecaoLancada;
     private Contrato contratoEmContexto;
     private Contrato contratoRetornadoBusca;
     private List<Contrato> listaContratosRetornada;
+    private String fornecedorIdEmContexto;
 
     @Before
     public void setup() {
         contratoRepository = Mockito.mock(ContratoRepository.class);
         eventoRepository = Mockito.mock(EventoRepository.class);
-        contratoService = new ContratoServiceImpl(contratoRepository, eventoRepository);
+        fornecedorRepository = Mockito.mock(FornecedorRepository.class);
+        contratoService = new ContratoServiceImpl(contratoRepository, eventoRepository, fornecedorRepository);
 
         excecaoLancada = null;
         contratoEmContexto = null;
         contratoRetornadoBusca = null;
         listaContratosRetornada = null;
+        fornecedorIdEmContexto = null;
 
         when(contratoRepository.salvar(any(Contrato.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -71,9 +77,37 @@ public class ContratoSteps {
         when(eventoRepository.buscarPorId(any())).thenReturn(Optional.empty());
     }
 
+    @Given("existe um fornecedor ativo válido para contrato")
+    public void existe_um_fornecedor_ativo_valido_para_contrato() {
+        Fornecedor fornecedor = new Fornecedor(
+                "Fornecedor Contrato", "11.444.777/0001-61", "Equipamentos", "contato@fornecedor.com");
+        fornecedorIdEmContexto = fornecedor.getId();
+        when(fornecedorRepository.buscarPorId(fornecedorIdEmContexto)).thenReturn(Optional.of(fornecedor));
+    }
+
+    @Given("existe um fornecedor inativo para contrato")
+    public void existe_um_fornecedor_inativo_para_contrato() {
+        Fornecedor fornecedor = new Fornecedor(
+                "Fornecedor Inativo", "04.252.011/0001-10", "Serviços", "inativo@fornecedor.com");
+        fornecedor.desativar();
+        fornecedorIdEmContexto = fornecedor.getId();
+        when(fornecedorRepository.buscarPorId(fornecedorIdEmContexto)).thenReturn(Optional.of(fornecedor));
+    }
+
+    @Given("não existe fornecedor válido para contrato")
+    public void nao_existe_fornecedor_valido_para_contrato() {
+        Fornecedor fornecedor = new Fornecedor(
+                "Fornecedor Fantasma", "45.723.174/0001-10", "Serviços", "fantasma@fornecedor.com");
+        fornecedorIdEmContexto = fornecedor.getId();
+        when(fornecedorRepository.buscarPorId(fornecedorIdEmContexto)).thenReturn(Optional.empty());
+    }
+
     @Given("existe um contrato cadastrado nesse evento")
     public void existe_um_contrato_cadastrado_nesse_evento() {
-        contratoEmContexto = novoContratoValido(ID_EVENTO);
+        if (fornecedorIdEmContexto == null) {
+            existe_um_fornecedor_ativo_valido_para_contrato();
+        }
+        contratoEmContexto = novoContratoValido(ID_EVENTO, fornecedorIdEmContexto);
         when(contratoRepository.buscarPorId(eq(contratoEmContexto.getId())))
                 .thenReturn(Optional.of(contratoEmContexto));
     }
@@ -99,7 +133,7 @@ public class ContratoSteps {
 
     @When("eu cadastrar um contrato completo para esse evento")
     public void eu_cadastrar_um_contrato_completo_para_esse_evento() {
-        tentarCadastrar(novoContratoValido(ID_EVENTO));
+        tentarCadastrar(novoContratoValido(ID_EVENTO, fornecedorIdEmContexto));
     }
 
     @When("eu tentar cadastrar um contrato completo")
@@ -130,7 +164,8 @@ public class ContratoSteps {
         LocalDateTime fim = inicio.plusDays(1);
         List<DadosParteContrato> uma = List.of(new DadosParteContrato("Única Parte", "Tipo"));
         try {
-            new Contrato(ID_EVENTO, TipoContrato.OUTRO, OBJETO_PADRAO, new BigDecimal("1.00"), inicio, fim, uma);
+            new Contrato(ID_EVENTO, fornecedorIdEmContexto, TipoContrato.OUTRO, OBJETO_PADRAO,
+                    new BigDecimal("1.00"), inicio, fim, uma);
         } catch (Exception e) {
             excecaoLancada = e;
         }
@@ -157,7 +192,7 @@ public class ContratoSteps {
 
     @When("eu tentar editar um contrato inexistente")
     public void eu_tentar_editar_um_contrato_inexistente() {
-        Contrato orphan = novoContratoValido(ID_EVENTO);
+        Contrato orphan = novoContratoValido(ID_EVENTO, fornecedorIdEmContexto);
         when(contratoRepository.buscarPorId(orphan.getId())).thenReturn(Optional.empty());
         try {
             contratoService.editarContrato(orphan);
@@ -296,31 +331,37 @@ public class ContratoSteps {
     }
 
     private void tentarConstruirContratoInvalido(String objeto, BigDecimal valor) {
+        if (fornecedorIdEmContexto == null) {
+            existe_um_fornecedor_ativo_valido_para_contrato();
+        }
         LocalDateTime inicio = LocalDateTime.now();
         LocalDateTime fim = inicio.plusDays(10);
         List<DadosParteContrato> partes = duasPartesPadrao();
         try {
-            new Contrato(ID_EVENTO, TipoContrato.FORNECEDOR, objeto, valor, inicio, fim, partes);
+            new Contrato(ID_EVENTO, fornecedorIdEmContexto, TipoContrato.FORNECEDOR, objeto, valor, inicio, fim, partes);
         } catch (Exception e) {
             excecaoLancada = e;
         }
     }
 
     private void tentarConstruirContratoComDatas(LocalDateTime inicio, LocalDateTime fim) {
+        if (fornecedorIdEmContexto == null) {
+            existe_um_fornecedor_ativo_valido_para_contrato();
+        }
         List<DadosParteContrato> partes = duasPartesPadrao();
         try {
-            new Contrato(ID_EVENTO, TipoContrato.FORNECEDOR, OBJETO_PADRAO, new BigDecimal("5000.00"), inicio, fim,
-                    partes);
+            new Contrato(ID_EVENTO, fornecedorIdEmContexto, TipoContrato.FORNECEDOR, OBJETO_PADRAO,
+                    new BigDecimal("5000.00"), inicio, fim, partes);
         } catch (Exception e) {
             excecaoLancada = e;
         }
     }
 
-    private Contrato novoContratoValido(String eventoId) {
+    private Contrato novoContratoValido(String eventoId, String fornecedorId) {
         LocalDateTime inicio = LocalDateTime.now();
         LocalDateTime fim = inicio.plusDays(30);
-        return new Contrato(eventoId, TipoContrato.FORNECEDOR, OBJETO_PADRAO, new BigDecimal("10000.00"), inicio, fim,
-                duasPartesPadrao());
+        return new Contrato(eventoId, fornecedorId, TipoContrato.FORNECEDOR, OBJETO_PADRAO,
+                new BigDecimal("10000.00"), inicio, fim, duasPartesPadrao());
     }
 
     private static List<DadosParteContrato> duasPartesPadrao() {

@@ -14,7 +14,7 @@ import java.util.UUID;
 public class Contrato {
     private final String id;
     private final String eventoId;
-    private String fornecedorId;
+    private final String fornecedorId;
     private TipoContrato tipo;
     private String objeto;
     private BigDecimal valor;
@@ -25,13 +25,14 @@ public class Contrato {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public Contrato(String eventoId, TipoContrato tipo, String objeto, BigDecimal valor,
+    public Contrato(String eventoId, String fornecedorId, TipoContrato tipo, String objeto, BigDecimal valor,
             LocalDateTime dataInicio, LocalDateTime dataFim, List<DadosParteContrato> dadosPartes) {
 
-        validarCamposObrigatorios(eventoId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
+        validarCamposObrigatorios(eventoId, fornecedorId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
 
         this.id = UUID.randomUUID().toString();
         this.eventoId = eventoId;
+        this.fornecedorId = fornecedorId.trim();
         this.tipo = tipo;
         this.objeto = objeto.trim();
         this.valor = valor;
@@ -53,7 +54,7 @@ public class Contrato {
             throw new IllegalStateException("Contrato não pode ser alterado neste estado.");
         }
 
-        validarCamposObrigatorios(this.eventoId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
+        validarCamposObrigatorios(this.eventoId, this.fornecedorId, tipo, objeto, valor, dataInicio, dataFim, dadosPartes);
 
         this.tipo = tipo;
         this.objeto = objeto.trim();
@@ -69,7 +70,8 @@ public class Contrato {
 
     public boolean estaCompleto() {
         try {
-            validarCamposObrigatorios(eventoId, tipo, objeto, valor, dataInicio, dataFim, getDadosPartesInterno());
+            validarCamposObrigatorios(eventoId, fornecedorId, tipo, objeto, valor, dataInicio, dataFim,
+                    getDadosPartesInterno());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -120,11 +122,14 @@ public class Contrato {
         return list;
     }
 
-    private static void validarCamposObrigatorios(String eventoId, TipoContrato tipo, String objeto,
-            BigDecimal valor, LocalDateTime dataInicio, LocalDateTime dataFim,
+    private static void validarCamposObrigatorios(String eventoId, String fornecedorId, TipoContrato tipo,
+            String objeto, BigDecimal valor, LocalDateTime dataInicio, LocalDateTime dataFim,
             List<DadosParteContrato> dadosPartes) {
         if (eventoId == null || eventoId.trim().isEmpty()) {
             throw new IllegalArgumentException("Evento do contrato é obrigatório.");
+        }
+        if (fornecedorId == null || fornecedorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Fornecedor do contrato é obrigatório.");
         }
         if (tipo == null) {
             throw new IllegalArgumentException("Tipo de contrato é obrigatório.");
@@ -144,11 +149,6 @@ public class Contrato {
         if (dadosPartes == null || dadosPartes.size() < 2) {
             throw new IllegalArgumentException("É necessário informar ao menos duas partes no contrato.");
         }
-    }
-
-    public void definirFornecedor(String fornecedorId) {
-        this.fornecedorId = fornecedorId;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public String getId() { return id; }

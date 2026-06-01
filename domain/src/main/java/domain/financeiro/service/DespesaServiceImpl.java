@@ -10,6 +10,8 @@ import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
 import domain.financeiro.valueobject.CategoriaDespesa;
 import domain.financeiro.valueobject.DesvioOrcamentario;
+import domain.fornecedor.entity.Fornecedor;
+import domain.fornecedor.repository.FornecedorRepository;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -24,15 +26,18 @@ public class DespesaServiceImpl implements DespesaService {
     private final OrcamentoEventoRepository orcamentoEventoRepository;
     private final CategoriaOrcamentoRepository categoriaOrcamentoRepository;
     private final EventoRepository eventoRepository;
+    private final FornecedorRepository fornecedorRepository;
 
     public DespesaServiceImpl(DespesaRepository despesaRepository,
                                OrcamentoEventoRepository orcamentoEventoRepository,
                                CategoriaOrcamentoRepository categoriaOrcamentoRepository,
-                               EventoRepository eventoRepository) {
+                               EventoRepository eventoRepository,
+                               FornecedorRepository fornecedorRepository) {
         this.despesaRepository = despesaRepository;
         this.orcamentoEventoRepository = orcamentoEventoRepository;
         this.categoriaOrcamentoRepository = categoriaOrcamentoRepository;
         this.eventoRepository = eventoRepository;
+        this.fornecedorRepository = fornecedorRepository;
     }
 
     @Override
@@ -40,6 +45,12 @@ public class DespesaServiceImpl implements DespesaService {
         eventoRepository.buscarPorId(despesa.getEventoId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Evento inválido ou não encontrado."));
+
+        Fornecedor fornecedor = fornecedorRepository.buscarPorId(despesa.getFornecedorId())
+                .orElseThrow(() -> new IllegalArgumentException("Fornecedor inválido ou não encontrado."));
+        if (!fornecedor.isAtivo()) {
+            throw new IllegalArgumentException("Fornecedor inativo não pode ser vinculado a despesas.");
+        }
 
         OrcamentoEvento orcamento = orcamentoEventoRepository
                 .buscarPorEventoId(despesa.getEventoId())
