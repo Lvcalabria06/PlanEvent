@@ -46,13 +46,6 @@ public class TarefaRepositoryJpaAdapter implements TarefaRepository {
     }
 
     @Override
-    public List<Tarefa> listarPorEventoId(String eventoId) {
-        return jpaRepository.findByEventoId(eventoId).stream()
-                .map(TarefaMapper::paraDominio)
-                .toList();
-    }
-
-    @Override
     public boolean existePorTituloEEquipe(String titulo, String equipeId) {
         return jpaRepository.existsByTituloAndEquipeId(titulo, equipeId);
     }
