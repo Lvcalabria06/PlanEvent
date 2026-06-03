@@ -9,6 +9,7 @@ import domain.tarefa.entity.Tarefa;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.valueobject.StatusTarefa;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class TarefaServiceImpl implements TarefaService {
@@ -53,31 +54,35 @@ public class TarefaServiceImpl implements TarefaService {
 
     @Override
     public Tarefa editarTarefa(Tarefa tarefaEditada) {
-        Tarefa tarefaAtual = tarefaRepository.buscarPorId(tarefaEditada.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
-
-        // RN8: Não editável após conclusão (a própria entidade Tarefa já validará no
-        // update)
-        if (!tarefaAtual.getTitulo().equals(tarefaEditada.getTitulo())) {
-            if (tarefaRepository.existePorTituloEEquipe(tarefaEditada.getTitulo(), tarefaAtual.getEquipeId())) {
-                throw new IllegalStateException("Já existe uma tarefa com esse título na equipe.");
-            }
-        }
-
-        // Aplicamos RN8 (lança exception se estiver concluída) e RN3 (datas válidas)
-        tarefaAtual.atualizarDetalhes(
+        return editarTarefa(
+                tarefaEditada.getId(),
                 tarefaEditada.getTitulo(),
                 tarefaEditada.getDescricao(),
                 tarefaEditada.getDataInicio(),
                 tarefaEditada.getDataFim());
+    }
 
-        // Impacto nas dependentes: se as novas datas invadirem dados de tarefas dependentes, sinalizamos erro.
+    @Override
+    public Tarefa editarTarefa(String tarefaId, String titulo, String descricao,
+            LocalDateTime dataInicio, LocalDateTime dataFim) {
+        Tarefa tarefaAtual = tarefaRepository.buscarPorId(tarefaId)
+                .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada."));
+
+        // RN2/CA4: título único dentro da equipe (apenas quando o título muda)
+        if (!tarefaAtual.getTitulo().equals(titulo)) {
+            if (tarefaRepository.existePorTituloEEquipe(titulo, tarefaAtual.getEquipeId())) {
+                throw new IllegalStateException("Já existe uma tarefa com esse título na equipe.");
+            }
+        }
+
+        // RN8 (lança exceção se estiver concluída) e RN3 (datas válidas) validadas na entidade
+        tarefaAtual.atualizarDetalhes(titulo, descricao, dataInicio, dataFim);
+
+        // Impacto nas dependentes: se as novas datas comprometem dependentes, sinalizamos erro.
         if (tarefaAtual.getDataFim() != null) {
             List<Tarefa> dependentes = tarefaRepository.listarDependentes(tarefaAtual.getId());
             for (Tarefa dependente : dependentes) {
                 if (dependente.getDataInicio() != null && dependente.getDataInicio().isBefore(tarefaAtual.getDataFim())) {
-                    // Para o teste "a tarefa B deve ser marcada como potentially atrasada", como não testamos flags na interface 
-                    // lançamos erro em edição que comprometa as dependentes (cenário Impacto de Dependências)
                     throw new IllegalStateException("Atraso de dependência! A alteração compromete tarefas dependentes (potencialmente atrasada).");
                 }
             }
@@ -169,8 +174,26 @@ public class TarefaServiceImpl implements TarefaService {
     }
 
     @Override
+    public List<String> listarResponsaveis(String tarefaId) {
+        return responsavelTarefaRepository.listarPorTarefa(tarefaId).stream()
+                .map(ResponsavelTarefa::getFuncionarioId)
+                .toList();
+    }
+
+    @Override
     public List<Tarefa> listarPorEquipe(String equipeId) {
         return tarefaRepository.listarPorEquipeId(equipeId);
+    }
+
+    @Override
+    public List<Tarefa> listarPorEvento(String eventoId) {
+        // CA17: tarefas do evento, resolvidas pelas equipes que pertencem a ele.
+        // Mantém o repositório de Tarefa restrito ao seu próprio agregado (DDD),
+        // delegando a relação evento->equipe ao EquipeRepository.
+        return equipeRepository.listarPorEventoId(eventoId).stream()
+                .map(Equipe::getId)
+                .flatMap(equipeId -> tarefaRepository.listarPorEquipeId(equipeId).stream())
+                .toList();
     }
 
     private boolean isFuncionarioNaEquipe(String equipeId, String funcionarioId) {

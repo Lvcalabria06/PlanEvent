@@ -23,9 +23,22 @@
 						<artifactId>jib-maven-plugin</artifactId>
 					</plugin>
 				</plugins>
-			</build>			
+			</build>
 		</profile>
-	</profiles>    
+	</profiles>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Roda a partir da raiz do projeto multi-módulo, onde fica o .env -->
+					<workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
     <dependencies>
         <dependency>
@@ -50,6 +63,18 @@
             <artifactId>PlanEvent-infrastructure</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
-        </dependency>        
-    </dependencies>    
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
