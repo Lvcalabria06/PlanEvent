@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  planevent-db:
+    image: postgres:16
+    container_name: planevent-db
+    environment:
+      POSTGRES_DB: planevent
+      POSTGRES_USER: planevent
+      POSTGRES_PASSWORD: planevent
+    ports:
+      - "5432:5432"
+    volumes:
+      - planevent-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  planevent-db-data:
