@@ -54,10 +54,12 @@ public class ScaffoldingConfig {
             FuncionarioRepository funcionarioRepository,
             EquipeRepository equipeRepository) {
         return args -> {
-            boolean usandoStubs = eventoRepository instanceof InMemoryEventoRepository
-                    && funcionarioRepository instanceof InMemoryFuncionarioRepository
-                    && equipeRepository instanceof InMemoryEquipeRepository;
-            if (!usandoStubs) {
+            // Roda enquanto Evento e Funcionário ainda forem stubs (módulos não plugados).
+            // A Equipe pode já ser persistência real (módulo da colega) — usamos o
+            // repositório injetado de qualquer forma.
+            boolean apoioStubsAtivo = eventoRepository instanceof InMemoryEventoRepository
+                    && funcionarioRepository instanceof InMemoryFuncionarioRepository;
+            if (!apoioStubsAtivo) {
                 return;
             }
 
@@ -67,11 +69,13 @@ public class ScaffoldingConfig {
             Equipe equipe = equipeRepository.salvar(
                     new Equipe(evento.getId(), "Equipe Demo", funcionario.getId()));
 
-            log.info("==================== DADOS DEMO (stubs in-memory) ====================");
-            log.info("eventoId      = {}", evento.getId());
-            log.info("equipeId      = {}  (use ao criar tarefas)", equipe.getId());
-            log.info("funcionarioId = {}  (membro da equipe; use como responsavel)", funcionario.getId());
-            log.info("=====================================================================");
+            boolean equipePersistida = !(equipeRepository instanceof InMemoryEquipeRepository);
+            log.info("==================== DADOS DEMO ====================");
+            log.info("eventoId      = {}  (stub in-memory)", evento.getId());
+            log.info("funcionarioId = {}  (stub in-memory; membro da equipe; use como responsavel)", funcionario.getId());
+            log.info("equipeId      = {}  ({}; use ao criar tarefas)",
+                    equipe.getId(), equipePersistida ? "persistida no banco" : "stub in-memory");
+            log.info("===================================================");
         };
     }
 }
