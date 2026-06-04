@@ -4,6 +4,7 @@ import './agenda/agenda.css'
 import AgendaModule from './agenda/AgendaModule'
 import { AgendaProvider, useAgenda } from './agenda/AgendaContext'
 import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
+import TarefasApp from './app/TarefasApp'
 
 interface Funcionario {
   id: string;
@@ -1911,6 +1912,8 @@ export default function App() {
                 </div>
               )}
             </div>
+          ) : currentTab === 'tarefas' ? (
+            <TarefasApp />
           ) : currentTab === 'agenda' ? (
             <AgendaModule />
           ) : (

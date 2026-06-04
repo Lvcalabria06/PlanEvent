@@ -22,9 +22,13 @@ public interface TarefaService {
 
     void atribuirResponsavel(String tarefaId, String funcionarioId);
 
+    void removerResponsavel(String tarefaId, String funcionarioId);
+
     List<String> listarResponsaveis(String tarefaId);
 
     List<Tarefa> listarPorEquipe(String equipeId);
 
     List<Tarefa> listarPorEvento(String eventoId);
+
+    List<Tarefa> listarTodas();
 }

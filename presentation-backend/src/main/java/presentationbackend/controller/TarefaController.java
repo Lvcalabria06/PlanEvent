@@ -32,6 +32,11 @@ public class TarefaController {
         this.tarefaUseCase = tarefaUseCase;
     }
 
+    @GetMapping
+    public List<TarefaResponse> listarTodas() {
+        return tarefaUseCase.listarTodas();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TarefaResponse criar(@RequestBody CriarTarefaRequest request) {
@@ -65,6 +70,12 @@ public class TarefaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void atribuirResponsavel(@PathVariable String id, @RequestBody AtribuirResponsavelRequest request) {
         tarefaUseCase.atribuirResponsavel(id, request);
+    }
+
+    @DeleteMapping("/{id}/responsaveis/{funcionarioId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removerResponsavel(@PathVariable String id, @PathVariable String funcionarioId) {
+        tarefaUseCase.removerResponsavel(id, funcionarioId);
     }
 
     @GetMapping("/por-equipe/{equipeId}")

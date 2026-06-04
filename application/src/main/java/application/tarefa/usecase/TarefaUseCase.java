@@ -25,7 +25,11 @@ public interface TarefaUseCase {
 
     void atribuirResponsavel(String tarefaId, AtribuirResponsavelRequest request);
 
+    void removerResponsavel(String tarefaId, String funcionarioId);
+
     List<TarefaResponse> listarPorEquipe(String equipeId);
 
     List<TarefaResponse> listarPorEvento(String eventoId);
+
+    List<TarefaResponse> listarTodas();
 }

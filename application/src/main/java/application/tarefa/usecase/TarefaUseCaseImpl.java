@@ -62,6 +62,11 @@ public class TarefaUseCaseImpl implements TarefaUseCase {
     }
 
     @Override
+    public void removerResponsavel(String tarefaId, String funcionarioId) {
+        tarefaService.removerResponsavel(tarefaId, funcionarioId);
+    }
+
+    @Override
     public List<TarefaResponse> listarPorEquipe(String equipeId) {
         return tarefaService.listarPorEquipe(equipeId).stream()
                 .map(this::paraResposta)
@@ -71,6 +76,13 @@ public class TarefaUseCaseImpl implements TarefaUseCase {
     @Override
     public List<TarefaResponse> listarPorEvento(String eventoId) {
         return tarefaService.listarPorEvento(eventoId).stream()
+                .map(this::paraResposta)
+                .toList();
+    }
+
+    @Override
+    public List<TarefaResponse> listarTodas() {
+        return tarefaService.listarTodas().stream()
                 .map(this::paraResposta)
                 .toList();
     }
