@@ -4,6 +4,7 @@ import { CONTRACT_CATEGORIES } from '../../../modules/planning/constants';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Fornecedor, StatusFornecedor } from '../../../modules/planning/types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
+import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
 
 interface FornecedoresListPageProps {
 	onCreate: () => void;
@@ -33,15 +34,18 @@ function StatusBadge({ status }: { status: StatusFornecedor }) {
 export function FornecedoresListPage({ onCreate, onEdit }: FornecedoresListPageProps) {
 	const {
 		fornecedores,
-		alternarStatusFornecedor,
-		excluirFornecedor,
+		desativarFornecedor,
+		loading,
+		integrationPending,
+		error,
 	} = usePlanningData();
 
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<StatusFornecedor | 'TODOS'>('TODOS');
 	const [categoryFilter, setCategoryFilter] = useState<CategoriaServico | 'TODAS'>('TODAS');
-	const [toDelete, setToDelete] = useState<Fornecedor | null>(null);
+	const [toDeactivate, setToDeactivate] = useState<Fornecedor | null>(null);
 	const [feedback, setFeedback] = useState<string | null>(null);
+	const [actionLoading, setActionLoading] = useState(false);
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
@@ -62,20 +66,23 @@ export function FornecedoresListPage({ onCreate, onEdit }: FornecedoresListPageP
 	const inactiveCount = fornecedores.filter(f => f.status === 'INATIVO').length;
 	const categoryCount = new Set(fornecedores.map(f => f.categoriaServico)).size;
 
-	const handleToggleStatus = (id: string) => {
-		const erro = alternarStatusFornecedor(id);
+	const handleDeactivate = async () => {
+		if (!toDeactivate) return;
+		setActionLoading(true);
+		const erro = await desativarFornecedor(toDeactivate.id);
 		setFeedback(erro);
 		if (!erro) setFeedback(null);
+		setToDeactivate(null);
+		setActionLoading(false);
 	};
 
-	const handleDelete = () => {
-		if (!toDelete) return;
-		const ok = excluirFornecedor(toDelete.id);
-		if (!ok) {
-			setFeedback('Não é possível excluir fornecedor com contrato ativo vinculado.');
-		}
-		setToDelete(null);
-	};
+	if (loading) {
+		return (
+			<div className="module-page">
+				<p style={{ color: '#6b7280' }}>Carregando fornecedores...</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="module-page">
@@ -92,6 +99,14 @@ export function FornecedoresListPage({ onCreate, onEdit }: FornecedoresListPageP
 					Novo Fornecedor
 				</button>
 			</div>
+
+			{integrationPending && <IntegrationPendingBanner />}
+
+			{error && (
+				<div className="error-message" style={{ padding: '0.75rem', marginBottom: '1rem' }}>
+					{error}
+				</div>
+			)}
 
 			{feedback && (
 				<div className="alert-box yellow" style={{ marginBottom: '1rem' }}>
@@ -240,25 +255,16 @@ export function FornecedoresListPage({ onCreate, onEdit }: FornecedoresListPageP
 													>
 														Editar
 													</button>
-													<button
-														type="button"
-														className="edit-link"
-														style={{
-															marginLeft: '0.75rem',
-															color: fornecedor.status === 'ATIVO' ? '#ea580c' : '#10b981',
-														}}
-														onClick={() => handleToggleStatus(fornecedor.id)}
-													>
-														{fornecedor.status === 'ATIVO' ? 'Inativar' : 'Reativar'}
-													</button>
-													<button
-														type="button"
-														className="edit-link"
-														style={{ marginLeft: '0.75rem', color: '#ef4444' }}
-														onClick={() => setToDelete(fornecedor)}
-													>
-														Excluir
-													</button>
+													{fornecedor.status === 'ATIVO' && (
+														<button
+															type="button"
+															className="edit-link"
+															style={{ marginLeft: '0.75rem', color: '#ea580c' }}
+															onClick={() => setToDeactivate(fornecedor)}
+														>
+															Desativar
+														</button>
+													)}
 												</div>
 											</td>
 										</tr>
@@ -273,22 +279,22 @@ export function FornecedoresListPage({ onCreate, onEdit }: FornecedoresListPageP
 				)}
 			</div>
 
-			{toDelete && (
+			{toDeactivate && (
 				<ConfirmModal
-					title="Excluir Fornecedor"
+					title="Desativar Fornecedor"
 					description={
 						<>
-							<p>Você está prestes a excluir o fornecedor:</p>
+							<p>Você está prestes a desativar o fornecedor:</p>
 							<div className="highlight-box">
-								<strong>{toDelete.nome}</strong>
-								<span className="mono-text">{toDelete.cnpj}</span>
+								<strong>{toDeactivate.nome}</strong>
+								<span className="mono-text">{toDeactivate.cnpj}</span>
 							</div>
-							<p>Certifique-se de que não há contratos ativos vinculados.</p>
+							<p>Fornecedores inativos não podem ser vinculados a novos contratos.</p>
 						</>
 					}
-					confirmLabel="Excluir Fornecedor"
-					onConfirm={handleDelete}
-					onCancel={() => setToDelete(null)}
+					confirmLabel={actionLoading ? 'Desativando...' : 'Desativar Fornecedor'}
+					onConfirm={() => void handleDeactivate()}
+					onCancel={() => setToDeactivate(null)}
 				/>
 			)}
 		</div>

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { CONTRACT_EVENTS } from '../../../modules/planning/constants';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Contrato, StatusContratoUi } from '../../../modules/planning/types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
+import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
 
 interface ContratosListPageProps {
 	onCreate: () => void;
@@ -19,11 +19,13 @@ function StatusBadge({ status }: { status: StatusContratoUi }) {
 }
 
 export function ContratosListPage({ onCreate, onEdit, onView }: ContratosListPageProps) {
-	const { contratos, encerrarContrato } = usePlanningData();
+	const { contratos, encerrarContrato, eventos, loading, integrationPending, error } =
+		usePlanningData();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<StatusContratoUi | 'TODOS'>('TODOS');
 	const [toClose, setToClose] = useState<Contrato | null>(null);
 	const [feedback, setFeedback] = useState<string | null>(null);
+	const [actionLoading, setActionLoading] = useState(false);
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
@@ -43,15 +45,24 @@ export function ContratosListPage({ onCreate, onEdit, onView }: ContratosListPag
 	const closedCount = contratos.filter(c => c.status === 'ENCERRADO').length;
 	const eventCount = new Set(contratos.map(c => c.eventoId)).size;
 
-	const getEventName = (id: string) =>
-		CONTRACT_EVENTS.find(e => e.id === id)?.name ?? id;
+	const getEventName = (id: string) => eventos.find(e => e.id === id)?.name ?? id;
 
-	const handleClose = () => {
+	const handleClose = async () => {
 		if (!toClose) return;
-		const erro = encerrarContrato(toClose.id);
+		setActionLoading(true);
+		const erro = await encerrarContrato(toClose.id);
 		setFeedback(erro);
 		setToClose(null);
+		setActionLoading(false);
 	};
+
+	if (loading) {
+		return (
+			<div className="module-page">
+				<p style={{ color: '#6b7280' }}>Carregando contratos...</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="module-page">
@@ -68,6 +79,14 @@ export function ContratosListPage({ onCreate, onEdit, onView }: ContratosListPag
 					Novo Contrato
 				</button>
 			</div>
+
+			{integrationPending && <IntegrationPendingBanner />}
+
+			{error && (
+				<div className="error-message" style={{ padding: '0.75rem', marginBottom: '1rem' }}>
+					{error}
+				</div>
+			)}
 
 			{feedback && (
 				<div className="alert-box yellow" style={{ marginBottom: '1rem' }}>
@@ -274,8 +293,8 @@ export function ContratosListPage({ onCreate, onEdit, onView }: ContratosListPag
 							<p>Após o encerramento, o contrato não poderá mais ser editado.</p>
 						</>
 					}
-					confirmLabel="Encerrar Contrato"
-					onConfirm={handleClose}
+					confirmLabel={actionLoading ? 'Encerrando...' : 'Encerrar Contrato'}
+					onConfirm={() => void handleClose()}
 					onCancel={() => setToClose(null)}
 				/>
 			)}
