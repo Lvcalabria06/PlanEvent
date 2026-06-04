@@ -13,13 +13,17 @@ public interface DespesaRepository {
 
     Optional<Despesa> buscarPorId(String id);
 
+    void excluir(String id);
+
     List<Despesa> listarPorEventoId(String eventoId);
 
     List<Despesa> listarPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
 
+    List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId);
+
+    List<Despesa> listarPorFornecedorId(String fornecedorId);
+
     BigDecimal somarValoresPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
 
     BigDecimal somarValoresAtivosPorEventoECategoria(String eventoId, CategoriaDespesa categoria);
-
-    List<Despesa> listarPorFornecedorId(String fornecedorId);
 }
