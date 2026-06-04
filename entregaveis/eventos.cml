@@ -263,10 +263,151 @@ BoundedContext PlanejamentoContext implements EventOS {
 
             Repository OrcamentoEventoRepository {
                 @OrcamentoEvento buscar(@OrcamentoEventoId id);
+                @OrcamentoEvento buscarPorEventoId(String eventoId);
             }
         }
 
+        Entity CategoriaOrcamento {
+            -CategoriaOrcamentoId id
+            String orcamentoId
+            -CategoriaDespesa nome
+            BigDecimal valorPrevisto
+
+            Repository CategoriaOrcamentoRepository {
+                @CategoriaOrcamento buscarPorOrcamentoECategoria(String orcamentoId, -CategoriaDespesa categoria);
+                List<CategoriaOrcamento> listarPorOrcamentoId(String orcamentoId);
+            }
+        }
+
+        Entity Despesa {
+            -DespesaId id
+            String eventoId
+            -CategoriaDespesa categoria
+            String fornecedorId
+            BigDecimal valor
+            Date data
+            String lancadoPorUsuarioId
+            Date dataHoraLancamento
+            -StatusDespesa status
+            String aprovadorId
+            String motivoRejeicao
+
+            Repository DespesaRepository {
+                @Despesa salvar(@Despesa despesa);
+                @Despesa buscarPorId(String id);
+                void excluir(String id);
+                List<Despesa> listarPorEventoId(String eventoId);
+                List<Despesa> listarPorEventoECategoria(String eventoId, -CategoriaDespesa categoria);
+                List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId);
+                BigDecimal somarValoresAtivosPorEventoECategoria(String eventoId, -CategoriaDespesa categoria);
+            }
+        }
+
+        Entity RelatorioFinanceiro {
+            -RelatorioFinanceiroId id
+            String eventoId
+            String geradoPorUsuarioId
+            Date dataGeracao
+            -TipoRelatorio tipo
+            String motivoNovaVersaoOficial
+            BigDecimal totalGeralPrevisto
+            BigDecimal totalGeralRealizado
+            List<ItemRelatorioCategoria> itensPorCategoria
+            -SaudeFinanceira saudeFinanceira
+            -IndicadorCoberturaContratual coberturaContratual
+            -ComparativoRelatorioFinanceiro comparativo
+            List<RecomendacaoFinanceira> recomendacoes
+            String conteudo
+
+            Repository RelatorioFinanceiroRepository {
+                @RelatorioFinanceiro salvar(@RelatorioFinanceiro relatorio);
+                @RelatorioFinanceiro buscarPorId(String id);
+                List<RelatorioFinanceiro> listarPorEventoId(String eventoId);
+            }
+        }
+
+        Entity SimulacaoRelatorioFinanceiro {
+            -SimulacaoRelatorioFinanceiroId id
+            Date criadaEm
+
+            Repository SimulacaoRelatorioRepository {
+                @SimulacaoRelatorioFinanceiro salvar(@SimulacaoRelatorioFinanceiro simulacao);
+                @SimulacaoRelatorioFinanceiro buscarPorId(String id);
+                void remover(String id);
+            }
+        }
+
+        Service DespesaService {
+            @Despesa registrarDespesa(@Despesa despesa);
+            @Despesa buscarDespesa(String id);
+            List<Despesa> listarDespesasPorEvento(String eventoId);
+            List<Despesa> pesquisarPorCategoria(String eventoId, -CategoriaDespesa categoria);
+            List<Despesa> pesquisarPorFornecedor(String eventoId, String fornecedorId);
+            @Despesa atualizarDespesa(String despesaId, BigDecimal novoValor, Date novaData);
+            void excluirDespesa(String despesaId);
+            -DesvioOrcamentario calcularDesvio(String eventoId, -CategoriaDespesa categoria);
+            List<DesvioOrcamentario> calcularDesviosPorEvento(String eventoId);
+            @Despesa aprovarDespesa(String despesaId, String aprovadorId);
+            @Despesa rejeitarDespesa(String despesaId, String aprovadorId, String motivo);
+        }
+
+        Service RelatorioFinanceiroService {
+            @RelatorioFinanceiro gerarRelatorio(String eventoId, String usuarioId);
+            @RelatorioFinanceiro gerarRelatorio(String eventoId, String usuarioId, -TipoRelatorio tipo);
+            @RelatorioFinanceiro gerarRelatorioOficial(String eventoId, String usuarioId, String motivoNovaVersaoOficial);
+            @SimulacaoRelatorioFinanceiro simularRelatorio(String eventoId, String usuarioId);
+            @RelatorioFinanceiro confirmarGeracao(String simulacaoId, -TipoRelatorio tipo, String motivoNovaVersaoOficial);
+            @RelatorioFinanceiro buscarRelatorio(String id);
+            List<RelatorioFinanceiro> listarRelatoriosPorEvento(String eventoId);
+        }
+
         ValueObject OrcamentoEventoId { String valor }
+        ValueObject CategoriaOrcamentoId { String valor }
+        ValueObject DespesaId { String valor }
+        ValueObject RelatorioFinanceiroId { String valor }
+        ValueObject SimulacaoRelatorioFinanceiroId { String valor }
+        ValueObject CategoriaDespesa { String valor }
+        ValueObject StatusDespesa { String valor }
+        ValueObject ClassificacaoDesvio { String valor }
+        ValueObject DesvioOrcamentario {
+            -CategoriaDespesa categoria
+            BigDecimal valorPrevisto
+            BigDecimal valorRealizado
+            double desvioPercentual
+            -ClassificacaoDesvio classificacao
+        }
+        ValueObject ItemRelatorioCategoria {
+            -CategoriaDespesa categoria
+            BigDecimal valorPrevisto
+            BigDecimal valorRealizado
+            double percentualVariacao
+            -ClassificacaoDesvio classificacao
+        }
+        ValueObject SaudeFinanceira {
+            double score
+            -ClassificacaoSaude classificacao
+        }
+        ValueObject ClassificacaoSaude { String valor }
+        ValueObject TipoRelatorio { String valor }
+        ValueObject TendenciaSaudeFinanceira { String valor }
+        ValueObject ComparativoRelatorioFinanceiro {
+            String relatorioAnteriorId
+            double variacaoScore
+            -TendenciaSaudeFinanceira tendencia
+            List<CategoriaDespesa> categoriasComPiora
+        }
+        ValueObject IndicadorCoberturaContratual {
+            int totalDespesasAtivas
+            int despesasCobertas
+            int despesasDescobertas
+            double percentualCobertura
+        }
+        ValueObject RecomendacaoFinanceira {
+            -TipoRecomendacaoFinanceira tipo
+            String mensagem
+            -CategoriaDespesa categoriaRelacionada
+        }
+        ValueObject TipoRecomendacaoFinanceira { String valor }
     }
 
     Aggregate Estoque {

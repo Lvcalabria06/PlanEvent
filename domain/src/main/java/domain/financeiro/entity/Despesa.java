@@ -58,11 +58,33 @@ public class Despesa {
         this.status = StatusDespesa.REGISTRADA;
     }
 
+    public boolean podeSerAlterada() {
+        return status == StatusDespesa.REGISTRADA
+                || status == StatusDespesa.PENDENTE_APROVACAO;
+    }
+
+    public void garantirPodeSerAlterada() {
+        if (!podeSerAlterada()) {
+            throw new IllegalStateException(
+                    "Despesa aprovada ou rejeitada não pode ser alterada ou excluída. Status atual: "
+                            + status);
+        }
+    }
+
     public void corrigirValor(BigDecimal novoValor) {
+        garantirPodeSerAlterada();
         if (novoValor == null || novoValor.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Novo valor da despesa deve ser maior que zero.");
         }
         this.valor = novoValor;
+    }
+
+    public void corrigirData(LocalDateTime novaData) {
+        garantirPodeSerAlterada();
+        if (novaData == null) {
+            throw new IllegalArgumentException("Data da despesa é obrigatória.");
+        }
+        this.data = novaData;
     }
 
     public void marcarPendente() {

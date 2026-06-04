@@ -11,7 +11,13 @@ public class SaudeFinanceira {
     private final ClassificacaoSaude classificacao;
 
     public SaudeFinanceira(List<ItemRelatorioCategoria> itens) {
-        this.score = calcularScore(itens);
+        this(itens, null);
+    }
+
+    public SaudeFinanceira(List<ItemRelatorioCategoria> itens,
+                            IndicadorCoberturaContratual coberturaContratual) {
+        double scoreBase = calcularScore(itens);
+        this.score = aplicarPenalidadeCobertura(scoreBase, coberturaContratual);
         this.classificacao = classificarScore(this.score);
     }
 
@@ -42,6 +48,17 @@ public class SaudeFinanceira {
             score += contribuicao;
         }
         return score;
+    }
+
+    private static double aplicarPenalidadeCobertura(double scoreBase,
+                                                     IndicadorCoberturaContratual cobertura) {
+        if (cobertura == null || !cobertura.possuiDespesasDescobertas()) {
+            return scoreBase;
+        }
+        double fatorDescobertas = cobertura.getDespesasDescobertas()
+                / (double) Math.max(1, cobertura.getTotalDespesasAtivas());
+        double penalidade = fatorDescobertas * 30.0;
+        return Math.max(0.0, scoreBase - penalidade);
     }
 
     private static ClassificacaoSaude classificarScore(double score) {

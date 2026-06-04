@@ -1,12 +1,15 @@
 package domain.financeiro.valueobject;
 
+import domain.financeiro.template.ClassificadorDesvioTemplateMethod;
+import domain.financeiro.template.ClassificadorPorFaixasTemplateMethod;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public class DesvioOrcamentario {
 
-    private static final double LIMIAR_ATENCAO = 10.0;
-    private static final double LIMIAR_CRITICO = 20.0;
+    private static final ClassificadorDesvioTemplateMethod CLASSIFICADOR_PADRAO =
+            new ClassificadorPorFaixasTemplateMethod();
 
     private final CategoriaDespesa categoria;
     private final BigDecimal valorPrevisto;
@@ -17,6 +20,13 @@ public class DesvioOrcamentario {
     public DesvioOrcamentario(CategoriaDespesa categoria,
                                BigDecimal valorPrevisto,
                                BigDecimal valorRealizado) {
+        this(categoria, valorPrevisto, valorRealizado, CLASSIFICADOR_PADRAO);
+    }
+
+    public DesvioOrcamentario(CategoriaDespesa categoria,
+                               BigDecimal valorPrevisto,
+                               BigDecimal valorRealizado,
+                               ClassificadorDesvioTemplateMethod classificador) {
 
         if (categoria == null) {
             throw new IllegalArgumentException("Categoria é obrigatória.");
@@ -27,16 +37,15 @@ public class DesvioOrcamentario {
         if (valorRealizado == null || valorRealizado.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Valor realizado não pode ser nulo ou negativo.");
         }
+        if (classificador == null) {
+            throw new IllegalArgumentException("Classificador de desvio é obrigatório.");
+        }
 
         this.categoria = categoria;
         this.valorPrevisto = valorPrevisto;
         this.valorRealizado = valorRealizado;
         this.desvioPercentual = calcularDesvioPercentual(valorPrevisto, valorRealizado);
-        this.classificacao = desvioPercentual > LIMIAR_CRITICO
-                ? ClassificacaoDesvio.CRITICO
-                : desvioPercentual >= LIMIAR_ATENCAO
-                        ? ClassificacaoDesvio.ATENCAO
-                        : ClassificacaoDesvio.NORMAL;
+        this.classificacao = classificador.classificar(desvioPercentual);
     }
 
     private static double calcularDesvioPercentual(BigDecimal previsto, BigDecimal realizado) {

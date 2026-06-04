@@ -35,6 +35,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DespesaSteps {
@@ -43,6 +44,7 @@ public class DespesaSteps {
     private static final String ID_ORCAMENTO  = "orc-1";
     private static final String ID_FORNECEDOR = "fornecedor-1";
     private static final String ID_USUARIO    = "usuario-gestor-1";
+    private static final String ID_APROVADOR  = "aprovador-gestor-1";
 
     private EventoRepository             eventoRepository;
     private OrcamentoEventoRepository    orcamentoEventoRepository;
@@ -182,6 +184,72 @@ public class DespesaSteps {
                 .thenReturn(Optional.of(despesaEmContexto));
         when(despesaRepository.listarPorEventoId(ID_EVENTO))
                 .thenReturn(List.of(despesaEmContexto));
+        when(despesaRepository.listarPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(List.of(despesaEmContexto));
+        when(despesaRepository.listarPorEventoEFornecedor(eq(ID_EVENTO), eq(ID_FORNECEDOR)))
+                .thenReturn(List.of(despesaEmContexto));
+        when(despesaRepository.somarValoresAtivosPorEventoECategoria(eq(ID_EVENTO), eq(cat)))
+                .thenReturn(BigDecimal.valueOf(valor));
+    }
+
+    @Given("existe uma despesa já aprovada para gerenciamento")
+    public void existe_uma_despesa_ja_aprovada_para_gerenciamento() {
+        when(eventoRepository.buscarPorId(ID_EVENTO))
+                .thenReturn(Optional.of(Mockito.mock(Evento.class)));
+        despesaEmContexto = new Despesa(ID_EVENTO, CategoriaDespesa.SERVICO,
+                ID_FORNECEDOR, new BigDecimal("100.00"), LocalDateTime.now(), ID_USUARIO);
+        despesaEmContexto.marcarPendente();
+        despesaEmContexto.aprovar(ID_APROVADOR);
+        when(despesaRepository.buscarPorId(despesaEmContexto.getId()))
+                .thenReturn(Optional.of(despesaEmContexto));
+    }
+
+    @When("eu alterar o valor da despesa para {double}")
+    public void eu_alterar_o_valor_da_despesa_para(double novoValor) {
+        try {
+            despesaEmContexto = despesaService.atualizarDespesa(
+                    despesaEmContexto.getId(), BigDecimal.valueOf(novoValor), null);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @When("eu tentar alterar o valor da despesa aprovada para {double}")
+    public void eu_tentar_alterar_o_valor_da_despesa_aprovada_para(double novoValor) {
+        eu_alterar_o_valor_da_despesa_para(novoValor);
+    }
+
+    @When("eu excluir essa despesa")
+    public void eu_excluir_essa_despesa() {
+        try {
+            despesaService.excluirDespesa(despesaEmContexto.getId());
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @When("eu tentar excluir a despesa aprovada")
+    public void eu_tentar_excluir_a_despesa_aprovada() {
+        eu_excluir_essa_despesa();
+    }
+
+    @When("eu pesquisar despesas da categoria {string}")
+    public void eu_pesquisar_despesas_da_categoria(String catStr) {
+        try {
+            listaDespesasRetornada = despesaService.pesquisarPorCategoria(
+                    ID_EVENTO, CategoriaDespesa.valueOf(catStr));
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @When("eu pesquisar despesas do fornecedor {string}")
+    public void eu_pesquisar_despesas_do_fornecedor(String fornecedorId) {
+        try {
+            listaDespesasRetornada = despesaService.pesquisarPorFornecedor(ID_EVENTO, fornecedorId);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
     }
 
     @Given("não existe despesa com o id informado")
@@ -453,5 +521,38 @@ public class DespesaSteps {
     @Then("o sistema deve impedir a visualização da despesa")
     public void o_sistema_deve_impedir_a_visualizacao_da_despesa() {
         assertNotNull(excecaoLancada, "Era esperada uma exceção ao buscar despesa inexistente.");
+    }
+
+    @Then("o valor da despesa deve ser {double}")
+    public void o_valor_da_despesa_deve_ser(double esperado) {
+        assertNull(excecaoLancada);
+        assertNotNull(despesaEmContexto);
+        assertEquals(0, BigDecimal.valueOf(esperado).compareTo(despesaEmContexto.getValor()));
+    }
+
+    @Then("o sistema deve impedir a alteração da despesa")
+    public void o_sistema_deve_impedir_a_alteracao_da_despesa() {
+        assertNotNull(excecaoLancada);
+        assertTrue(excecaoLancada instanceof IllegalStateException);
+    }
+
+    @Then("o sistema deve impedir a exclusão da despesa")
+    public void o_sistema_deve_impedir_a_exclusao_da_despesa() {
+        assertNotNull(excecaoLancada);
+        assertTrue(excecaoLancada instanceof IllegalStateException);
+    }
+
+    @Then("a despesa deve ser removida com sucesso")
+    public void a_despesa_deve_ser_removida_com_sucesso() {
+        assertNull(excecaoLancada);
+        verify(despesaRepository).excluir(despesaEmContexto.getId());
+    }
+
+    @Then("a pesquisa deve retornar ao menos {int} despesa")
+    public void a_pesquisa_deve_retornar_ao_menos_despesas(int quantidade) {
+        assertNull(excecaoLancada);
+        assertNotNull(listaDespesasRetornada);
+        assertTrue(listaDespesasRetornada.size() >= quantidade,
+                "Esperava ao menos " + quantidade + " despesa(s).");
     }
 }
