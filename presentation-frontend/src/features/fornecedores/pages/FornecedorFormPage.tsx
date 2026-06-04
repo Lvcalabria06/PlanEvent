@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { CONTRACT_CATEGORIES } from '../../../modules/planning/constants';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Fornecedor, FornecedorInput } from '../../../modules/planning/types';
+import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
 import { formatCnpj, isCnpjValid } from '../../../shared/utils/cnpj';
 
 interface FornecedorFormPageProps {
@@ -25,7 +26,7 @@ const emptyForm = (): FormState => ({
 
 export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFormPageProps) {
 	const isEditing = !!fornecedor;
-	const { criarFornecedor, atualizarFornecedor } = usePlanningData();
+	const { criarFornecedor, atualizarFornecedor, integrationPending } = usePlanningData();
 
 	const [form, setForm] = useState<FormState>(
 		fornecedor
@@ -43,6 +44,7 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 	);
 	const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 	const [submitError, setSubmitError] = useState<string | null>(null);
+	const [submitting, setSubmitting] = useState(false);
 
 	const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
 		setForm(prev => ({ ...prev, [key]: value }));
@@ -74,7 +76,7 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 		return Object.keys(next).length === 0;
 	};
 
-	const handleSubmit = (e: FormEvent) => {
+	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 
@@ -83,22 +85,35 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 			contato: form.email.trim() || form.contato.trim(),
 		};
 
-		if (isEditing && fornecedor) {
-			const ok = atualizarFornecedor(fornecedor.id, payload);
-			if (!ok) {
-				setSubmitError(
-					'Não foi possível salvar. Verifique se o fornecedor está ativo e se o CNPJ não está duplicado.'
-				);
-				return;
+		setSubmitting(true);
+		setSubmitError(null);
+
+		try {
+			if (isEditing && fornecedor) {
+				const ok = await atualizarFornecedor(fornecedor.id, payload);
+				if (!ok) {
+					setSubmitError(
+						integrationPending
+							? 'Integração com backend pendente. Implemente fornecedoresApi.editarFornecedor.'
+							: 'Não foi possível salvar. Verifique se o fornecedor está ativo e se o CNPJ não está duplicado.'
+					);
+					return;
+				}
+			} else {
+				const id = await criarFornecedor(payload);
+				if (!id) {
+					setSubmitError(
+						integrationPending
+							? 'Integração com backend pendente. Implemente fornecedoresApi.cadastrarFornecedor.'
+							: 'Não foi possível cadastrar. Verifique os dados e se o CNPJ já existe.'
+					);
+					return;
+				}
 			}
-		} else {
-			const id = criarFornecedor(payload);
-			if (!id) {
-				setSubmitError('Não foi possível cadastrar. Verifique os dados e se o CNPJ já existe.');
-				return;
-			}
+			onSaved();
+		} finally {
+			setSubmitting(false);
 		}
-		onSaved();
 	};
 
 	const locked = isEditing && fornecedor?.status === 'INATIVO';
@@ -122,6 +137,8 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 						? `Editando ${fornecedor?.nome}`
 						: 'Preencha os dados para cadastrar um novo fornecedor'}
 				</p>
+
+				{integrationPending && <IntegrationPendingBanner />}
 
 				{locked && (
 					<div className="alert-box yellow" style={{ marginBottom: '1rem' }}>
@@ -235,7 +252,7 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 							<ul>
 								<li>CNPJ deve ser válido e único no cadastro</li>
 								<li>Fornecedor inativo não pode ser editado</li>
-								<li>Não é possível inativar fornecedor com contrato ativo</li>
+								<li>Não é possível desativar fornecedor com contrato ativo</li>
 							</ul>
 						</div>
 					</div>
@@ -245,8 +262,12 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 							Cancelar
 						</button>
 						{!locked && (
-							<button type="submit" className="action-btn">
-								{isEditing ? 'Salvar Alterações' : 'Cadastrar Fornecedor'}
+							<button type="submit" className="action-btn" disabled={submitting}>
+								{submitting
+									? 'Salvando...'
+									: isEditing
+										? 'Salvar Alterações'
+										: 'Cadastrar Fornecedor'}
 							</button>
 						)}
 					</div>

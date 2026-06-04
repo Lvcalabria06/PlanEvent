@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { CONTRACT_EVENTS } from '../../../modules/planning/constants';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Contrato } from '../../../modules/planning/types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
+import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
 
 interface ContratoDetailPageProps {
 	contrato: Contrato;
@@ -11,22 +11,24 @@ interface ContratoDetailPageProps {
 }
 
 export function ContratoDetailPage({ contrato: initial, onBack, onEdit }: ContratoDetailPageProps) {
-	const { encerrarContrato, obterContrato } = usePlanningData();
+	const { encerrarContrato, obterContrato, eventos, integrationPending } = usePlanningData();
 	const contrato = obterContrato(initial.id) ?? initial;
 	const [showCloseModal, setShowCloseModal] = useState(false);
 	const [feedback, setFeedback] = useState<string | null>(null);
+	const [actionLoading, setActionLoading] = useState(false);
 
-	const eventName =
-		CONTRACT_EVENTS.find(e => e.id === contrato.eventoId)?.name ?? contrato.eventoId;
+	const eventName = eventos.find(e => e.id === contrato.eventoId)?.name ?? contrato.eventoId;
 
-	const handleClose = () => {
-		const erro = encerrarContrato(contrato.id);
+	const handleClose = async () => {
+		setActionLoading(true);
+		const erro = await encerrarContrato(contrato.id);
 		if (erro) {
 			setFeedback(erro);
 		} else {
 			setFeedback(null);
 		}
 		setShowCloseModal(false);
+		setActionLoading(false);
 	};
 
 	return (
@@ -38,6 +40,8 @@ export function ContratoDetailPage({ contrato: initial, onBack, onEdit }: Contra
 				</svg>
 				Voltar para Contratos
 			</button>
+
+			{integrationPending && <IntegrationPendingBanner />}
 
 			{feedback && (
 				<div className="alert-box yellow" style={{ marginBottom: '1rem' }}>
@@ -176,8 +180,8 @@ export function ContratoDetailPage({ contrato: initial, onBack, onEdit }: Contra
 							</ul>
 						</>
 					}
-					confirmLabel="Encerrar Contrato"
-					onConfirm={handleClose}
+					confirmLabel={actionLoading ? 'Encerrando...' : 'Encerrar Contrato'}
+					onConfirm={() => void handleClose()}
 					onCancel={() => setShowCloseModal(false)}
 				/>
 			)}

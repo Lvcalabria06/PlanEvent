@@ -2,14 +2,12 @@ import { useState, type FormEvent } from 'react';
 import {
 	CONTRATANTE_PADRAO,
 	CONTRACT_CATEGORIES,
-	CONTRACT_EVENTS,
 	CONTRACT_TYPES,
 } from '../../../modules/planning/constants';
-import {
-	buildPartes,
-	usePlanningData,
-} from '../../../modules/planning/PlanningDataContext';
+import { buildPartes } from '../../../modules/planning/contratos/utils';
+import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Contrato, ContratoInput } from '../../../modules/planning/types';
+import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
 
 interface ContratoFormPageProps {
 	contrato?: Contrato;
@@ -32,7 +30,7 @@ type FormState = {
 export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPageProps) {
 	const isEditing = !!contrato;
 	const locked = isEditing && contrato?.status === 'ENCERRADO';
-	const { criarContrato, atualizarContrato, fornecedoresAtivos, obterFornecedor } =
+	const { criarContrato, atualizarContrato, fornecedoresAtivos, obterFornecedor, eventos, integrationPending } =
 		usePlanningData();
 
 	const [form, setForm] = useState<FormState>(() => ({
@@ -43,12 +41,13 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 		valor: contrato?.valor?.toString() ?? '',
 		dataInicio: contrato?.dataInicio ?? '',
 		dataFim: contrato?.dataFim ?? '',
-		eventoId: contrato?.eventoId ?? CONTRACT_EVENTS[0].id,
+		eventoId: contrato?.eventoId ?? eventos[0]?.id ?? '',
 		categoria: contrato?.categoria ?? 'Buffet/Alimentação',
 	}));
 	const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [savedId, setSavedId] = useState<string | null>(null);
+	const [submitting, setSubmitting] = useState(false);
 
 	const selectedSupplier = obterFornecedor(form.fornecedorId);
 
@@ -94,7 +93,7 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 		};
 	};
 
-	const handleSubmit = (e: FormEvent) => {
+	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 		const payload = buildPayload();
@@ -103,21 +102,36 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 			return;
 		}
 
-		if (isEditing && contrato) {
-			const ok = atualizarContrato(contrato.id, payload);
-			if (!ok) {
-				setSubmitError('Não foi possível salvar. Verifique se o contrato está ativo.');
-				return;
+		setSubmitting(true);
+		setSubmitError(null);
+
+		try {
+			if (isEditing && contrato) {
+				const ok = await atualizarContrato(contrato.id, payload);
+				if (!ok) {
+					setSubmitError(
+						integrationPending
+							? 'Integração com backend pendente. Implemente contratosApi.editarContrato.'
+							: 'Não foi possível salvar. Verifique se o contrato está ativo.'
+					);
+					return;
+				}
+				onSaved(contrato.id);
+			} else {
+				const id = await criarContrato(payload);
+				if (!id) {
+					setSubmitError(
+						integrationPending
+							? 'Integração com backend pendente. Implemente contratosApi.criarContrato.'
+							: 'Não foi possível cadastrar o contrato. Verifique os dados.'
+					);
+					return;
+				}
+				setSavedId(id);
+				onSaved(id);
 			}
-			onSaved(contrato.id);
-		} else {
-			const id = criarContrato(payload);
-			if (!id) {
-				setSubmitError('Não foi possível cadastrar o contrato. Verifique os dados.');
-				return;
-			}
-			setSavedId(id);
-			onSaved(id);
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
@@ -152,6 +166,8 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 						</div>
 					)}
 				</div>
+
+				{integrationPending && <IntegrationPendingBanner />}
 
 				{locked && (
 					<div className="alert-box yellow" style={{ marginBottom: '1rem' }}>
@@ -218,7 +234,7 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 								disabled={locked}
 								onChange={e => update('eventoId', e.target.value)}
 							>
-								{CONTRACT_EVENTS.map(e => (
+								{eventos.map(e => (
 									<option key={e.id} value={e.id}>
 										{e.id} — {e.name}
 									</option>
@@ -345,8 +361,12 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 							Cancelar
 						</button>
 						{!locked && (
-							<button type="submit" className="action-btn">
-								{isEditing ? 'Salvar Alterações' : 'Cadastrar Contrato'}
+							<button type="submit" className="action-btn" disabled={submitting}>
+								{submitting
+									? 'Salvando...'
+									: isEditing
+										? 'Salvar Alterações'
+										: 'Cadastrar Contrato'}
 							</button>
 						)}
 					</div>
