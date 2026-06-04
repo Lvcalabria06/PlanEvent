@@ -174,6 +174,14 @@ public class TarefaServiceImpl implements TarefaService {
     }
 
     @Override
+    public void removerResponsavel(String tarefaId, String funcionarioId) {
+        responsavelTarefaRepository.listarPorTarefa(tarefaId).stream()
+                .filter(r -> r.getFuncionarioId().equals(funcionarioId))
+                .findFirst()
+                .ifPresent(r -> responsavelTarefaRepository.remover(r.getId()));
+    }
+
+    @Override
     public List<String> listarResponsaveis(String tarefaId) {
         return responsavelTarefaRepository.listarPorTarefa(tarefaId).stream()
                 .map(ResponsavelTarefa::getFuncionarioId)
@@ -183,6 +191,11 @@ public class TarefaServiceImpl implements TarefaService {
     @Override
     public List<Tarefa> listarPorEquipe(String equipeId) {
         return tarefaRepository.listarPorEquipeId(equipeId);
+    }
+
+    @Override
+    public List<Tarefa> listarTodas() {
+        return tarefaRepository.listarTodos();
     }
 
     @Override

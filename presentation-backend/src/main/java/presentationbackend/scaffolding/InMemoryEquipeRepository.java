@@ -35,6 +35,11 @@ public class InMemoryEquipeRepository implements EquipeRepository {
     }
 
     @Override
+    public List<Equipe> listarTodos() {
+        return List.copyOf(dados.values());
+    }
+
+    @Override
     public void remover(String id) {
         dados.remove(id);
     }

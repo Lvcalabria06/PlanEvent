@@ -1,11 +1,12 @@
 package presentationbackend.scaffolding;
 
-import domain.equipe.entity.Equipe;
 import domain.equipe.repository.EquipeRepository;
-import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
-import domain.funcionario.entity.Funcionario;
 import domain.funcionario.repository.FuncionarioRepository;
+import domain.tarefa.repository.ResponsavelTarefaRepository;
+import domain.tarefa.repository.TarefaRepository;
+import domain.tarefa.service.DependenciaService;
+import domain.tarefa.service.TarefaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -45,37 +46,27 @@ public class ScaffoldingConfig {
     }
 
     /**
-     * Semeia um evento, um funcionário e uma equipe (com o funcionário como membro)
-     * apenas quando os stubs in-memory estão ativos, registrando os IDs no log para
-     * uso nas chamadas da API.
+     * Semeia um conjunto realista de dados de demonstração (via {@link DadosDemoSeeder})
+     * apenas enquanto Evento e Funcionário ainda forem stubs em memória.
      */
     @Bean
     public CommandLineRunner seedDadosDemo(EventoRepository eventoRepository,
             FuncionarioRepository funcionarioRepository,
-            EquipeRepository equipeRepository) {
+            EquipeRepository equipeRepository,
+            TarefaRepository tarefaRepository,
+            ResponsavelTarefaRepository responsavelTarefaRepository,
+            TarefaService tarefaService,
+            DependenciaService dependenciaService) {
         return args -> {
-            // Roda enquanto Evento e Funcionário ainda forem stubs (módulos não plugados).
-            // A Equipe pode já ser persistência real (módulo da colega) — usamos o
-            // repositório injetado de qualquer forma.
             boolean apoioStubsAtivo = eventoRepository instanceof InMemoryEventoRepository
                     && funcionarioRepository instanceof InMemoryFuncionarioRepository;
             if (!apoioStubsAtivo) {
                 return;
             }
 
-            Evento evento = eventoRepository.salvar(new Evento());
-            Funcionario funcionario = funcionarioRepository.salvar(
-                    new Funcionario("Funcionario Demo", "ANALISTA", "INTEGRAL"));
-            Equipe equipe = equipeRepository.salvar(
-                    new Equipe(evento.getId(), "Equipe Demo", funcionario.getId()));
-
-            boolean equipePersistida = !(equipeRepository instanceof InMemoryEquipeRepository);
-            log.info("==================== DADOS DEMO ====================");
-            log.info("eventoId      = {}  (stub in-memory)", evento.getId());
-            log.info("funcionarioId = {}  (stub in-memory; membro da equipe; use como responsavel)", funcionario.getId());
-            log.info("equipeId      = {}  ({}; use ao criar tarefas)",
-                    equipe.getId(), equipePersistida ? "persistida no banco" : "stub in-memory");
-            log.info("===================================================");
+            new DadosDemoSeeder(eventoRepository, funcionarioRepository, equipeRepository,
+                    tarefaRepository, responsavelTarefaRepository, tarefaService, dependenciaService, log)
+                    .semear();
         };
     }
 }
