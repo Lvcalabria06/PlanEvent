@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * O preflight global do Tailwind está desligado (para não resetar o CSS do
+ * restante do app). Reaplicamos aqui um reset MÍNIMO, escopado em .tarefas-root,
+ * para que os componentes de tarefa renderizem como projetados.
+ */
+.tarefas-root,
+.tarefas-root *,
+.tarefas-root *::before,
+.tarefas-root *::after {
+  box-sizing: border-box;
+}
+
+.tarefas-root {
+  height: 100%;
+  color: #111827;
+  font-family: inherit;
+}
+
+/* Botões: remove o estilo nativo do navegador (os utilitários do Tailwind cuidam da aparência). */
+.tarefas-root button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: none;
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+/* Tipografia: zera tamanhos/margens nativos; as classes text-*/font-* definem tudo. */
+.tarefas-root h1,
+.tarefas-root h2,
+.tarefas-root h3,
+.tarefas-root h4,
+.tarefas-root h5,
+.tarefas-root h6,
+.tarefas-root p {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Campos de formulário herdam a fonte e respeitam as bordas dos utilitários. */
+.tarefas-root input,
+.tarefas-root select,
+.tarefas-root textarea {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.tarefas-root ul,
+.tarefas-root ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarefas-root svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Garante o fundo claro padrão do design dentro do módulo. */
+.tarefas-root {
+  background-color: #ffffff;
+}
