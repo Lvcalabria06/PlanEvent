@@ -20,14 +20,4 @@ public interface TarefaJpaRepository extends JpaRepository<TarefaJpaEntity, Stri
      */
     @Query("SELECT t FROM TarefaJpaEntity t JOIN t.dependenciasIds d WHERE d = :tarefaId")
     List<TarefaJpaEntity> findDependentes(@Param("tarefaId") String tarefaId);
-
-    /**
-     * Tarefas associadas a um evento, resolvidas pela equipe a que pertencem.
-     * Assume a existência de uma tabela {@code equipe(id, evento_id)} mantida pelo
-     * módulo de Equipes.
-     */
-    @Query(value = "SELECT t.* FROM tarefa t "
-            + "JOIN equipe e ON t.equipe_id = e.id "
-            + "WHERE e.evento_id = :eventoId", nativeQuery = true)
-    List<TarefaJpaEntity> findByEventoId(@Param("eventoId") String eventoId);
 }

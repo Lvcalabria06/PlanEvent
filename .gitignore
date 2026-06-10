@@ -1,3 +1,6 @@
+# Variáveis de ambiente (credenciais locais). O template .env.example É versionado.
+.env
+
 # Node / Frontend
 node_modules/
 presentation-frontend/.node/

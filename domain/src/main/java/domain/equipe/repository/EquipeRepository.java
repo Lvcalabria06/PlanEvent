@@ -9,6 +9,7 @@ public interface EquipeRepository {
     Equipe salvar(Equipe equipe);
     Optional<Equipe> buscarPorId(String id);
     List<Equipe> listarPorEventoId(String eventoId);
+    List<Equipe> listarTodos();
     void remover(String id);
 
     boolean existeEquipeComNomeNoEvento(String eventoId, String nome);

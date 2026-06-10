@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:8080`. Requisições para `/api` são encaminhadas ao backend em `http://localhost:8081`.
+A aplicação estará disponível em `http://localhost:8080`. Requisições para `/api` são encaminhadas ao backend em `http://localhost:3000`.
 
 ## Build
 
