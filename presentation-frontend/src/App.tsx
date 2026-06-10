@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Toaster } from 'sonner'
 import './App.css'
 import './agenda/agenda.css'
 import AgendaModule from './agenda/AgendaModule'
@@ -531,6 +532,7 @@ export default function App() {
 
   return (
     <AgendaProvider eventos={eventosAgenda}>
+    <Toaster position="top-right" richColors />
     <div className="app-layout">
       {/* Menu Lateral (Sidebar) */}
       <aside className="sidebar">

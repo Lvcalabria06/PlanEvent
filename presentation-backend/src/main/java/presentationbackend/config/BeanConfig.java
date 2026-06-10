@@ -1,9 +1,21 @@
 package presentationbackend.config;
 
+import application.agenda.usecase.CompromissoUseCase;
+import application.agenda.usecase.CompromissoUseCaseImpl;
+import application.agenda.usecase.LembreteUseCase;
+import application.agenda.usecase.LembreteUseCaseImpl;
 import application.dependencia.usecase.DependenciaUseCase;
 import application.dependencia.usecase.DependenciaUseCaseImpl;
 import application.tarefa.usecase.TarefaUseCase;
 import application.tarefa.usecase.TarefaUseCaseImpl;
+import domain.agenda.observer.LembreteNotificacaoSubject;
+import domain.agenda.port.AlertaLembretePort;
+import domain.agenda.repository.CompromissoRepository;
+import domain.agenda.repository.LembreteRepository;
+import domain.agenda.service.CompromissoService;
+import domain.agenda.service.CompromissoServiceImpl;
+import domain.agenda.service.LembreteService;
+import domain.agenda.service.LembreteServiceImpl;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
 import domain.funcionario.repository.FuncionarioRepository;
@@ -49,5 +61,35 @@ public class BeanConfig {
     public DependenciaUseCase dependenciaUseCase(DependenciaService dependenciaService,
             TarefaService tarefaService) {
         return new DependenciaUseCaseImpl(dependenciaService, tarefaService);
+    }
+
+    @Bean
+    public CompromissoService compromissoService(CompromissoRepository compromissoRepository,
+            LembreteRepository lembreteRepository) {
+        return new CompromissoServiceImpl(compromissoRepository, lembreteRepository);
+    }
+
+    @Bean
+    public LembreteNotificacaoSubject lembreteNotificacaoSubject(LembreteRepository lembreteRepository,
+            AlertaLembretePort alertaLembretePort) {
+        return LembreteServiceImpl.criarSubject(lembreteRepository, alertaLembretePort);
+    }
+
+    @Bean
+    public LembreteService lembreteService(LembreteRepository lembreteRepository,
+            CompromissoRepository compromissoRepository,
+            LembreteNotificacaoSubject lembreteNotificacaoSubject) {
+        return new LembreteServiceImpl(lembreteRepository, compromissoRepository, lembreteNotificacaoSubject);
+    }
+
+    @Bean
+    public CompromissoUseCase compromissoUseCase(CompromissoService compromissoService) {
+        return new CompromissoUseCaseImpl(compromissoService);
+    }
+
+    @Bean
+    public LembreteUseCase lembreteUseCase(LembreteService lembreteService,
+            CompromissoService compromissoService) {
+        return new LembreteUseCaseImpl(lembreteService, compromissoService);
     }
 }

@@ -1,5 +1,11 @@
 package presentationbackend.scaffolding;
 
+import domain.agenda.entity.Compromisso;
+import domain.agenda.entity.Lembrete;
+import domain.agenda.repository.CompromissoRepository;
+import domain.agenda.repository.LembreteRepository;
+import domain.agenda.service.CompromissoService;
+import domain.agenda.service.LembreteService;
 import domain.equipe.entity.Equipe;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.entity.Evento;
@@ -36,15 +42,22 @@ class DadosDemoSeeder {
     private final ResponsavelTarefaRepository responsavelRepo;
     private final TarefaService tarefaService;
     private final DependenciaService dependenciaService;
+    private final CompromissoRepository compromissoRepo;
+    private final LembreteRepository lembreteRepo;
+    private final CompromissoService compromissoService;
+    private final LembreteService lembreteService;
     private final Logger log;
 
     private final Map<String, String> funcIdPorNome = new LinkedHashMap<>();
     private final Map<String, String> equipeIdPorNome = new LinkedHashMap<>();
     private final Map<String, String> taskIdPorChave = new LinkedHashMap<>();
+    private final Map<String, String> compromissoIdPorChave = new LinkedHashMap<>();
 
     DadosDemoSeeder(EventoRepository eventoRepo, FuncionarioRepository funcRepo, EquipeRepository equipeRepo,
             TarefaRepository tarefaRepo, ResponsavelTarefaRepository responsavelRepo,
-            TarefaService tarefaService, DependenciaService dependenciaService, Logger log) {
+            TarefaService tarefaService, DependenciaService dependenciaService,
+            CompromissoRepository compromissoRepo, LembreteRepository lembreteRepo,
+            CompromissoService compromissoService, LembreteService lembreteService, Logger log) {
         this.eventoRepo = eventoRepo;
         this.funcRepo = funcRepo;
         this.equipeRepo = equipeRepo;
@@ -52,6 +65,10 @@ class DadosDemoSeeder {
         this.responsavelRepo = responsavelRepo;
         this.tarefaService = tarefaService;
         this.dependenciaService = dependenciaService;
+        this.compromissoRepo = compromissoRepo;
+        this.lembreteRepo = lembreteRepo;
+        this.compromissoService = compromissoService;
+        this.lembreteService = lembreteService;
         this.log = log;
     }
 
@@ -62,16 +79,24 @@ class DadosDemoSeeder {
         criarFuncionarios();
         criarEquipes(eventoId);
         criarTarefas();
+        criarAgenda(eventoId);
 
         log.info("==================== SEED DE DEMONSTRAÇÃO ====================");
-        log.info("Evento, {} funcionários, {} equipes e {} tarefas criadas.",
-                funcIdPorNome.size(), equipeIdPorNome.size(), taskIdPorChave.size());
+        log.info("Evento, {} funcionários, {} equipes, {} tarefas e {} compromissos criados.",
+                funcIdPorNome.size(), equipeIdPorNome.size(), taskIdPorChave.size(),
+                compromissoIdPorChave.size());
         log.info("Equipes: {}", equipeIdPorNome.keySet());
         log.info("Abra a aba 'Tarefas' no front — os dados já aparecem populados.");
         log.info("=============================================================");
     }
 
     private void limparPersistidos() {
+        for (Lembrete l : lembreteRepo.listarTodos()) {
+            lembreteRepo.remover(l.getId());
+        }
+        for (Compromisso c : compromissoRepo.listarTodos()) {
+            compromissoRepo.remover(c.getId());
+        }
         for (Tarefa t : tarefaRepo.listarTodos()) {
             responsavelRepo.listarPorTarefa(t.getId()).forEach(r -> responsavelRepo.remover(r.getId()));
             tarefaRepo.remover(t.getId());
@@ -168,5 +193,48 @@ class DadosDemoSeeder {
         tarefaService.iniciarTarefa(taskIdPorChave.get("t2"));
         tarefaService.iniciarTarefa(taskIdPorChave.get("t3"));
         tarefaService.iniciarTarefa(taskIdPorChave.get("t7"));
+    }
+
+    // ---- Agenda (compromissos e lembretes) ----
+    private LocalDateTime dt(int mes, int dia, int hora, int min) {
+        return LocalDate.of(2026, mes, dia).atTime(hora, min);
+    }
+
+    private void compromisso(String chave, String gestorId, String eventoId, String titulo,
+            LocalDateTime inicio, LocalDateTime fim) {
+        Compromisso c = compromissoService.criarCompromisso(
+                new Compromisso(gestorId, eventoId, titulo, "Compromisso de demonstração.", inicio, fim));
+        compromissoIdPorChave.put(chave, c.getId());
+    }
+
+    private void lembreteCompromisso(String compromissoChave, LocalDateTime horario) {
+        String compId = compromissoIdPorChave.get(compromissoChave);
+        Compromisso comp = compromissoService.buscarCompromisso(compId);
+        lembreteService.criarLembrete(new Lembrete(compId, comp.getEventoId(), horario, comp.getDataInicio()));
+    }
+
+    private void lembreteEvento(String eventoId, LocalDateTime horario) {
+        lembreteService.criarLembrete(new Lembrete(null, eventoId, horario, null));
+    }
+
+    private void criarAgenda(String eventoId) {
+        String gestorId = funcIdPorNome.get("Maria Silva");
+
+        compromisso("c1", gestorId, eventoId, "Revisão do Plano de Segurança",
+                dt(7, 10, 9, 0), dt(7, 10, 10, 30));
+        compromisso("c2", gestorId, eventoId, "Alinhamento com Equipe Técnica",
+                dt(7, 10, 14, 0), dt(7, 10, 15, 0));
+        compromisso("c3", gestorId, eventoId, "Visita ao Local do Evento",
+                dt(7, 11, 10, 0), dt(7, 11, 12, 0));
+        compromisso("c4", gestorId, eventoId, "Briefing com Fornecedores",
+                dt(7, 12, 11, 0), dt(7, 12, 12, 30));
+
+        compromissoService.iniciarCompromisso(compromissoIdPorChave.get("c4"));
+
+        lembreteCompromisso("c1", dt(7, 9, 18, 0));
+        lembreteCompromisso("c2", dt(7, 10, 8, 0));
+        lembreteCompromisso("c3", dt(7, 10, 19, 0));
+        lembreteCompromisso("c4", dt(7, 11, 17, 0));
+        lembreteEvento(eventoId, dt(7, 15, 9, 0));
     }
 }

@@ -1,5 +1,9 @@
 package presentationbackend.scaffolding;
 
+import domain.agenda.repository.CompromissoRepository;
+import domain.agenda.repository.LembreteRepository;
+import domain.agenda.service.CompromissoService;
+import domain.agenda.service.LembreteService;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
 import domain.funcionario.repository.FuncionarioRepository;
@@ -56,7 +60,11 @@ public class ScaffoldingConfig {
             TarefaRepository tarefaRepository,
             ResponsavelTarefaRepository responsavelTarefaRepository,
             TarefaService tarefaService,
-            DependenciaService dependenciaService) {
+            DependenciaService dependenciaService,
+            CompromissoRepository compromissoRepository,
+            LembreteRepository lembreteRepository,
+            CompromissoService compromissoService,
+            LembreteService lembreteService) {
         return args -> {
             boolean apoioStubsAtivo = eventoRepository instanceof InMemoryEventoRepository
                     && funcionarioRepository instanceof InMemoryFuncionarioRepository;
@@ -65,7 +73,8 @@ public class ScaffoldingConfig {
             }
 
             new DadosDemoSeeder(eventoRepository, funcionarioRepository, equipeRepository,
-                    tarefaRepository, responsavelTarefaRepository, tarefaService, dependenciaService, log)
+                    tarefaRepository, responsavelTarefaRepository, tarefaService, dependenciaService,
+                    compromissoRepository, lembreteRepository, compromissoService, lembreteService, log)
                     .semear();
         };
     }

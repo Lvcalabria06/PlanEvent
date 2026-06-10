@@ -37,6 +37,27 @@ public class Lembrete {
         this.updatedAt = this.createdAt;
     }
 
+    private Lembrete(String id, String compromissoId, String eventoId, LocalDateTime horario,
+                     boolean notificado, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.compromissoId = compromissoId;
+        this.eventoId = eventoId;
+        this.horario = horario;
+        this.notificado = notificado;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Reconstrói um Lembrete a partir de dados já persistidos, sem revalidar
+     * regras de criação. Usado exclusivamente pela camada de persistência.
+     */
+    public static Lembrete reconstituir(String id, String compromissoId, String eventoId,
+                                        LocalDateTime horario, boolean notificado,
+                                        LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Lembrete(id, compromissoId, eventoId, horario, notificado, createdAt, updatedAt);
+    }
+
     public void editar(LocalDateTime novoHorario, LocalDateTime inicioReferencia) {
         if (this.notificado) {
             throw new IllegalStateException("Não é permitido editar lembretes já notificados.");

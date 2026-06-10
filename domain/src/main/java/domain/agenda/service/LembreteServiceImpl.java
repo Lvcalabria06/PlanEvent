@@ -5,11 +5,15 @@ import domain.agenda.entity.Lembrete;
 import domain.agenda.observer.EnviarAlertaLembreteObserver;
 import domain.agenda.observer.LembreteNotificacaoSubject;
 import domain.agenda.observer.MarcarLembreteNotificadoObserver;
+import domain.agenda.port.AlertaLembretePort;
 import domain.agenda.repository.CompromissoRepository;
 import domain.agenda.repository.LembreteRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LembreteServiceImpl implements LembreteService {
 
@@ -32,7 +36,15 @@ public class LembreteServiceImpl implements LembreteService {
 
     private static LembreteNotificacaoSubject criarSubjectPadrao(LembreteRepository lembreteRepository) {
         LembreteNotificacaoSubject subject = new LembreteNotificacaoSubject();
-        subject.registrar(new EnviarAlertaLembreteObserver());
+        subject.registrar(new EnviarAlertaLembreteObserver(lembrete -> { /* noop em testes sem porta */ }));
+        subject.registrar(new MarcarLembreteNotificadoObserver(lembreteRepository));
+        return subject;
+    }
+
+    public static LembreteNotificacaoSubject criarSubject(LembreteRepository lembreteRepository,
+                                                          AlertaLembretePort alertaPort) {
+        LembreteNotificacaoSubject subject = new LembreteNotificacaoSubject();
+        subject.registrar(new EnviarAlertaLembreteObserver(alertaPort));
         subject.registrar(new MarcarLembreteNotificadoObserver(lembreteRepository));
         return subject;
     }
@@ -107,6 +119,43 @@ public class LembreteServiceImpl implements LembreteService {
     }
 
     @Override
+    public List<Lembrete> listarLembretesPorEvento(String eventoId) {
+        return lembreteRepository.listarPorEventoId(eventoId);
+    }
+
+    @Override
+    public List<Lembrete> listarLembretesPorGestor(String gestorId) {
+        List<Compromisso> compromissos = compromissoRepository.listarPorGestorId(gestorId);
+        List<Lembrete> resultado = new ArrayList<>();
+        Set<String> idsIncluidos = new HashSet<>();
+        Set<String> eventoIds = new HashSet<>();
+
+        for (Compromisso compromisso : compromissos) {
+            eventoIds.add(compromisso.getEventoId());
+            for (Lembrete lembrete : lembreteRepository.listarPorCompromissoId(compromisso.getId())) {
+                if (idsIncluidos.add(lembrete.getId())) {
+                    resultado.add(lembrete);
+                }
+            }
+        }
+
+        for (String eventoId : eventoIds) {
+            for (Lembrete lembrete : lembreteRepository.listarPorEventoId(eventoId)) {
+                if (lembrete.getCompromissoId() == null && idsIncluidos.add(lembrete.getId())) {
+                    resultado.add(lembrete);
+                }
+            }
+        }
+
+        return resultado;
+    }
+
+    @Override
+    public List<Lembrete> listarTodosLembretes() {
+        return lembreteRepository.listarTodos();
+    }
+
+    @Override
     public void removerLembrete(String id) {
         lembreteRepository.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Lembrete não encontrado."));
@@ -125,5 +174,29 @@ public class LembreteServiceImpl implements LembreteService {
 
         notificacaoSubject.notificar(lembrete);
         return lembrete;
+    }
+
+    @Override
+    public List<Lembrete> processarLembretesVencidos() {
+        LocalDateTime agora = LocalDateTime.now();
+        List<Lembrete> vencidos = lembreteRepository.listarPendentesComHorarioAte(agora);
+        List<Lembrete> processados = new ArrayList<>();
+
+        for (Lembrete lembrete : vencidos) {
+            if (lembrete.getCompromissoId() != null) {
+                Compromisso compromisso = compromissoRepository.buscarPorId(lembrete.getCompromissoId())
+                        .orElse(null);
+                if (compromisso != null && compromisso.estaFinalizado()) {
+                    continue;
+                }
+            }
+            try {
+                processados.add(dispararNotificacao(lembrete.getId()));
+            } catch (IllegalStateException ignored) {
+                // concorrência ou já notificado
+            }
+        }
+
+        return processados;
     }
 }
