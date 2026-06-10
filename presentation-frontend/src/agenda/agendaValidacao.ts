@@ -1,9 +1,24 @@
-import type { CompromissoAgenda, LembreteAgenda } from './types'
-
-export const REFERENCIA_AGORA = new Date('2026-04-28T08:00:00')
+import type { CompromissoAgenda, EventoAgenda, LembreteAgenda, StatusCompromisso } from './types'
 
 export function dataHoraIso(data: string, hora: string): Date {
-  return new Date(`${data}T${hora}:00`)
+  return new Date(`${data}T${hora.length >= 5 ? hora.slice(0, 5) : hora}:00`)
+}
+
+export function compromissoEstaFinalizado(status: StatusCompromisso): boolean {
+  return status === 'Concluído'
+}
+
+function temSobreposicao(
+  inicio: Date,
+  fim: Date,
+  outro: CompromissoAgenda,
+  compromissoEditId: string | null
+): boolean {
+  if (outro.id === compromissoEditId) return false
+  if (compromissoEstaFinalizado(outro.status)) return false
+  const outroInicio = dataHoraIso(outro.data, outro.horaInicio)
+  const outroFim = dataHoraIso(outro.data, outro.horaFim)
+  return inicio < outroFim && outroInicio < fim
 }
 
 export function validarCompromissoForm(params: {
@@ -15,6 +30,8 @@ export function validarCompromissoForm(params: {
   formLocal: string
   compromissos: CompromissoAgenda[]
   compromissoEditId: string | null
+  eventos: EventoAgenda[]
+  statusAtual?: StatusCompromisso
 }): string | null {
   const {
     formEventoId,
@@ -25,10 +42,21 @@ export function validarCompromissoForm(params: {
     formLocal,
     compromissos,
     compromissoEditId,
+    eventos,
+    statusAtual,
   } = params
+
+  if (statusAtual && compromissoEstaFinalizado(statusAtual)) {
+    return 'Não é permitido editar compromissos já concluídos.'
+  }
 
   if (!formEventoId || !formTitulo.trim() || !formData || !formHoraInicio || !formHoraFim || !formLocal.trim()) {
     return 'Preencha todos os campos obrigatórios.'
+  }
+
+  const evento = eventos.find((e) => e.id === formEventoId)
+  if (!evento) {
+    return 'Selecione um evento válido.'
   }
 
   if (formHoraFim <= formHoraInicio) {
@@ -36,20 +64,15 @@ export function validarCompromissoForm(params: {
   }
 
   const inicio = dataHoraIso(formData, formHoraInicio)
-  if (inicio < REFERENCIA_AGORA) {
+  const fim = dataHoraIso(formData, formHoraFim)
+
+  if (inicio < new Date()) {
     return 'Não é permitido criar compromissos em datas passadas.'
   }
 
-  const sobreposto = compromissos.some(
-    (c) =>
-      c.data === formData &&
-      c.id !== compromissoEditId &&
-      c.status !== 'Concluído' &&
-      formHoraInicio < c.horaFim &&
-      c.horaInicio < formHoraFim
-  )
+  const sobreposto = compromissos.some((c) => temSobreposicao(inicio, fim, c, compromissoEditId))
   if (sobreposto) {
-    return 'Não é possível agendar compromissos em horários sobrepostos.'
+    return 'Já existe um compromisso nesse horário para o gestor.'
   }
 
   return null
@@ -63,7 +86,8 @@ export function validarLembreteForm(params: {
   lembreteHorario: string
   compromissos: CompromissoAgenda[]
   lembretes: LembreteAgenda[]
-  eventos: { id: string; dataEvento: string }[]
+  eventos: EventoAgenda[]
+  lembreteEditId?: string | null
 }): string | null {
   const {
     lembreteVinculo,
@@ -74,6 +98,7 @@ export function validarLembreteForm(params: {
     compromissos,
     lembretes,
     eventos,
+    lembreteEditId = null,
   } = params
 
   if (lembreteVinculo === 'evento' && !lembreteEventoId) {
@@ -87,7 +112,9 @@ export function validarLembreteForm(params: {
   }
 
   const horarioLembrete = dataHoraIso(lembreteData, lembreteHorario)
-  if (horarioLembrete < REFERENCIA_AGORA) {
+  const agora = new Date()
+
+  if (horarioLembrete < agora) {
     return 'Não é permitido criar lembretes com horário no passado.'
   }
 
@@ -96,8 +123,12 @@ export function validarLembreteForm(params: {
       ? compromissos.find((c) => c.id === lembreteCompromissoId)
       : null
 
+  if (lembreteVinculo === 'compromisso' && !comp) {
+    return 'Compromisso não encontrado.'
+  }
+
   if (comp?.status === 'Concluído') {
-    return 'Não é permitido criar lembretes para compromissos finalizados.'
+    return 'Não é permitido criar ou editar lembretes de compromissos finalizados.'
   }
 
   let inicioReferencia: Date | null = null
@@ -105,9 +136,10 @@ export function validarLembreteForm(params: {
     inicioReferencia = dataHoraIso(comp.data, comp.horaInicio)
   } else if (lembreteVinculo === 'evento') {
     const ev = eventos.find((e) => e.id === lembreteEventoId)
-    if (ev) {
-      inicioReferencia = dataHoraIso(ev.dataEvento, '23:59')
+    if (!ev) {
+      return 'Evento não encontrado.'
     }
+    inicioReferencia = dataHoraIso(ev.dataEvento, '23:59')
   }
 
   if (inicioReferencia && horarioLembrete >= inicioReferencia) {
@@ -116,8 +148,9 @@ export function validarLembreteForm(params: {
 
   const eventoIdVinculo = comp?.eventoId ?? lembreteEventoId
   const duplicado = lembretes.some((l) => {
+    if (l.id === lembreteEditId) return false
     if (l.notificado) return false
-    const mesmoHorario = l.data === lembreteData && l.horario === lembreteHorario
+    const mesmoHorario = l.data === lembreteData && l.horario === lembreteHorario.slice(0, 5)
     if (!mesmoHorario) return false
     if (lembreteVinculo === 'compromisso') {
       return l.compromissoId === lembreteCompromissoId

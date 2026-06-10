@@ -93,13 +93,42 @@
   padding: 1rem;
 }
 
+.agenda-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.agenda-week-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agenda-week-nav-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
 .agenda-month-label {
   font-size: 0.8rem;
   font-weight: 700;
   color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.75rem;
+  text-align: center;
+  flex: 1;
 }
 
 .agenda-date-list {

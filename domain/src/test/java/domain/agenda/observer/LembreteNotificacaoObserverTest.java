@@ -2,6 +2,7 @@ package domain.agenda.observer;
 
 import domain.agenda.entity.Compromisso;
 import domain.agenda.entity.Lembrete;
+import domain.agenda.port.AlertaLembretePort;
 import domain.agenda.repository.CompromissoRepository;
 import domain.agenda.repository.LembreteRepository;
 import domain.agenda.service.LembreteServiceImpl;
@@ -11,8 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,6 +31,7 @@ class LembreteNotificacaoObserverTest {
 
     private LembreteRepository lembreteRepository;
     private CompromissoRepository compromissoRepository;
+    private AlertaLembretePort alertaPort;
     private LembreteNotificacaoSubject subject;
     private LembreteServiceImpl lembreteService;
 
@@ -35,9 +39,8 @@ class LembreteNotificacaoObserverTest {
     void setUp() {
         lembreteRepository = mock(LembreteRepository.class);
         compromissoRepository = mock(CompromissoRepository.class);
-        subject = new LembreteNotificacaoSubject();
-        subject.registrar(new EnviarAlertaLembreteObserver());
-        subject.registrar(new MarcarLembreteNotificadoObserver(lembreteRepository));
+        alertaPort = mock(AlertaLembretePort.class);
+        subject = LembreteServiceImpl.criarSubject(lembreteRepository, alertaPort);
         lembreteService = new LembreteServiceImpl(lembreteRepository, compromissoRepository, subject);
 
         when(lembreteRepository.salvar(any(Lembrete.class)))
@@ -56,6 +59,7 @@ class LembreteNotificacaoObserverTest {
         Lembrete resultado = lembreteService.dispararNotificacao(lembrete.getId());
 
         assertTrue(resultado.isNotificado());
+        verify(alertaPort).enviar(lembrete);
         verify(lembreteRepository).salvar(lembrete);
     }
 
@@ -95,15 +99,42 @@ class LembreteNotificacaoObserverTest {
     @Test
     @DisplayName("EnviarAlertaLembreteObserver ignora lembrete ja notificado")
     void enviarAlertaIgnoraLembreteJaNotificado() {
+        AlertaLembretePort port = mock(AlertaLembretePort.class);
         Compromisso compromisso = novoCompromisso();
         Lembrete lembrete = new Lembrete(compromisso.getId(), ID_EVENTO,
                 compromisso.getDataInicio().minusMinutes(15), compromisso.getDataInicio());
         lembrete.marcarComoNotificado();
 
-        new EnviarAlertaLembreteObserver().onLembreteDisparado(lembrete);
+        new EnviarAlertaLembreteObserver(port).onLembreteDisparado(lembrete);
 
         assertTrue(lembrete.isNotificado());
         assertFalse(lembrete.getUpdatedAt().isBefore(lembrete.getCreatedAt()));
+        Mockito.verify(port, Mockito.never()).enviar(any());
+    }
+
+    @Test
+    @DisplayName("processarLembretesVencidos dispara alerta e marca como notificado")
+    void processarLembretesVencidos() {
+        Compromisso compromisso = novoCompromisso();
+        LocalDateTime horario = LocalDateTime.now().minusMinutes(5);
+        Lembrete lembrete = Lembrete.reconstituir(
+                "lem-vencido",
+                compromisso.getId(),
+                ID_EVENTO,
+                horario,
+                false,
+                horario.minusHours(1),
+                horario.minusHours(1));
+
+        when(lembreteRepository.listarPendentesComHorarioAte(any())).thenReturn(List.of(lembrete));
+        when(lembreteRepository.buscarPorId(lembrete.getId())).thenReturn(Optional.of(lembrete));
+        when(compromissoRepository.buscarPorId(compromisso.getId())).thenReturn(Optional.of(compromisso));
+
+        List<Lembrete> processados = lembreteService.processarLembretesVencidos();
+
+        assertEquals(1, processados.size());
+        assertTrue(processados.get(0).isNotificado());
+        verify(alertaPort).enviar(lembrete);
     }
 
     private static Compromisso novoCompromisso() {
