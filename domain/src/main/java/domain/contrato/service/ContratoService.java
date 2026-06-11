@@ -12,6 +12,8 @@ public interface ContratoService {
 
     Contrato buscarContrato(String id);
 
+    List<Contrato> listarTodosContratos();
+
     List<Contrato> listarContratosPorEvento(String eventoId);
 
     void encerrarContrato(String id);

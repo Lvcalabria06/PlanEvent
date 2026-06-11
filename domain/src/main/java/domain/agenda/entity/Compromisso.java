@@ -43,6 +43,34 @@ public class Compromisso {
         this.updatedAt = this.createdAt;
     }
 
+    private Compromisso(String id, String gestorId, String eventoId, String titulo, String descricao,
+                        LocalDateTime dataInicio, LocalDateTime dataFim, StatusCompromisso status,
+                        LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.gestorId = gestorId;
+        this.eventoId = eventoId;
+        this.titulo = titulo;
+        this.descricao = descricao;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.status = status;
+        this.lembretes = new ArrayList<>();
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Reconstrói um Compromisso a partir de dados já persistidos, sem revalidar
+     * regras de criação. Usado exclusivamente pela camada de persistência.
+     */
+    public static Compromisso reconstituir(String id, String gestorId, String eventoId, String titulo,
+                                           String descricao, LocalDateTime dataInicio, LocalDateTime dataFim,
+                                           StatusCompromisso status, LocalDateTime createdAt,
+                                           LocalDateTime updatedAt) {
+        return new Compromisso(id, gestorId, eventoId, titulo, descricao, dataInicio, dataFim, status,
+                createdAt, updatedAt);
+    }
+
     public void editar(String titulo, String descricao,
                        LocalDateTime dataInicio, LocalDateTime dataFim) {
 

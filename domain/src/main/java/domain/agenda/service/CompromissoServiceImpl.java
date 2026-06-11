@@ -61,6 +61,11 @@ public class CompromissoServiceImpl implements CompromissoService {
     }
 
     @Override
+    public List<Compromisso> listarTodosCompromissos() {
+        return compromissoRepository.listarTodos();
+    }
+
+    @Override
     public void removerCompromisso(String id) {
         Compromisso compromisso = compromissoRepository.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Compromisso não encontrado."));
@@ -70,5 +75,29 @@ public class CompromissoServiceImpl implements CompromissoService {
         lembreteRepository.removerPorCompromissoId(id);
 
         compromissoRepository.remover(id);
+    }
+
+    @Override
+    public Compromisso iniciarCompromisso(String id) {
+        Compromisso compromisso = compromissoRepository.buscarPorId(id)
+                .orElseThrow(() -> new IllegalArgumentException("Compromisso não encontrado."));
+        compromisso.iniciar();
+        return compromissoRepository.salvar(compromisso);
+    }
+
+    @Override
+    public Compromisso concluirCompromisso(String id) {
+        Compromisso compromisso = compromissoRepository.buscarPorId(id)
+                .orElseThrow(() -> new IllegalArgumentException("Compromisso não encontrado."));
+        compromisso.concluir();
+        return compromissoRepository.salvar(compromisso);
+    }
+
+    @Override
+    public Compromisso cancelarCompromisso(String id) {
+        Compromisso compromisso = compromissoRepository.buscarPorId(id)
+                .orElseThrow(() -> new IllegalArgumentException("Compromisso não encontrado."));
+        compromisso.cancelar();
+        return compromissoRepository.salvar(compromisso);
     }
 }

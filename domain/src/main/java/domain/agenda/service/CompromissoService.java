@@ -14,5 +14,13 @@ public interface CompromissoService {
 
     List<Compromisso> listarCompromissosPorGestor(String gestorId);
 
+    List<Compromisso> listarTodosCompromissos();
+
     void removerCompromisso(String id);
+
+    Compromisso iniciarCompromisso(String id);
+
+    Compromisso concluirCompromisso(String id);
+
+    Compromisso cancelarCompromisso(String id);
 }

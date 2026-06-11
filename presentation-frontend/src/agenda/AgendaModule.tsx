@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './agenda.css'
 import { useAgenda } from './AgendaContext'
 import LembretesNotificacaoPopup from './LembretesNotificacaoPopup'
@@ -9,13 +9,53 @@ export type { EventoAgenda, CompromissoAgenda, LembreteAgenda } from './types'
 type AgendaView = 'list' | 'create-compromisso' | 'edit-compromisso'
 type LembreteVinculo = 'evento' | 'compromisso'
 
-const DIAS_ABRIL_2026 = [
-  { key: '2026-04-26', label: 'Dom', num: 26 },
-  { key: '2026-04-27', label: 'Seg', num: 27 },
-  { key: '2026-04-28', label: 'Ter', num: 28 },
-  { key: '2026-04-29', label: 'Qua', num: 29 },
-  { key: '2026-04-30', label: 'Qui', num: 30 },
-]
+const DIAS_SEMANA_CURTO = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const
+
+function toIsoLocal(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function gerarDiasDaSemana(dataIso: string): { key: string; label: string; num: number }[] {
+  const ref = new Date(`${dataIso}T12:00:00`)
+  const dow = ref.getDay()
+  const segunda = new Date(ref)
+  segunda.setDate(ref.getDate() + (dow === 0 ? -6 : 1 - dow))
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(segunda)
+    d.setDate(segunda.getDate() + i)
+    return {
+      key: toIsoLocal(d),
+      label: DIAS_SEMANA_CURTO[d.getDay()],
+      num: d.getDate(),
+    }
+  })
+}
+
+function formatarMesAno(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`)
+  const raw = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
+function intervaloSemana(refIso: string): { inicio: Date; fim: Date } {
+  const ref = new Date(`${refIso}T12:00:00`)
+  const dow = ref.getDay()
+  const segunda = new Date(ref)
+  segunda.setDate(ref.getDate() + (dow === 0 ? -6 : 1 - dow))
+  const domingo = new Date(segunda)
+  domingo.setDate(segunda.getDate() + 6)
+  return { inicio: segunda, fim: domingo }
+}
+
+function mudarDataPorDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T12:00:00`)
+  d.setDate(d.getDate() + dias)
+  return toIsoLocal(d)
+}
 
 function formatarDataLonga(iso: string): string {
   const d = new Date(iso + 'T12:00:00')
@@ -32,15 +72,20 @@ export default function AgendaModule() {
     eventos,
     compromissos,
     lembretes,
-    setCompromissos,
-    setLembretes,
+    loading,
     criarCompromisso: criarCompromissoCtx,
     atualizarCompromisso,
+    removerCompromisso: removerCompromissoCtx,
+    avancarStatusCompromisso,
     criarLembrete: criarLembreteCtx,
+    atualizarLembrete,
+    removerLembrete,
   } = useAgenda()
 
+  const hojeIso = useMemo(() => toIsoLocal(new Date()), [])
+
   const [agendaView, setAgendaView] = useState<AgendaView>('list')
-  const [dataSelecionada, setDataSelecionada] = useState('2026-04-28')
+  const [dataSelecionada, setDataSelecionada] = useState(() => toIsoLocal(new Date()))
   const [compromissoEditId, setCompromissoEditId] = useState<string | null>(null)
 
   const [showLembreteModal, setShowLembreteModal] = useState(false)
@@ -63,17 +108,37 @@ export default function AgendaModule() {
   const [lembreteData, setLembreteData] = useState('')
   const [lembreteHorario, setLembreteHorario] = useState('')
   const [lembreteErro, setLembreteErro] = useState('')
+  const [lembreteEditId, setLembreteEditId] = useState<string | null>(null)
 
   const compromissoEmEdicao = compromissos.find((c) => c.id === compromissoEditId)
+  const lembreteEmEdicao = lembretes.find((l) => l.id === lembreteEditId)
+  const compromissoSomenteLeitura = compromissoEmEdicao?.status === 'Concluído'
+  const podeExcluirCompromisso = compromissoEmEdicao?.status !== 'Em andamento'
+
+  const dataInicialAjustada = useRef(false)
+
+  useEffect(() => {
+    if (loading || compromissos.length === 0 || dataInicialAjustada.current) return
+    const temNoDia = compromissos.some((c) => c.data === dataSelecionada)
+    if (temNoDia) {
+      dataInicialAjustada.current = true
+      return
+    }
+    const ordenados = [...compromissos].sort(
+      (a, b) => a.data.localeCompare(b.data) || a.horaInicio.localeCompare(b.horaInicio)
+    )
+    const proximo = ordenados.find((c) => c.data >= hojeIso) ?? ordenados[ordenados.length - 1]
+    if (proximo) setDataSelecionada(proximo.data)
+    dataInicialAjustada.current = true
+  }, [loading, compromissos, hojeIso])
 
   const stats = useMemo(() => {
-    const hoje = '2026-04-28'
+    const hoje = hojeIso
     const hojeList = compromissos.filter((c) => c.data === hoje)
     const concluidosHoje = hojeList.filter((c) => c.status === 'Concluído').length
-    const inicioSemana = new Date('2026-04-27T12:00:00')
-    const fimSemana = new Date('2026-05-03T12:00:00')
+    const { inicio: inicioSemana, fim: fimSemana } = intervaloSemana(hoje)
     const semana = compromissos.filter((c) => {
-      const d = new Date(c.data + 'T12:00:00')
+      const d = new Date(`${c.data}T12:00:00`)
       return d >= inicioSemana && d <= fimSemana
     })
     const pendentesSemana = semana.filter((c) => c.status !== 'Concluído').length
@@ -90,7 +155,10 @@ export default function AgendaModule() {
       avulsos,
       lembretesPendentes: lembretes.filter((l) => !l.notificado).length,
     }
-  }, [compromissos, lembretes])
+  }, [compromissos, lembretes, hojeIso])
+
+  const diasDaSemana = useMemo(() => gerarDiasDaSemana(dataSelecionada), [dataSelecionada])
+  const mesAnoLabel = useMemo(() => formatarMesAno(dataSelecionada), [dataSelecionada])
 
   const compromissosDoDia = useMemo(
     () =>
@@ -147,7 +215,7 @@ export default function AgendaModule() {
     setAgendaView('edit-compromisso')
   }
 
-  function salvarCompromisso(e: React.FormEvent) {
+  async function salvarCompromisso(e: React.FormEvent) {
     e.preventDefault()
 
     const dados = {
@@ -162,14 +230,14 @@ export default function AgendaModule() {
     }
 
     if (agendaView === 'create-compromisso') {
-      const erroCtx = criarCompromissoCtx(dados)
+      const erroCtx = await criarCompromissoCtx(dados)
       if (erroCtx) {
         setFormErro(erroCtx)
         return
       }
       setDataSelecionada(formData)
     } else if (compromissoEditId) {
-      const erro = atualizarCompromisso(compromissoEditId, dados)
+      const erro = await atualizarCompromisso(compromissoEditId, dados)
       if (erro) {
         setFormErro(erro)
         return
@@ -181,34 +249,35 @@ export default function AgendaModule() {
     setCompromissoEditId(null)
   }
 
-  function excluirCompromisso() {
+  async function excluirCompromisso() {
     if (!compromissoEditId) return
     const c = compromissos.find((x) => x.id === compromissoEditId)
     if (c?.status === 'Em andamento') {
       setFormErro('Compromissos em andamento não podem ser excluídos.')
       return
     }
-    setCompromissos((prev) => prev.filter((x) => x.id !== compromissoEditId))
-    setLembretes((prev) => prev.filter((l) => l.compromissoId !== compromissoEditId))
+    const erro = await removerCompromissoCtx(compromissoEditId)
+    if (erro) {
+      setFormErro(erro)
+      return
+    }
     setAgendaView('list')
     setCompromissoEditId(null)
   }
 
-  function avancarStatus() {
+  async function avancarStatus() {
     if (!compromissoEditId || !compromissoEmEdicao) return
-    if (compromissoEmEdicao.status === 'Pendente') {
-      setCompromissos((prev) =>
-        prev.map((c) => (c.id === compromissoEditId ? { ...c, status: 'Em andamento' } : c))
-      )
-    } else if (compromissoEmEdicao.status === 'Em andamento') {
-      setCompromissos((prev) =>
-        prev.map((c) => (c.id === compromissoEditId ? { ...c, status: 'Concluído' } : c))
-      )
+    const erro = await avancarStatusCompromisso(compromissoEditId, compromissoEmEdicao.status)
+    if (erro) {
+      setFormErro(erro)
+      return
     }
+    setFormErro('')
   }
 
   function abrirModalLembrete() {
-    setLembreteVinculo('evento')
+    setLembreteEditId(null)
+    setLembreteVinculo('compromisso')
     setLembreteEventoId(eventos[0]?.id ?? '')
     setLembreteFiltroEventoId('')
     setLembreteCompromissoId('')
@@ -218,21 +287,55 @@ export default function AgendaModule() {
     setShowLembreteModal(true)
   }
 
-  function criarLembrete(e: React.FormEvent) {
-    e.preventDefault()
-    const erro = criarLembreteCtx({
-      vinculo: lembreteVinculo,
-      eventoId: lembreteEventoId,
-      compromissoId: lembreteCompromissoId,
-      data: lembreteData,
-      horario: lembreteHorario,
-    })
+  function abrirEditarLembrete(lembrete: { id: string; compromissoId: string | null; eventoId: string | null; data: string; horario: string }) {
+    setLembreteEditId(lembrete.id)
+    setLembreteVinculo(lembrete.compromissoId ? 'compromisso' : 'evento')
+    setLembreteEventoId(lembrete.eventoId ?? '')
+    setLembreteCompromissoId(lembrete.compromissoId ?? '')
+    setLembreteData(lembrete.data)
+    setLembreteHorario(lembrete.horario)
+    setLembreteErro('')
+    setShowLembretesPanel(false)
+    setShowLembreteModal(true)
+  }
+
+  async function excluirLembreteHandler(id: string) {
+    const erro = await removerLembrete(id)
     if (erro) {
       setLembreteErro(erro)
       return
     }
     setLembreteErro('')
+    if (lembreteEditId === id) {
+      setShowLembreteModal(false)
+      setLembreteEditId(null)
+    }
+  }
+
+  async function salvarLembrete(e: React.FormEvent) {
+    e.preventDefault()
+    if (lembreteEditId) {
+      const erro = await atualizarLembrete(lembreteEditId, lembreteData, lembreteHorario)
+      if (erro) {
+        setLembreteErro(erro)
+        return
+      }
+    } else {
+      const erro = await criarLembreteCtx({
+        vinculo: lembreteVinculo,
+        eventoId: lembreteEventoId,
+        compromissoId: lembreteCompromissoId,
+        data: lembreteData,
+        horario: lembreteHorario,
+      })
+      if (erro) {
+        setLembreteErro(erro)
+        return
+      }
+    }
+    setLembreteErro('')
     setShowLembreteModal(false)
+    setLembreteEditId(null)
   }
 
   function contarLembretesCompromisso(compromissoId: string): number {
@@ -256,6 +359,7 @@ export default function AgendaModule() {
             className="form-select"
             value={formEventoId}
             onChange={(e) => setFormEventoId(e.target.value)}
+            disabled={compromissoSomenteLeitura}
           >
             <option value="">Selecione um evento...</option>
             {eventos.map((ev) => (
@@ -276,6 +380,7 @@ export default function AgendaModule() {
     const status = compromissoEmEdicao?.status ?? 'Pendente'
     const proximoStatus =
       status === 'Pendente' ? 'Em andamento' : status === 'Em andamento' ? 'Concluído' : null
+    const bloqueado = compromissoSomenteLeitura
 
     return (
       <div className="content-card">
@@ -296,7 +401,7 @@ export default function AgendaModule() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', margin: 0 }}>{tituloPagina}</h2>
-          {mostrarStatus && (
+          {mostrarStatus && podeExcluirCompromisso && (
             <button type="button" className="btn-excluir" onClick={excluirCompromisso}>
               <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="3 6 5 6 21 6" />
@@ -354,6 +459,16 @@ export default function AgendaModule() {
           </div>
         )}
 
+        {bloqueado && (
+          <div className="alert-box blue" style={{ marginBottom: '1rem' }}>
+            <div className="alert-content">
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                Este compromisso está concluído e não pode mais ser editado, mas pode ser excluído.
+              </p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={salvarCompromisso}>
           {renderEventLinkBox()}
 
@@ -365,6 +480,7 @@ export default function AgendaModule() {
               placeholder="Ex: Reunião com Fornecedor"
               value={formTitulo}
               onChange={(e) => setFormTitulo(e.target.value)}
+              disabled={bloqueado}
             />
           </div>
 
@@ -377,6 +493,7 @@ export default function AgendaModule() {
               value={formDescricao}
               onChange={(e) => setFormDescricao(e.target.value)}
               style={{ resize: 'vertical' }}
+              disabled={bloqueado}
             />
           </div>
 
@@ -388,11 +505,17 @@ export default function AgendaModule() {
                 className="form-input"
                 value={formData}
                 onChange={(e) => setFormData(e.target.value)}
+                disabled={bloqueado}
               />
             </div>
             <div className="form-group">
               <label>Tipo *</label>
-              <select className="form-select" value={formTipo} onChange={(e) => setFormTipo(e.target.value as TipoCompromisso)}>
+              <select
+                className="form-select"
+                value={formTipo}
+                onChange={(e) => setFormTipo(e.target.value as TipoCompromisso)}
+                disabled={bloqueado}
+              >
                 <option value="Reunião">Reunião</option>
                 <option value="Visita">Visita</option>
                 <option value="Apresentação">Apresentação</option>
@@ -409,6 +532,7 @@ export default function AgendaModule() {
                 className="form-input"
                 value={formHoraInicio}
                 onChange={(e) => setFormHoraInicio(e.target.value)}
+                disabled={bloqueado}
               />
             </div>
             <div className="form-group">
@@ -418,6 +542,7 @@ export default function AgendaModule() {
                 className="form-input"
                 value={formHoraFim}
                 onChange={(e) => setFormHoraFim(e.target.value)}
+                disabled={bloqueado}
               />
             </div>
           </div>
@@ -430,6 +555,7 @@ export default function AgendaModule() {
               placeholder="Ex: Sala de Reuniões A"
               value={formLocal}
               onChange={(e) => setFormLocal(e.target.value)}
+              disabled={bloqueado}
             />
           </div>
 
@@ -444,9 +570,11 @@ export default function AgendaModule() {
             >
               Cancelar
             </button>
-            <button type="submit" className="action-btn">
-              {agendaView === 'create-compromisso' ? 'Criar Compromisso' : 'Salvar Alterações'}
-            </button>
+            {!bloqueado && (
+              <button type="submit" className="action-btn">
+                {agendaView === 'create-compromisso' ? 'Criar Compromisso' : 'Salvar Alterações'}
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -459,6 +587,14 @@ export default function AgendaModule() {
 
   if (agendaView === 'edit-compromisso') {
     return <div className="agenda-container container">{renderFormCompromisso('Editar Compromisso', true)}</div>
+  }
+
+  if (loading) {
+    return (
+      <div className="agenda-container container">
+        <p style={{ color: '#6b7280', padding: '2rem 0' }}>Carregando agenda...</p>
+      </div>
+    )
   }
 
   return (
@@ -549,9 +685,27 @@ export default function AgendaModule() {
 
       <div className="agenda-body">
         <div className="agenda-date-column">
-          <div className="agenda-month-label">Abril 2026</div>
+          <div className="agenda-week-nav">
+            <button
+              type="button"
+              className="agenda-week-nav-btn"
+              onClick={() => setDataSelecionada((d) => mudarDataPorDias(d, -7))}
+              aria-label="Semana anterior"
+            >
+              ‹
+            </button>
+            <div className="agenda-month-label">{mesAnoLabel}</div>
+            <button
+              type="button"
+              className="agenda-week-nav-btn"
+              onClick={() => setDataSelecionada((d) => mudarDataPorDias(d, 7))}
+              aria-label="Próxima semana"
+            >
+              ›
+            </button>
+          </div>
           <div className="agenda-date-list">
-            {DIAS_ABRIL_2026.map((dia) => (
+            {diasDaSemana.map((dia) => (
               <button
                 key={dia.key}
                 type="button"
@@ -663,6 +817,8 @@ export default function AgendaModule() {
               eventos={eventos}
               onClose={() => setShowLembretesPanel(false)}
               onVerAgenda={() => setShowLembretesPanel(false)}
+              onEditar={abrirEditarLembrete}
+              onExcluir={excluirLembreteHandler}
             />
           </aside>
         </>
@@ -679,13 +835,22 @@ export default function AgendaModule() {
               </div>
               <div style={{ flex: 1 }}>
                 <h3 className="modal-title" style={{ margin: 0 }}>
-                  Novo Lembrete
+                  {lembreteEditId ? 'Editar Lembrete' : 'Novo Lembrete'}
                 </h3>
                 <p className="modal-description" style={{ margin: '0.25rem 0 0' }}>
-                  Configure um lembrete para evento ou compromisso
+                  {lembreteEditId
+                    ? 'Altere a data e o horário do lembrete'
+                    : 'Configure um lembrete para evento ou compromisso'}
                 </p>
               </div>
-              <button type="button" className="lembretes-panel-close" onClick={() => setShowLembreteModal(false)}>
+              <button
+                type="button"
+                className="lembretes-panel-close"
+                onClick={() => {
+                  setShowLembreteModal(false)
+                  setLembreteEditId(null)
+                }}
+              >
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -693,7 +858,9 @@ export default function AgendaModule() {
               </button>
             </div>
 
-            <form onSubmit={criarLembrete}>
+            <form onSubmit={salvarLembrete}>
+              {!lembreteEditId && (
+              <>
               <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.75rem' }}>
                 A que este lembrete se refere?
               </p>
@@ -731,21 +898,6 @@ export default function AgendaModule() {
                   </p>
                 </div>
               </div>
-
-              {lembreteErro && (
-                <div
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#fee2e2',
-                    borderRadius: '0.375rem',
-                    marginBottom: '1rem',
-                    fontSize: '0.85rem',
-                    color: '#991b1b',
-                  }}
-                >
-                  {lembreteErro}
-                </div>
-              )}
 
               {lembreteVinculo === 'evento' ? (
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
@@ -800,6 +952,36 @@ export default function AgendaModule() {
                   </div>
                 </>
               )}
+              </>
+              )}
+
+              {lembreteEditId && lembreteEmEdicao && (
+                <div className="alert-box blue" style={{ marginBottom: '1rem' }}>
+                  <div className="alert-content">
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                      Vínculo:{' '}
+                      {lembreteEmEdicao.compromissoId
+                        ? `Compromisso — ${compromissos.find((c) => c.id === lembreteEmEdicao.compromissoId)?.titulo ?? ''}`
+                        : `Evento — ${nomeEvento(lembreteEmEdicao.eventoId ?? '')}`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {lembreteErro && (
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: '#fee2e2',
+                    borderRadius: '0.375rem',
+                    marginBottom: '1rem',
+                    fontSize: '0.85rem',
+                    color: '#991b1b',
+                  }}
+                >
+                  {lembreteErro}
+                </div>
+              )}
 
               <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '1.5rem' }}>
                 <div className="form-group">
@@ -823,11 +1005,28 @@ export default function AgendaModule() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="modal-btn-cancelar" onClick={() => setShowLembreteModal(false)}>
+                <button
+                  type="button"
+                  className="modal-btn-cancelar"
+                  onClick={() => {
+                    setShowLembreteModal(false)
+                    setLembreteEditId(null)
+                  }}
+                >
                   Cancelar
                 </button>
+                {lembreteEditId && (
+                  <button
+                    type="button"
+                    className="modal-btn-cancelar"
+                    style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+                    onClick={() => excluirLembreteHandler(lembreteEditId)}
+                  >
+                    Excluir
+                  </button>
+                )}
                 <button type="submit" className="btn-criar-lembrete">
-                  Criar Lembrete
+                  {lembreteEditId ? 'Salvar Alterações' : 'Criar Lembrete'}
                 </button>
               </div>
             </form>

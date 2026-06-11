@@ -1,5 +1,9 @@
 import { useState } from 'react'
+import { Toaster } from 'sonner'
 import './App.css'
+import { FornecedoresSection } from './features/fornecedores/FornecedoresSection'
+import { ContratosSection } from './features/contratos/ContratosSection'
+import { PlanningDataProvider } from './modules/planning/PlanningDataContext'
 import './agenda/agenda.css'
 import AgendaModule from './agenda/AgendaModule'
 import { AgendaProvider, useAgenda } from './agenda/AgendaContext'
@@ -9,24 +13,24 @@ import FinanceiroApp from './financeiro/FinanceiroApp'
 import AprovacoesApp from './financeiro/AprovacoesApp'
 
 interface Funcionario {
-  id: string;
-  nome: string;
-  email: string;
-  cargo: string;
-  competencias: string[];
-  disponibilidade: string;
-  status: 'Disponível' | 'Em equipe' | 'Inativo';
-  ativo: boolean;
-  lider: boolean;
-  criadoEm: string;
-  atualizadoEm: string;
+	id: string;
+	nome: string;
+	email: string;
+	cargo: string;
+	competencias: string[];
+	disponibilidade: string;
+	status: 'Disponível' | 'Em equipe' | 'Inativo';
+	ativo: boolean;
+	lider: boolean;
+	criadoEm: string;
+	atualizadoEm: string;
 }
 
 interface Equipe {
-  id: string;
-  eventoId: string;
-  nome: string;
-  membros: { funcionarioId: string; lider: boolean }[];
+	id: string;
+	eventoId: string;
+	nome: string;
+	membros: { funcionarioId: string; lider: boolean }[];
 }
 
 function TopbarBell({ onVerAgenda }: { onVerAgenda: () => void }) {
@@ -533,6 +537,8 @@ export default function App() {
 
   return (
     <AgendaProvider eventos={eventosAgenda}>
+    <PlanningDataProvider>
+    <Toaster position="top-right" richColors />
     <div className="app-layout">
       {/* Menu Lateral (Sidebar) */}
       <aside className="sidebar">
@@ -1922,6 +1928,10 @@ export default function App() {
             <FinanceiroApp />
           ) : currentTab === 'aprovacoes' ? (
             <AprovacoesApp />
+          ) : currentTab === 'fornecedores' ? (
+            <FornecedoresSection />
+          ) : currentTab === 'contratos' ? (
+            <ContratosSection />
           ) : (
             <div className="content-card" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
               <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '1.5rem', color: '#9ca3af' }}>
@@ -1930,7 +1940,7 @@ export default function App() {
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>Módulo em Desenvolvimento</h2>
-              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot; ou &quot;Agenda&quot; no menu lateral.</p>
+              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot; ou &quot;Contratos&quot; no menu lateral.</p>
             </div>
           )}
         </div>
@@ -1966,6 +1976,7 @@ export default function App() {
         </div>
       )}
     </div>
+    </PlanningDataProvider>
     </AgendaProvider>
   );
 }
