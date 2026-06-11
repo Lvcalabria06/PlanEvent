@@ -14,7 +14,15 @@ public interface LembreteService {
 
     List<Lembrete> listarLembretesPorCompromisso(String compromissoId);
 
+    List<Lembrete> listarLembretesPorEvento(String eventoId);
+
+    List<Lembrete> listarLembretesPorGestor(String gestorId);
+
+    List<Lembrete> listarTodosLembretes();
+
     void removerLembrete(String id);
 
     Lembrete dispararNotificacao(String lembreteId);
+
+    List<Lembrete> processarLembretesVencidos();
 }
