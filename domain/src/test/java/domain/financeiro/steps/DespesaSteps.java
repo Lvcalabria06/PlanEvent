@@ -192,6 +192,17 @@ public class DespesaSteps {
                 .thenReturn(BigDecimal.valueOf(valor));
     }
 
+    @Given("existe uma despesa pendente de aprovação para gerenciamento")
+    public void existe_uma_despesa_pendente_de_aprovacao_para_gerenciamento() {
+        when(eventoRepository.buscarPorId(ID_EVENTO))
+                .thenReturn(Optional.of(Mockito.mock(Evento.class)));
+        despesaEmContexto = new Despesa(ID_EVENTO, CategoriaDespesa.SERVICO,
+                ID_FORNECEDOR, new BigDecimal("100.00"), LocalDateTime.now(), ID_USUARIO);
+        despesaEmContexto.marcarPendente();
+        when(despesaRepository.buscarPorId(despesaEmContexto.getId()))
+                .thenReturn(Optional.of(despesaEmContexto));
+    }
+
     @Given("existe uma despesa já aprovada para gerenciamento")
     public void existe_uma_despesa_ja_aprovada_para_gerenciamento() {
         when(eventoRepository.buscarPorId(ID_EVENTO))
@@ -212,6 +223,11 @@ public class DespesaSteps {
         } catch (Exception e) {
             excecaoLancada = e;
         }
+    }
+
+    @When("eu tentar alterar o valor da despesa pendente para {double}")
+    public void eu_tentar_alterar_o_valor_da_despesa_pendente_para(double novoValor) {
+        eu_alterar_o_valor_da_despesa_para(novoValor);
     }
 
     @When("eu tentar alterar o valor da despesa aprovada para {double}")

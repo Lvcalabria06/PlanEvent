@@ -5,6 +5,8 @@ import AgendaModule from './agenda/AgendaModule'
 import { AgendaProvider, useAgenda } from './agenda/AgendaContext'
 import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
 import TarefasApp from './app/TarefasApp'
+import FinanceiroApp from './financeiro/FinanceiroApp'
+import AprovacoesApp from './financeiro/AprovacoesApp'
 
 interface Funcionario {
   id: string;
@@ -1916,6 +1918,10 @@ export default function App() {
             <TarefasApp />
           ) : currentTab === 'agenda' ? (
             <AgendaModule />
+          ) : currentTab === 'financeiro' ? (
+            <FinanceiroApp />
+          ) : currentTab === 'aprovacoes' ? (
+            <AprovacoesApp />
           ) : (
             <div className="content-card" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
               <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '1.5rem', color: '#9ca3af' }}>
