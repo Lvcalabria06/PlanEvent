@@ -24,6 +24,21 @@ public class ParteContrato {
         this.tipoParte = tipoParte;
     }
 
+    private ParteContrato(String id, String contratoId, String nomeParte, String tipoParte) {
+        this.id = id;
+        this.contratoId = contratoId;
+        this.nomeParte = nomeParte;
+        this.tipoParte = tipoParte;
+    }
+
+    /**
+     * Reconstrói uma ParteContrato a partir de dados já persistidos, sem re-gerar o UUID.
+     * Usado exclusivamente pela camada de persistência.
+     */
+    public static ParteContrato reconstituir(String id, String contratoId, String nomeParte, String tipoParte) {
+        return new ParteContrato(id, contratoId, nomeParte, tipoParte);
+    }
+
     public String getId() { return id; }
     public String getContratoId() { return contratoId; }
     public String getNomeParte() { return nomeParte; }

@@ -60,6 +60,11 @@ public class ContratoServiceImpl implements ContratoService {
     }
 
     @Override
+    public List<Contrato> listarTodosContratos() {
+        return contratoRepository.listarTodos();
+    }
+
+    @Override
     public List<Contrato> listarContratosPorEvento(String eventoId) {
         return contratoRepository.listarPorEventoId(eventoId);
     }

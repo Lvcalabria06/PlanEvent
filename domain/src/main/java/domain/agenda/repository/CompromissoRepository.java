@@ -13,5 +13,7 @@ public interface CompromissoRepository {
 
     List<Compromisso> listarPorGestorId(String gestorId);
 
+    List<Compromisso> listarTodos();
+
     void remover(String id);
 }
