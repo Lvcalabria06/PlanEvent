@@ -14,6 +14,11 @@ Feature: Gerenciar despesas do evento
     Then o valor da despesa deve ser 350.00
 
 
+  Scenario: Impedir alteração de despesa já enviada para aprovação
+    Given existe uma despesa pendente de aprovação para gerenciamento
+    When eu tentar alterar o valor da despesa pendente para 500.00
+    Then o sistema deve impedir a alteração da despesa
+
   Scenario: Impedir alteração de despesa já aprovada
     Given existe uma despesa já aprovada para gerenciamento
     When eu tentar alterar o valor da despesa aprovada para 500.00

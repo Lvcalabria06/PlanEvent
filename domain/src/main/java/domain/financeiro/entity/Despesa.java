@@ -59,14 +59,13 @@ public class Despesa {
     }
 
     public boolean podeSerAlterada() {
-        return status == StatusDespesa.REGISTRADA
-                || status == StatusDespesa.PENDENTE_APROVACAO;
+        return status == StatusDespesa.REGISTRADA;
     }
 
     public void garantirPodeSerAlterada() {
         if (!podeSerAlterada()) {
             throw new IllegalStateException(
-                    "Despesa aprovada ou rejeitada não pode ser alterada ou excluída. Status atual: "
+                    "Despesa já enviada para aprovação, aprovada ou rejeitada não pode ser alterada ou excluída. Status atual: "
                             + status);
         }
     }
