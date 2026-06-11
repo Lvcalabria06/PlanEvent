@@ -39,6 +39,13 @@ public class EquipeRepositoryJpaAdapter implements EquipeRepository {
     }
 
     @Override
+    public List<Equipe> listarTodos() {
+        return jpaRepository.findAll().stream()
+                .map(EquipeMapper::paraDominio)
+                .toList();
+    }
+
+    @Override
     public void remover(String id) {
         jpaRepository.deleteById(id);
     }

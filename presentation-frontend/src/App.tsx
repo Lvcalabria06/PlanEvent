@@ -1,8 +1,14 @@
 import { useState } from 'react'
+import { Toaster } from 'sonner'
 import './App.css'
 import { FornecedoresSection } from './features/fornecedores/FornecedoresSection'
 import { ContratosSection } from './features/contratos/ContratosSection'
 import { PlanningDataProvider } from './modules/planning/PlanningDataContext'
+import './agenda/agenda.css'
+import AgendaModule from './agenda/AgendaModule'
+import { AgendaProvider, useAgenda } from './agenda/AgendaContext'
+import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
+import TarefasApp from './app/TarefasApp'
 
 interface Funcionario {
 	id: string;
@@ -23,6 +29,42 @@ interface Equipe {
 	eventoId: string;
 	nome: string;
 	membros: { funcionarioId: string; lider: boolean }[];
+}
+
+function TopbarBell({ onVerAgenda }: { onVerAgenda: () => void }) {
+  const { lembretes, compromissos, eventos, lembretesPendentes } = useAgenda()
+  const [aberto, setAberto] = useState(false)
+  const total = lembretesPendentes.length
+
+  return (
+    <div className="topbar-bell-wrap">
+      <button
+        type="button"
+        className="notification-bell-btn"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        aria-label={`Lembretes, ${total} pendentes`}
+      >
+        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        {total > 0 && <span className="notification-badge">{total > 9 ? '9+' : total}</span>}
+      </button>
+      {aberto && (
+        <LembretesNotificacaoPopup
+          lembretes={lembretes}
+          compromissos={compromissos}
+          eventos={eventos}
+          onClose={() => setAberto(false)}
+          onVerAgenda={() => {
+            onVerAgenda()
+            setAberto(false)
+          }}
+        />
+      )}
+    </div>
+  )
 }
 
 export default function App() {
@@ -110,8 +152,10 @@ export default function App() {
 	const [funcToInativar, setFuncToInativar] = useState<Funcionario | null>(null);
 
 	// List of events for the team selection
-	const [eventosList] = useState<{ id: string; nome: string }[]>([
-		{ id: 'evento-1', nome: 'Convenção Anual 2026' }
+	const [eventosList] = useState<{ id: string; nome: string; dataEvento?: string }[]>([
+		{ id: 'evento-1', nome: 'Conferência Anual de TI 2026', dataEvento: '2026-05-15' },
+		{ id: 'evento-2', nome: 'Workshop de Liderança Q2', dataEvento: '2026-06-10' },
+		{ id: 'evento-3', nome: 'Convenção Anual 2026', dataEvento: '2026-04-20' },
 	]);
 
 	// JS expression evaluator representing the Interpreter pattern
@@ -153,7 +197,7 @@ export default function App() {
 
 			const query = normalizedExpr.toLowerCase();
 			return func.nome.toLowerCase().includes(query) || func.cargo.toLowerCase().includes(query);
-		} catch (e) {
+		} catch {
 			return true;
 		}
 	};
@@ -483,8 +527,16 @@ export default function App() {
 		return evaluateInterpreterExpression(f, searchExpression);
 	});
 
+	const eventosAgenda = eventosList.map((e) => ({
+		id: e.id,
+		nome: e.nome,
+		dataEvento: e.dataEvento ?? '2026-05-15',
+	}));
+
 	return (
+		<AgendaProvider eventos={eventosAgenda}>
 		<PlanningDataProvider>
+		<Toaster position="top-right" richColors />
 		<div className="app-layout">
 			{/* Menu Lateral (Sidebar) */}
 			<aside className="sidebar">
@@ -653,13 +705,7 @@ export default function App() {
 			{/* Main panel */}
 			<main className="main-panel">
 				<header className="topbar">
-					<button className="notification-bell-btn">
-						<svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-							<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-							<path d="M13.73 21a2 2 0 0 1-3.46 0" />
-						</svg>
-						<span className="notification-badge">6</span>
-					</button>
+					<TopbarBell onVerAgenda={() => setCurrentTab('agenda')} />
 				</header>
 
 				<div className="main-content">
@@ -1872,6 +1918,10 @@ export default function App() {
 								</div>
 							)}
 						</div>
+					) : currentTab === 'tarefas' ? (
+						<TarefasApp />
+					) : currentTab === 'agenda' ? (
+						<AgendaModule />
 					) : currentTab === 'fornecedores' ? (
 						<FornecedoresSection />
 					) : currentTab === 'contratos' ? (
@@ -1884,7 +1934,7 @@ export default function App() {
 								<line x1="12" y1="16" x2="12.01" y2="16" />
 							</svg>
 							<h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>Módulo em Desenvolvimento</h2>
-							<p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Fornecedores&quot; ou &quot;Contratos&quot; no menu lateral.</p>
+							<p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Fornecedores&quot; ou &quot;Contratos&quot; no menu lateral.</p>
 						</div>
 					)}
 				</div>
@@ -1921,5 +1971,6 @@ export default function App() {
 			)}
 		</div>
 		</PlanningDataProvider>
+		</AgendaProvider>
 	);
 }

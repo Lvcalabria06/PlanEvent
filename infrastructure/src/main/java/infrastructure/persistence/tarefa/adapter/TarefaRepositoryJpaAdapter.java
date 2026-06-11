@@ -46,8 +46,8 @@ public class TarefaRepositoryJpaAdapter implements TarefaRepository {
     }
 
     @Override
-    public List<Tarefa> listarPorEventoId(String eventoId) {
-        return jpaRepository.findByEventoId(eventoId).stream()
+    public List<Tarefa> listarTodos() {
+        return jpaRepository.findAll().stream()
                 .map(TarefaMapper::paraDominio)
                 .toList();
     }
