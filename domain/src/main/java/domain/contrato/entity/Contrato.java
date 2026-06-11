@@ -47,6 +47,37 @@ public class Contrato {
         this.updatedAt = this.createdAt;
     }
 
+    private Contrato(String id, String eventoId, String fornecedorId, TipoContrato tipo, String objeto,
+                     BigDecimal valor, LocalDateTime dataInicio, LocalDateTime dataFim,
+                     StatusContrato status, List<ParteContrato> partes,
+                     LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.fornecedorId = fornecedorId;
+        this.tipo = tipo;
+        this.objeto = objeto;
+        this.valor = valor;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.status = status;
+        this.partes = new ArrayList<>(partes);
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Reconstrói um Contrato a partir de dados já persistidos, sem revalidar
+     * regras de criação. Usado exclusivamente pela camada de persistência.
+     */
+    public static Contrato reconstituir(String id, String eventoId, String fornecedorId, TipoContrato tipo,
+                                        String objeto, BigDecimal valor, LocalDateTime dataInicio,
+                                        LocalDateTime dataFim, StatusContrato status,
+                                        List<ParteContrato> partes, LocalDateTime createdAt,
+                                        LocalDateTime updatedAt) {
+        return new Contrato(id, eventoId, fornecedorId, tipo, objeto, valor, dataInicio, dataFim,
+                status, partes, createdAt, updatedAt);
+    }
+
     public void atualizarDetalhes(TipoContrato tipo, String objeto, BigDecimal valor,
             LocalDateTime dataInicio, LocalDateTime dataFim, List<DadosParteContrato> dadosPartes) {
 
