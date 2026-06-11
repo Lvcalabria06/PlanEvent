@@ -4,8 +4,12 @@ import application.agenda.usecase.CompromissoUseCase;
 import application.agenda.usecase.CompromissoUseCaseImpl;
 import application.agenda.usecase.LembreteUseCase;
 import application.agenda.usecase.LembreteUseCaseImpl;
+import application.contrato.usecase.ContratoUseCase;
+import application.contrato.usecase.ContratoUseCaseImpl;
 import application.dependencia.usecase.DependenciaUseCase;
 import application.dependencia.usecase.DependenciaUseCaseImpl;
+import application.fornecedor.usecase.FornecedorUseCase;
+import application.fornecedor.usecase.FornecedorUseCaseImpl;
 import application.tarefa.usecase.TarefaUseCase;
 import application.tarefa.usecase.TarefaUseCaseImpl;
 import domain.agenda.observer.LembreteNotificacaoSubject;
@@ -16,8 +20,15 @@ import domain.agenda.service.CompromissoService;
 import domain.agenda.service.CompromissoServiceImpl;
 import domain.agenda.service.LembreteService;
 import domain.agenda.service.LembreteServiceImpl;
+import domain.contrato.repository.ContratoRepository;
+import domain.contrato.service.ContratoService;
+import domain.contrato.service.ContratoServiceImpl;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
+import domain.financeiro.repository.DespesaRepository;
+import domain.fornecedor.repository.FornecedorRepository;
+import domain.fornecedor.service.FornecedorService;
+import domain.fornecedor.service.FornecedorServiceImpl;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
@@ -91,5 +102,31 @@ public class BeanConfig {
     public LembreteUseCase lembreteUseCase(LembreteService lembreteService,
             CompromissoService compromissoService) {
         return new LembreteUseCaseImpl(lembreteService, compromissoService);
+    }
+
+    @Bean
+    public FornecedorService fornecedorService(FornecedorRepository fornecedorRepository,
+            ContratoRepository contratoRepository,
+            DespesaRepository despesaRepository,
+            EventoRepository eventoRepository) {
+        return new FornecedorServiceImpl(fornecedorRepository, contratoRepository,
+                despesaRepository, eventoRepository);
+    }
+
+    @Bean
+    public FornecedorUseCase fornecedorUseCase(FornecedorService fornecedorService) {
+        return new FornecedorUseCaseImpl(fornecedorService);
+    }
+
+    @Bean
+    public ContratoService contratoService(ContratoRepository contratoRepository,
+            EventoRepository eventoRepository,
+            FornecedorRepository fornecedorRepository) {
+        return new ContratoServiceImpl(contratoRepository, eventoRepository, fornecedorRepository);
+    }
+
+    @Bean
+    public ContratoUseCase contratoUseCase(ContratoService contratoService) {
+        return new ContratoUseCaseImpl(contratoService);
     }
 }

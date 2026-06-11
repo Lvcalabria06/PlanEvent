@@ -1,0 +1,19 @@
+# Git e IDE
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+
+# Builds locais (reconstruídos dentro da imagem)
+**/target
+presentation-frontend/.node
+presentation-frontend/node_modules
+node_modules
+
+# Credenciais locais
+.env
+
+# Artefatos diversos
+**/*.log
+.DS_Store
