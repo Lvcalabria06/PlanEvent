@@ -4,8 +4,13 @@ import domain.agenda.repository.CompromissoRepository;
 import domain.agenda.repository.LembreteRepository;
 import domain.agenda.service.CompromissoService;
 import domain.agenda.service.LembreteService;
+import domain.contrato.repository.ContratoRepository;
+import domain.contrato.service.ContratoService;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
+import domain.financeiro.repository.DespesaRepository;
+import domain.fornecedor.repository.FornecedorRepository;
+import domain.fornecedor.service.FornecedorService;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
@@ -49,6 +54,12 @@ public class ScaffoldingConfig {
         return new InMemoryEquipeRepository();
     }
 
+    @Bean
+    @ConditionalOnMissingBean(DespesaRepository.class)
+    public DespesaRepository inMemoryDespesaRepository() {
+        return new InMemoryDespesaRepository();
+    }
+
     /**
      * Semeia um conjunto realista de dados de demonstração (via {@link DadosDemoSeeder})
      * apenas enquanto Evento e Funcionário ainda forem stubs em memória.
@@ -64,7 +75,11 @@ public class ScaffoldingConfig {
             CompromissoRepository compromissoRepository,
             LembreteRepository lembreteRepository,
             CompromissoService compromissoService,
-            LembreteService lembreteService) {
+            LembreteService lembreteService,
+            FornecedorRepository fornecedorRepository,
+            FornecedorService fornecedorService,
+            ContratoRepository contratoRepository,
+            ContratoService contratoService) {
         return args -> {
             boolean apoioStubsAtivo = eventoRepository instanceof InMemoryEventoRepository
                     && funcionarioRepository instanceof InMemoryFuncionarioRepository;
@@ -74,7 +89,8 @@ public class ScaffoldingConfig {
 
             new DadosDemoSeeder(eventoRepository, funcionarioRepository, equipeRepository,
                     tarefaRepository, responsavelTarefaRepository, tarefaService, dependenciaService,
-                    compromissoRepository, lembreteRepository, compromissoService, lembreteService, log)
+                    compromissoRepository, lembreteRepository, compromissoService, lembreteService,
+                    fornecedorRepository, fornecedorService, contratoRepository, contratoService, log)
                     .semear();
         };
     }
