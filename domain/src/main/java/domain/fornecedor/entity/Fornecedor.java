@@ -28,6 +28,29 @@ public class Fornecedor {
         this.updatedAt = this.createdAt;
     }
 
+    private Fornecedor(String id, String nome, String cnpj, String categoriaServico,
+                       String contato, StatusFornecedor status,
+                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.nome = nome;
+        this.cnpj = cnpj;
+        this.categoriaServico = categoriaServico;
+        this.contato = contato;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Reconstrói um Fornecedor a partir de dados já persistidos, sem revalidar
+     * regras de criação. Usado exclusivamente pela camada de persistência.
+     */
+    public static Fornecedor reconstituir(String id, String nome, String cnpj, String categoriaServico,
+                                          String contato, StatusFornecedor status,
+                                          LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Fornecedor(id, nome, cnpj, categoriaServico, contato, status, createdAt, updatedAt);
+    }
+
     public void atualizarDados(String nome, String cnpj, String categoriaServico, String contato) {
         if (!isAtivo()) {
             throw new IllegalStateException("Fornecedor inativo não pode ser editado.");

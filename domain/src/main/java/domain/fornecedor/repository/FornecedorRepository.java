@@ -14,4 +14,6 @@ public interface FornecedorRepository {
     Optional<Fornecedor> buscarPorCnpj(String cnpj);
 
     List<Fornecedor> listarTodos();
+
+    void remover(String id);
 }
