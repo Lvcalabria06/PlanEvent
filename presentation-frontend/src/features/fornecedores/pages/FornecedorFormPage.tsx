@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { CONTRACT_CATEGORIES } from '../../../modules/planning/constants';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Fornecedor, FornecedorInput } from '../../../modules/planning/types';
@@ -44,12 +44,15 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 	);
 	const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 	const [submitError, setSubmitError] = useState<string | null>(null);
+	const [validationError, setValidationError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const formTopRef = useRef<HTMLDivElement>(null);
 
 	const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
 		setForm(prev => ({ ...prev, [key]: value }));
 		setErrors(prev => ({ ...prev, [key]: undefined }));
 		setSubmitError(null);
+		setValidationError(null);
 	};
 
 	const validate = (): boolean => {
@@ -69,20 +72,22 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 		if (!form.telefone.trim() || form.telefone.trim().length < 8) {
 			next.telefone = 'Informe um telefone válido.';
 		}
-		if (!form.contato.trim()) {
-			next.contato = 'Informe o contato principal.';
-		}
 		setErrors(next);
 		return Object.keys(next).length === 0;
 	};
 
 	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
-		if (!validate()) return;
+		setValidationError(null);
+		if (!validate()) {
+			setValidationError('Corrija os erros destacados antes de continuar.');
+			formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			return;
+		}
 
 		const payload: FornecedorInput = {
 			...form,
-			contato: form.email.trim() || form.contato.trim(),
+			contato: form.email.trim() || form.telefone.trim() || form.contato.trim(),
 		};
 
 		setSubmitting(true);
@@ -111,6 +116,12 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 				}
 			}
 			onSaved();
+		} catch (err) {
+			setSubmitError(
+				err instanceof Error
+					? err.message
+					: 'Erro inesperado ao salvar o fornecedor.'
+			);
 		} finally {
 			setSubmitting(false);
 		}
@@ -128,8 +139,8 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 				Voltar para Fornecedores
 			</button>
 
-			<div className="content-card">
-				<h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+		<div className="content-card" ref={formTopRef}>
+			<h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
 					{isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor'}
 				</h2>
 				<p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
@@ -257,12 +268,18 @@ export function FornecedorFormPage({ fornecedor, onBack, onSaved }: FornecedorFo
 						</div>
 					</div>
 
-					<div className="form-actions">
-						<button type="button" className="btn-outline" onClick={onBack}>
-							Cancelar
-						</button>
-						{!locked && (
-							<button type="submit" className="action-btn" disabled={submitting}>
+				{validationError && (
+					<div className="error-message" style={{ padding: '0.75rem', marginBottom: '0.5rem', marginTop: '1rem' }}>
+						{validationError}
+					</div>
+				)}
+
+				<div className="form-actions">
+					<button type="button" className="btn-outline" onClick={onBack}>
+						Cancelar
+					</button>
+					{!locked && (
+						<button type="submit" className="action-btn" disabled={submitting}>
 								{submitting
 									? 'Salvando...'
 									: isEditing

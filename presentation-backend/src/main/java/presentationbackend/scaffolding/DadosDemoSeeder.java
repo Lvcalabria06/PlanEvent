@@ -273,9 +273,9 @@ class DadosDemoSeeder {
     private void criarFornecedores() {
         fornecedor("Som & Luz Produções", "11.222.333/0001-81", "Audiovisual",
                 "contato@someluz.com.br");
-        fornecedor("Buffet Sabor do Sul", "22.333.444/0001-97", "Alimentação",
+        fornecedor("Buffet Sabor do Sul", "04.252.011/0001-10", "Alimentação",
                 "contato@sabordosul.com.br");
-        fornecedor("Segurança Total Ltda", "33.444.555/0001-06", "Segurança",
+        fornecedor("Segurança Total Ltda", "45.723.174/0001-10", "Segurança",
                 "operacoes@segurancatotal.com.br");
     }
 
