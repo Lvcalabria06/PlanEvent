@@ -21,16 +21,19 @@ public class ContratoRepositoryJpaAdapter implements ContratoRepository {
     }
 
     @Override
+    @Transactional
     public Contrato salvar(Contrato contrato) {
         return ContratoMapper.paraDominio(jpaRepository.save(ContratoMapper.paraJpa(contrato)));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Contrato> buscarPorId(String id) {
         return jpaRepository.findById(id).map(ContratoMapper::paraDominio);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Contrato> listarTodos() {
         return jpaRepository.findAll().stream()
                 .map(ContratoMapper::paraDominio)
@@ -38,6 +41,7 @@ public class ContratoRepositoryJpaAdapter implements ContratoRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Contrato> listarPorEventoId(String eventoId) {
         return jpaRepository.findByEventoId(eventoId).stream()
                 .map(ContratoMapper::paraDominio)

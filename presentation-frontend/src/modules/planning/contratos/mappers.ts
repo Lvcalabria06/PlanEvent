@@ -18,11 +18,39 @@ function toDateOnly(iso: string): string {
 	return iso.slice(0, 10);
 }
 
+const TIPO_UI_TO_BACKEND: Record<string, string> = {
+	'Prestação de Serviços': 'PRESTACAO_SERVICO',
+	'Locação de Espaço': 'LOCACAO',
+	'Fornecimento de Materiais': 'FORNECEDOR',
+	'Segurança Patrimonial': 'PRESTACAO_SERVICO',
+	'Consultoria': 'PRESTACAO_SERVICO',
+	'Licença de Software': 'OUTRO',
+	'Transporte e Logística': 'PRESTACAO_SERVICO',
+	'Marketing e Comunicação': 'PRESTACAO_SERVICO',
+	'Outros': 'OUTRO',
+};
+
+const TIPO_BACKEND_TO_UI: Record<string, string> = {
+	'PRESTACAO_SERVICO': 'Prestação de Serviços',
+	'LOCACAO': 'Locação de Espaço',
+	'FORNECEDOR': 'Fornecimento de Materiais',
+	'PATROCINIO': 'Outros',
+	'OUTRO': 'Outros',
+};
+
+function tipoUiToBackend(tipo: string): string {
+	return TIPO_UI_TO_BACKEND[tipo] ?? tipo;
+}
+
+function tipoBackendToUi(tipo: string): string {
+	return TIPO_BACKEND_TO_UI[tipo] ?? tipo;
+}
+
 export function fromContratoDto(dto: ContratoDto, categoria?: CategoriaServico): Contrato {
 	const statusUi = statusDomainToUi(dto.status);
 	return {
 		id: dto.id,
-		tipo: dto.tipo,
+		tipo: tipoBackendToUi(dto.tipo),
 		partes: dto.partes.map(p => p.nomeParte),
 		objeto: dto.objeto,
 		valor: dto.valor,
@@ -42,7 +70,7 @@ export function toContratoCreateDto(input: ContratoInput): ContratoCreateDto {
 	return {
 		eventoId: input.eventoId,
 		fornecedorId: input.fornecedorId,
-		tipo: input.tipo,
+		tipo: tipoUiToBackend(input.tipo),
 		objeto: input.objeto.trim(),
 		valor: input.valor,
 		dataInicio: `${input.dataInicio}T00:00:00`,
