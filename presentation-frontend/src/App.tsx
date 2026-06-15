@@ -11,6 +11,7 @@ import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
 import TarefasApp from './app/TarefasApp'
 import FinanceiroApp from './financeiro/FinanceiroApp'
 import AprovacoesApp from './financeiro/AprovacoesApp'
+import ConciliacaoApp from './conciliacao/ConciliacaoApp'
 
 interface Funcionario {
 	id: string;
@@ -1932,6 +1933,8 @@ export default function App() {
             <FornecedoresSection />
           ) : currentTab === 'contratos' ? (
             <ContratosSection />
+          ) : currentTab === 'conciliacao' ? (
+            <ConciliacaoApp />
           ) : (
             <div className="content-card" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
               <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '1.5rem', color: '#9ca3af' }}>
@@ -1940,7 +1943,7 @@ export default function App() {
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>Módulo em Desenvolvimento</h2>
-              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot; ou &quot;Contratos&quot; no menu lateral.</p>
+              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot;, &quot;Contratos&quot; ou &quot;Conciliação&quot; no menu lateral.</p>
             </div>
           )}
         </div>

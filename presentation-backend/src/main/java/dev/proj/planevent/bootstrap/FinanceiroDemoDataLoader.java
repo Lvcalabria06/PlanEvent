@@ -14,6 +14,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Semeia fornecedores e orçamento para o evento de demonstração já criado pelo
@@ -41,11 +42,14 @@ public class FinanceiroDemoDataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (eventoRepository.listarTodos().isEmpty()) {
-            return;
-        }
+        List<Evento> eventos = eventoRepository.listarTodos();
 
-        Evento evento = eventoRepository.listarTodos().get(0);
+        Evento evento;
+        if (eventos.isEmpty()) {
+            evento = eventoRepository.salvar(new Evento());
+        } else {
+            evento = eventos.get(0);
+        }
         if (orcamentoEventoRepository.buscarPorEventoId(evento.getId()).isPresent()) {
             return;
         }

@@ -27,11 +27,21 @@ export default function FinanceiroShell({
     );
   }
 
-  if (erro || eventos.length === 0) {
+  if (erro) {
     return (
       <div className="content-card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
         <p style={{ margin: 0 }}>
           Não foi possível carregar os eventos. Verifique se o backend está em execução na porta 3000.
+        </p>
+      </div>
+    );
+  }
+
+  if (eventos.length === 0) {
+    return (
+      <div className="content-card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+        <p style={{ margin: 0 }}>
+          Nenhum evento cadastrado. Crie um evento primeiro para utilizar este módulo.
         </p>
       </div>
     );
