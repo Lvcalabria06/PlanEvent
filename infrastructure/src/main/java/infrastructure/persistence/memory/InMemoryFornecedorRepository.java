@@ -40,6 +40,14 @@ public class InMemoryFornecedorRepository implements FornecedorRepository {
         return List.copyOf(porId.values());
     }
 
+    @Override
+    public void remover(String id) {
+        Fornecedor removido = porId.remove(id);
+        if (removido != null) {
+            cnpjParaId.remove(removido.getCnpj());
+        }
+    }
+
     public void limpar() {
         porId.clear();
         cnpjParaId.clear();

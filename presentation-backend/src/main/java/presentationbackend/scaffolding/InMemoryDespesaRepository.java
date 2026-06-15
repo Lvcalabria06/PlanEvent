@@ -24,6 +24,10 @@ class InMemoryDespesaRepository implements DespesaRepository {
     }
 
     @Override
+    public void excluir(String id) {}
+
+
+    @Override
     public Optional<Despesa> buscarPorId(String id) {
         return Optional.empty();
     }
@@ -50,6 +54,11 @@ class InMemoryDespesaRepository implements DespesaRepository {
 
     @Override
     public List<Despesa> listarPorFornecedorId(String fornecedorId) {
+        return List.of();
+    }
+
+    @Override
+    public List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId) {
         return List.of();
     }
 }

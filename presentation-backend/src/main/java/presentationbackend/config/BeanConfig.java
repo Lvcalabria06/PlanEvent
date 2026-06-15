@@ -4,6 +4,8 @@ import application.agenda.usecase.CompromissoUseCase;
 import application.agenda.usecase.CompromissoUseCaseImpl;
 import application.agenda.usecase.LembreteUseCase;
 import application.agenda.usecase.LembreteUseCaseImpl;
+import application.conciliacao.usecase.ConciliacaoUseCase;
+import application.conciliacao.usecase.ConciliacaoUseCaseImpl;
 import application.contrato.usecase.ContratoUseCase;
 import application.contrato.usecase.ContratoUseCaseImpl;
 import application.dependencia.usecase.DependenciaUseCase;
@@ -20,6 +22,7 @@ import domain.agenda.service.CompromissoService;
 import domain.agenda.service.CompromissoServiceImpl;
 import domain.agenda.service.LembreteService;
 import domain.agenda.service.LembreteServiceImpl;
+import domain.conciliacao.service.ConciliacaoService;
 import domain.contrato.repository.ContratoRepository;
 import domain.contrato.service.ContratoService;
 import domain.contrato.service.ContratoServiceImpl;
@@ -128,5 +131,10 @@ public class BeanConfig {
     @Bean
     public ContratoUseCase contratoUseCase(ContratoService contratoService) {
         return new ContratoUseCaseImpl(contratoService);
+    }
+
+    @Bean
+    public ConciliacaoUseCase conciliacaoUseCase(ConciliacaoService conciliacaoService) {
+        return new ConciliacaoUseCaseImpl(conciliacaoService);
     }
 }

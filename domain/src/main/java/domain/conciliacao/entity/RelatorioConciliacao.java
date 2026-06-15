@@ -32,6 +32,20 @@ public class RelatorioConciliacao {
         this.itens = Collections.unmodifiableList(itens);
     }
 
+    private RelatorioConciliacao(String id, String eventoId, String responsavelId,
+            LocalDateTime dataGeracao, List<ItemRelatorioConciliacao> itens) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.responsavelId = responsavelId;
+        this.dataGeracao = dataGeracao;
+        this.itens = Collections.unmodifiableList(itens);
+    }
+
+    public static RelatorioConciliacao reconstituir(String id, String eventoId, String responsavelId,
+            LocalDateTime dataGeracao, List<ItemRelatorioConciliacao> itens) {
+        return new RelatorioConciliacao(id, eventoId, responsavelId, dataGeracao, itens);
+    }
+
     public String getId() { return id; }
     public String getEventoId() { return eventoId; }
     public String getResponsavelId() { return responsavelId; }
