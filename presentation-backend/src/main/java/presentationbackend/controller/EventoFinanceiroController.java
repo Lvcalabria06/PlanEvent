@@ -1,6 +1,7 @@
-package dev.proj.planevent.web;
+package presentationbackend.controller;
 
-import dev.proj.planevent.web.dto.FinanceiroDtos;
+import application.financeiro.dto.FinanceiroDtos;
+import application.financeiro.mapper.FinanceiroMapper;
 import domain.evento.repository.EventoRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,13 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Expõe a listagem de eventos para o módulo financeiro (endpoint {@code /api/eventos}).
+ * Renomeado para evitar conflito com {@link EventoController} ({@code /api/v1/eventos}).
+ */
 @RestController
 @RequestMapping("/api/eventos")
-public class EventoController {
+public class EventoFinanceiroController {
 
     private final EventoRepository eventoRepository;
 
-    public EventoController(EventoRepository eventoRepository) {
+    public EventoFinanceiroController(EventoRepository eventoRepository) {
         this.eventoRepository = eventoRepository;
     }
 

@@ -12,6 +12,14 @@ import application.evento.usecase.AlocacaoLocalUseCase;
 import application.evento.usecase.AlocacaoLocalUseCaseImpl;
 import application.evento.usecase.EventoUseCase;
 import application.evento.usecase.EventoUseCaseImpl;
+import application.financeiro.usecase.AcaoPosRelatorioUseCase;
+import application.financeiro.usecase.AcaoPosRelatorioUseCaseImpl;
+import application.financeiro.usecase.DespesaUseCase;
+import application.financeiro.usecase.DespesaUseCaseImpl;
+import application.financeiro.usecase.OrcamentoEventoUseCase;
+import application.financeiro.usecase.OrcamentoEventoUseCaseImpl;
+import application.financeiro.usecase.RelatorioFinanceiroUseCase;
+import application.financeiro.usecase.RelatorioFinanceiroUseCaseImpl;
 import application.fornecedor.usecase.FornecedorUseCase;
 import application.fornecedor.usecase.FornecedorUseCaseImpl;
 import application.tarefa.usecase.TarefaUseCase;
@@ -33,7 +41,12 @@ import domain.evento.service.EventoService;
 import domain.evento.service.EventoServiceImpl;
 import domain.evento.service.PlanejamentoAlocacaoLocalService;
 import domain.evento.service.PlanejamentoAlocacaoLocalServiceImpl;
+import domain.financeiro.repository.AcaoPosRelatorioRepository;
 import domain.financeiro.repository.DespesaRepository;
+import domain.financeiro.service.AcaoPosRelatorioService;
+import domain.financeiro.service.DespesaService;
+import domain.financeiro.service.OrcamentoEventoService;
+import domain.financeiro.service.RelatorioFinanceiroService;
 import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.fornecedor.service.FornecedorServiceImpl;
@@ -174,4 +187,25 @@ public class BeanConfig {
             LocalRepository localRepository) {
         return new AlocacaoLocalUseCaseImpl(planejamentoAlocacaoLocalService, localRepository);
     }
+
+    @Bean
+    public DespesaUseCase despesaUseCase(DespesaService despesaService) {
+        return new DespesaUseCaseImpl(despesaService);
+    }
+
+    @Bean
+    public RelatorioFinanceiroUseCase relatorioFinanceiroUseCase(RelatorioFinanceiroService relatorioFinanceiroService) {
+        return new RelatorioFinanceiroUseCaseImpl(relatorioFinanceiroService);
+    }
+
+    @Bean
+    public OrcamentoEventoUseCase orcamentoEventoUseCase(OrcamentoEventoService orcamentoEventoService) {
+        return new OrcamentoEventoUseCaseImpl(orcamentoEventoService);
+    }
+
+    @Bean
+    public AcaoPosRelatorioUseCase acaoPosRelatorioUseCase(AcaoPosRelatorioService acaoPosRelatorioService) {
+        return new AcaoPosRelatorioUseCaseImpl(acaoPosRelatorioService);
+    }
 }
+

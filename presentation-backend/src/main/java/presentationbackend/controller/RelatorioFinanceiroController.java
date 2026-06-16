@@ -1,10 +1,7 @@
-package dev.proj.planevent.web;
+package presentationbackend.controller;
 
-import dev.proj.planevent.web.dto.FinanceiroDtos;
-import domain.financeiro.entity.RelatorioFinanceiro;
-import domain.financeiro.entity.SimulacaoRelatorioFinanceiro;
-import domain.financeiro.service.RelatorioFinanceiroService;
-import domain.financeiro.valueobject.TipoRelatorio;
+import application.financeiro.dto.FinanceiroDtos;
+import application.financeiro.usecase.RelatorioFinanceiroUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,24 +20,22 @@ public class RelatorioFinanceiroController {
 
     private static final String USUARIO_PADRAO = "gestor@empresa.com";
 
-    private final RelatorioFinanceiroService relatorioService;
+    private final RelatorioFinanceiroUseCase relatorioUseCase;
 
-    public RelatorioFinanceiroController(RelatorioFinanceiroService relatorioService) {
-        this.relatorioService = relatorioService;
+    public RelatorioFinanceiroController(RelatorioFinanceiroUseCase relatorioUseCase) {
+        this.relatorioUseCase = relatorioUseCase;
     }
 
     @GetMapping
     public List<FinanceiroDtos.RelatorioDto> listar(@PathVariable String eventoId) {
-        return relatorioService.listarRelatoriosPorEvento(eventoId).stream()
-                .map(FinanceiroMapper::toRelatorioDto)
-                .toList();
+        return relatorioUseCase.listar(eventoId);
     }
 
     @GetMapping("/{relatorioId}")
     public FinanceiroDtos.RelatorioDto buscar(
             @PathVariable String eventoId,
             @PathVariable String relatorioId) {
-        return FinanceiroMapper.toRelatorioDto(relatorioService.buscarRelatorio(relatorioId));
+        return relatorioUseCase.buscar(relatorioId);
     }
 
     @PostMapping("/simular")
@@ -48,8 +43,17 @@ public class RelatorioFinanceiroController {
     public FinanceiroDtos.SimulacaoDto simular(
             @PathVariable String eventoId,
             @RequestHeader(value = "X-Usuario-Id", defaultValue = USUARIO_PADRAO) String usuarioId) {
-        SimulacaoRelatorioFinanceiro simulacao = relatorioService.simularRelatorio(eventoId, usuarioId);
-        return FinanceiroMapper.toSimulacaoDto(simulacao);
+        return relatorioUseCase.simular(eventoId, usuarioId);
+    }
+
+    /** Simulação what-if com parâmetros de cenário (RN15). */
+    @PostMapping("/simular/what-if")
+    @ResponseStatus(HttpStatus.CREATED)
+    public FinanceiroDtos.SimulacaoDto simularWhatIf(
+            @PathVariable String eventoId,
+            @RequestBody FinanceiroDtos.SimularWhatIfRequest request,
+            @RequestHeader(value = "X-Usuario-Id", defaultValue = USUARIO_PADRAO) String usuarioId) {
+        return relatorioUseCase.simularWhatIf(eventoId, usuarioId, request);
     }
 
     @PostMapping("/simulacoes/{simulacaoId}/confirmar")
@@ -58,10 +62,7 @@ public class RelatorioFinanceiroController {
             @PathVariable String eventoId,
             @PathVariable String simulacaoId,
             @RequestBody FinanceiroDtos.ConfirmarRelatorioRequest request) {
-        TipoRelatorio tipo = TipoRelatorio.valueOf(request.tipo());
-        RelatorioFinanceiro relatorio = relatorioService.confirmarGeracao(
-                simulacaoId, tipo, request.motivoNovaVersaoOficial());
-        return FinanceiroMapper.toRelatorioDto(relatorio);
+        return relatorioUseCase.confirmar(simulacaoId, request);
     }
 
     @PostMapping("/preliminar")
@@ -69,8 +70,7 @@ public class RelatorioFinanceiroController {
     public FinanceiroDtos.RelatorioDto gerarPreliminar(
             @PathVariable String eventoId,
             @RequestHeader(value = "X-Usuario-Id", defaultValue = USUARIO_PADRAO) String usuarioId) {
-        return FinanceiroMapper.toRelatorioDto(
-                relatorioService.gerarRelatorio(eventoId, usuarioId, TipoRelatorio.PRELIMINAR));
+        return relatorioUseCase.gerarPreliminar(eventoId, usuarioId);
     }
 
     @PostMapping("/oficial")
@@ -79,8 +79,15 @@ public class RelatorioFinanceiroController {
             @PathVariable String eventoId,
             @RequestBody(required = false) FinanceiroDtos.GerarOficialRequest request,
             @RequestHeader(value = "X-Usuario-Id", defaultValue = USUARIO_PADRAO) String usuarioId) {
-        String motivo = request != null ? request.motivoNovaVersaoOficial() : null;
-        return FinanceiroMapper.toRelatorioDto(
-                relatorioService.gerarRelatorioOficial(eventoId, usuarioId, motivo));
+        return relatorioUseCase.gerarOficial(eventoId, request, usuarioId);
+    }
+
+    /** Comparação entre dois snapshots escolhidos pelo usuário (RN17). */
+    @GetMapping("/comparar")
+    public FinanceiroDtos.ComparativoRelatorioParDto compararRelatorios(
+            @PathVariable String eventoId,
+            @org.springframework.web.bind.annotation.RequestParam String baseId,
+            @org.springframework.web.bind.annotation.RequestParam String comparadoId) {
+        return relatorioUseCase.compararRelatorios(baseId, comparadoId);
     }
 }

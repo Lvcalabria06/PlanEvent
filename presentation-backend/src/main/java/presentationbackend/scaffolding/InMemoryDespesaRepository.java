@@ -34,6 +34,11 @@ class InMemoryDespesaRepository implements DespesaRepository {
     }
 
     @Override
+    public void excluir(String id) {
+        // stub – nenhuma ação necessária
+    }
+
+    @Override
     public List<Despesa> listarPorEventoECategoria(String eventoId, CategoriaDespesa categoria) {
         return List.of();
     }
@@ -49,12 +54,12 @@ class InMemoryDespesaRepository implements DespesaRepository {
     }
 
     @Override
-    public List<Despesa> listarPorFornecedorId(String fornecedorId) {
+    public List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId) {
         return List.of();
     }
 
     @Override
-    public List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId) {
+    public List<Despesa> listarPorFornecedorId(String fornecedorId) {
         return List.of();
     }
 }

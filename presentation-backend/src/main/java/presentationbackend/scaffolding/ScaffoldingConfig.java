@@ -119,7 +119,8 @@ public class ScaffoldingConfig {
         return args -> {
             EventoLocaisSeeder.semearSeVazio(localRepository);
 
-            boolean apoioStubsAtivo = funcionarioRepository instanceof InMemoryFuncionarioRepository;
+            boolean apoioStubsAtivo = eventoRepository.getClass().getSimpleName().equals("InMemoryEventoRepository")
+                    && funcionarioRepository.getClass().getSimpleName().equals("InMemoryFuncionarioRepository");
             if (!apoioStubsAtivo) {
                 log.info("Seed de demonstração ignorado (repositório real de funcionário ativo).");
                 return;

@@ -1,10 +1,14 @@
-package dev.proj.planevent.web;
+package application.financeiro.mapper;
 
-import dev.proj.planevent.web.dto.FinanceiroDtos;
+import application.financeiro.dto.FinanceiroDtos;
 import domain.evento.entity.Evento;
+import domain.financeiro.entity.AcaoPosRelatorio;
+import domain.financeiro.entity.CategoriaOrcamento;
 import domain.financeiro.entity.Despesa;
+import domain.financeiro.entity.OrcamentoEvento;
 import domain.financeiro.entity.RelatorioFinanceiro;
 import domain.financeiro.entity.SimulacaoRelatorioFinanceiro;
+import domain.financeiro.valueobject.ComparativoRelatorioPar;
 import domain.financeiro.valueobject.ComparativoRelatorioFinanceiro;
 import domain.financeiro.valueobject.DesvioOrcamentario;
 import domain.financeiro.valueobject.IndicadorCoberturaContratual;
@@ -52,6 +56,27 @@ public final class FinanceiroMapper {
                 d.getClassificacao().name());
     }
 
+    public static FinanceiroDtos.OrcamentoEventoDto toOrcamentoDto(OrcamentoEvento o) {
+        return new FinanceiroDtos.OrcamentoEventoDto(
+                o.getId(), o.getEventoId(), o.getValorTotal(), o.getDataCriacao());
+    }
+
+    public static FinanceiroDtos.CategoriaOrcamentoDto toCategoriaOrcamentoDto(CategoriaOrcamento c) {
+        return new FinanceiroDtos.CategoriaOrcamentoDto(
+                c.getId(), c.getOrcamentoId(), c.getNome().name(), c.getValorPrevisto());
+    }
+
+    public static FinanceiroDtos.AcaoPosRelatorioDto toAcaoPosRelatorioDto(AcaoPosRelatorio a) {
+        return new FinanceiroDtos.AcaoPosRelatorioDto(
+                a.getId(),
+                a.getRelatorioId(),
+                a.getTipoRecomendacao().name(),
+                a.getDescricao(),
+                a.getStatus().name(),
+                a.getCriadaEm(),
+                a.getTratadaEm());
+    }
+
     public static FinanceiroDtos.RelatorioDto toRelatorioDto(RelatorioFinanceiro r) {
         return new FinanceiroDtos.RelatorioDto(
                 r.getId(),
@@ -97,6 +122,17 @@ public final class FinanceiroMapper {
                 s.getId(),
                 toRelatorioPreview(s.getResultado()),
                 s.getCriadaEm());
+    }
+
+    public static FinanceiroDtos.ComparativoRelatorioParDto toComparativoParDto(ComparativoRelatorioPar c) {
+        return new FinanceiroDtos.ComparativoRelatorioParDto(
+                c.getRelatorioBaseId(),
+                c.getRelatorioComparadoId(),
+                c.getVariacaoScore(),
+                c.getVariacaoTotalRealizado(),
+                c.getTendencia().name(),
+                c.getCategoriasComPiora().stream().map(Enum::name).toList(),
+                c.getCategoriasComMelhora().stream().map(Enum::name).toList());
     }
 
     private static FinanceiroDtos.ItemRelatorioDto toItem(ItemRelatorioCategoria i) {

@@ -1,9 +1,7 @@
-package dev.proj.planevent.web;
+package presentationbackend.controller;
 
-import dev.proj.planevent.web.dto.FinanceiroDtos;
-import domain.financeiro.entity.Despesa;
-import domain.financeiro.service.DespesaService;
-import domain.financeiro.valueobject.CategoriaDespesa;
+import application.financeiro.dto.FinanceiroDtos;
+import application.financeiro.usecase.DespesaUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +23,10 @@ public class DespesaController {
 
     private static final String USUARIO_PADRAO = "gestor@empresa.com";
 
-    private final DespesaService despesaService;
+    private final DespesaUseCase despesaUseCase;
 
-    public DespesaController(DespesaService despesaService) {
-        this.despesaService = despesaService;
+    public DespesaController(DespesaUseCase despesaUseCase) {
+        this.despesaUseCase = despesaUseCase;
     }
 
     @GetMapping
@@ -36,43 +34,22 @@ public class DespesaController {
             @PathVariable String eventoId,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String fornecedorId) {
-        if (categoria != null && !categoria.isBlank()) {
-            return despesaService
-                    .pesquisarPorCategoria(eventoId, CategoriaDespesa.valueOf(categoria))
-                    .stream()
-                    .map(FinanceiroMapper::toDespesaDto)
-                    .toList();
-        }
-        if (fornecedorId != null && !fornecedorId.isBlank()) {
-            return despesaService
-                    .pesquisarPorFornecedor(eventoId, fornecedorId)
-                    .stream()
-                    .map(FinanceiroMapper::toDespesaDto)
-                    .toList();
-        }
-        return despesaService.listarDespesasPorEvento(eventoId).stream()
-                .map(FinanceiroMapper::toDespesaDto)
-                .toList();
+        return despesaUseCase.listar(eventoId, categoria, fornecedorId);
     }
 
     @GetMapping("/pendentes")
     public List<FinanceiroDtos.DespesaDto> listarPendentes(@PathVariable String eventoId) {
-        return despesaService.listarDespesasPorEvento(eventoId).stream()
-                .filter(d -> d.getStatus().name().equals("PENDENTE_APROVACAO"))
-                .map(FinanceiroMapper::toDespesaDto)
-                .toList();
+        return despesaUseCase.listarPendentes(eventoId);
     }
 
     @GetMapping("/desvios")
     public List<FinanceiroDtos.DesvioDto> desvios(@PathVariable String eventoId) {
-        return despesaService.calcularDesviosPorEvento(eventoId).stream()
-                .map(FinanceiroMapper::toDesvioDto)
-                .toList();
+        return despesaUseCase.desvios(eventoId);
     }
 
     @GetMapping("/{despesaId}")
     public FinanceiroDtos.DespesaDto buscar(@PathVariable String eventoId, @PathVariable String despesaId) {
-        return FinanceiroMapper.toDespesaDto(despesaService.buscarDespesa(despesaId));
+        return despesaUseCase.buscar(despesaId);
     }
 
     @PostMapping
@@ -81,14 +58,7 @@ public class DespesaController {
             @PathVariable String eventoId,
             @RequestBody FinanceiroDtos.RegistrarDespesaRequest request,
             @RequestHeader(value = "X-Usuario-Id", defaultValue = USUARIO_PADRAO) String usuarioId) {
-        Despesa despesa = new Despesa(
-                eventoId,
-                CategoriaDespesa.valueOf(request.categoria()),
-                request.fornecedorId(),
-                request.valor(),
-                request.data(),
-                usuarioId);
-        return FinanceiroMapper.toDespesaDto(despesaService.registrarDespesa(despesa));
+        return despesaUseCase.registrar(eventoId, request, usuarioId);
     }
 
     @PutMapping("/{despesaId}")
@@ -96,14 +66,13 @@ public class DespesaController {
             @PathVariable String eventoId,
             @PathVariable String despesaId,
             @RequestBody FinanceiroDtos.AtualizarDespesaRequest request) {
-        return FinanceiroMapper.toDespesaDto(
-                despesaService.atualizarDespesa(despesaId, request.valor(), request.data()));
+        return despesaUseCase.atualizar(despesaId, request);
     }
 
     @DeleteMapping("/{despesaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable String eventoId, @PathVariable String despesaId) {
-        despesaService.excluirDespesa(despesaId);
+        despesaUseCase.excluir(despesaId);
     }
 
     @PostMapping("/{despesaId}/aprovar")
@@ -111,8 +80,7 @@ public class DespesaController {
             @PathVariable String eventoId,
             @PathVariable String despesaId,
             @RequestBody FinanceiroDtos.AprovarDespesaRequest request) {
-        return FinanceiroMapper.toDespesaDto(
-                despesaService.aprovarDespesa(despesaId, request.aprovadorId()));
+        return despesaUseCase.aprovar(despesaId, request);
     }
 
     @PostMapping("/{despesaId}/rejeitar")
@@ -120,7 +88,6 @@ public class DespesaController {
             @PathVariable String eventoId,
             @PathVariable String despesaId,
             @RequestBody FinanceiroDtos.RejeitarDespesaRequest request) {
-        return FinanceiroMapper.toDespesaDto(
-                despesaService.rejeitarDespesa(despesaId, request.aprovadorId(), request.motivo()));
+        return despesaUseCase.rejeitar(despesaId, request);
     }
 }

@@ -1,4 +1,4 @@
-package dev.proj.planevent.bootstrap;
+package presentationbackend.scaffolding;
 
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 
 /**
  * Semeia fornecedores e orçamento para o evento de demonstração já criado pelo
- * {@link presentationbackend.scaffolding.DadosDemoSeeder}. Executa após o seed
+ * {@link DadosDemoSeeder}. Executa após o seed
  * de tarefas ({@code @Order(100)}).
  */
 @Component

@@ -1,4 +1,4 @@
-package dev.proj.planevent.web.dto;
+package application.financeiro.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -105,5 +105,62 @@ public final class FinanceiroDtos {
     }
 
     public record GerarOficialRequest(String motivoNovaVersaoOficial) {
+    }
+
+    // --- Orçamento ---
+
+    public record OrcamentoEventoDto(String id, String eventoId, BigDecimal valorTotal,
+                                      LocalDateTime dataCriacao) {
+    }
+
+    public record CriarOrcamentoRequest(BigDecimal valorTotal) {
+    }
+
+    public record CategoriaOrcamentoDto(String id, String orcamentoId, String categoria,
+                                         BigDecimal valorPrevisto) {
+    }
+
+    public record AdicionarCategoriaOrcamentoRequest(String categoria, BigDecimal valorPrevisto) {
+    }
+
+    public record AtualizarCategoriaOrcamentoRequest(BigDecimal valorPrevisto) {
+    }
+
+    // --- Ação Pós-Relatório (RN18) ---
+
+    public record AcaoPosRelatorioDto(
+            String id,
+            String relatorioId,
+            String tipoRecomendacao,
+            String descricao,
+            String status,
+            LocalDateTime criadaEm,
+            LocalDateTime tratadaEm) {
+    }
+
+    public record RegistrarAcaoPosRelatorioRequest(String tipoRecomendacao, String descricao) {
+    }
+
+    // --- Simulação What-If (RN15) ---
+
+    public record DespesaHipoteticaRequest(String categoria, BigDecimal valor) {
+    }
+
+    public record SimularWhatIfRequest(
+            boolean incluirPendentes,
+            boolean cenarioPessimistaCobertura,
+            List<DespesaHipoteticaRequest> despesasHipoteticas) {
+    }
+
+    // --- Comparativo entre dois snapshots (RN17) ---
+
+    public record ComparativoRelatorioParDto(
+            String relatorioBaseId,
+            String relatorioComparadoId,
+            double variacaoScore,
+            BigDecimal variacaoTotalRealizado,
+            String tendencia,
+            List<String> categoriasComPiora,
+            List<String> categoriasComMelhora) {
     }
 }
