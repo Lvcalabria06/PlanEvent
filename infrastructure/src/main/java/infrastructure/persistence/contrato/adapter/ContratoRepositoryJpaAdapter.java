@@ -2,7 +2,6 @@ package infrastructure.persistence.contrato.adapter;
 
 import domain.contrato.entity.Contrato;
 import domain.contrato.repository.ContratoRepository;
-import domain.contrato.valueobject.StatusContrato;
 import infrastructure.persistence.contrato.mapper.ContratoMapper;
 import infrastructure.persistence.contrato.repository.ContratoJpaRepository;
 import org.springframework.stereotype.Repository;
@@ -49,9 +48,11 @@ public class ContratoRepositoryJpaAdapter implements ContratoRepository {
     }
 
     @Override
-    public boolean possuiContratoAtivoPorFornecedorId(String fornecedorId) {
-        var statusInativos = List.of(StatusContrato.ENCERRADO, StatusContrato.CANCELADO);
-        return jpaRepository.existsByFornecedorIdAndStatusNotIn(fornecedorId, statusInativos);
+    @Transactional(readOnly = true)
+    public List<Contrato> listarPorFornecedorId(String fornecedorId) {
+        return jpaRepository.findByFornecedorId(fornecedorId).stream()
+                .map(ContratoMapper::paraDominio)
+                .toList();
     }
 
     @Override

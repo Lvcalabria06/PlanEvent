@@ -15,7 +15,7 @@ public interface ContratoRepository {
 
     List<Contrato> listarPorEventoId(String eventoId);
 
-    boolean possuiContratoAtivoPorFornecedorId(String fornecedorId);
+    List<Contrato> listarPorFornecedorId(String fornecedorId);
 
     void remover(String id);
 }

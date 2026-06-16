@@ -5,6 +5,7 @@ import domain.contrato.repository.ContratoRepository;
 import domain.contrato.service.ContratoService;
 import domain.contrato.service.ContratoServiceImpl;
 import domain.contrato.valueobject.DadosParteContrato;
+import domain.contrato.valueobject.StatusContrato;
 import domain.contrato.valueobject.TipoContrato;
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
@@ -80,7 +81,7 @@ public class FornecedorSteps {
                     .findFirst();
         });
         when(fornecedorRepository.listarTodos()).thenAnswer(inv -> new ArrayList<>(fornecedoresDb.values()));
-        when(contratoRepository.possuiContratoAtivoPorFornecedorId(any())).thenReturn(false);
+        when(contratoRepository.listarPorFornecedorId(any())).thenReturn(List.of());
         when(despesaRepository.listarPorFornecedorId(any())).thenReturn(List.of());
 
         fornecedorService = new FornecedorServiceImpl(
@@ -125,7 +126,9 @@ public class FornecedorSteps {
 
     @And("o fornecedor possui contrato ativo vinculado")
     public void oFornecedorPossuiContratoAtivoVinculado() {
-        when(contratoRepository.possuiContratoAtivoPorFornecedorId(eq(fornecedorAtual.getId()))).thenReturn(true);
+        Contrato contratoAtivo = Mockito.mock(Contrato.class);
+        when(contratoAtivo.getStatus()).thenReturn(StatusContrato.ASSINADO);
+        when(contratoRepository.listarPorFornecedorId(eq(fornecedorAtual.getId()))).thenReturn(List.of(contratoAtivo));
     }
 
     @And("o fornecedor possui despesa em evento em andamento")
