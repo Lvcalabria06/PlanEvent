@@ -34,6 +34,10 @@ import domain.evento.service.EventoServiceImpl;
 import domain.evento.service.PlanejamentoAlocacaoLocalService;
 import domain.evento.service.PlanejamentoAlocacaoLocalServiceImpl;
 import domain.financeiro.repository.DespesaRepository;
+import domain.financeiro.service.AcaoPosRelatorioService;
+import domain.financeiro.service.DespesaService;
+import domain.financeiro.service.OrcamentoEventoService;
+import domain.financeiro.service.RelatorioFinanceiroService;
 import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.fornecedor.service.FornecedorServiceImpl;
@@ -177,6 +181,26 @@ public class BeanConfig {
             PlanejamentoAlocacaoLocalService planejamentoAlocacaoLocalService,
             LocalRepository localRepository) {
         return new AlocacaoLocalUseCaseImpl(planejamentoAlocacaoLocalService, localRepository);
+    }
+
+    @Bean
+    public DespesaUseCase despesaUseCase(DespesaService despesaService) {
+        return new DespesaUseCaseImpl(despesaService);
+    }
+
+    @Bean
+    public RelatorioFinanceiroUseCase relatorioFinanceiroUseCase(RelatorioFinanceiroService relatorioFinanceiroService) {
+        return new RelatorioFinanceiroUseCaseImpl(relatorioFinanceiroService);
+    }
+
+    @Bean
+    public OrcamentoEventoUseCase orcamentoEventoUseCase(OrcamentoEventoService orcamentoEventoService) {
+        return new OrcamentoEventoUseCaseImpl(orcamentoEventoService);
+    }
+
+    @Bean
+    public AcaoPosRelatorioUseCase acaoPosRelatorioUseCase(AcaoPosRelatorioService acaoPosRelatorioService) {
+        return new AcaoPosRelatorioUseCaseImpl(acaoPosRelatorioService);
     }
 
     @Bean
