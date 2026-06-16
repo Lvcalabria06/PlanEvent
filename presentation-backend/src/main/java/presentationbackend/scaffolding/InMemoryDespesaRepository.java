@@ -29,6 +29,11 @@ class InMemoryDespesaRepository implements DespesaRepository {
     }
 
     @Override
+    public void excluir(String id) {
+        // stub em memória: sem persistência real, nenhuma ação necessária
+    }
+
+    @Override
     public List<Despesa> listarPorEventoId(String eventoId) {
         return List.of();
     }

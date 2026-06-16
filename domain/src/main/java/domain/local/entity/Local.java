@@ -38,6 +38,30 @@ public class Local {
         this.layouts = new ArrayList<>();
     }
 
+    // Construtor privado para reconstituição a partir da persistência
+    private Local(String id, String nome, int capacidade, String endereco, String tipo,
+                  String infraestrutura, String restricoes, BigDecimal custo,
+                  StatusLocal status, LocalDateTime updatedAt) {
+        this.id = id;
+        this.nome = nome;
+        this.capacidade = capacidade;
+        this.endereco = endereco;
+        this.tipo = tipo;
+        this.infraestrutura = infraestrutura;
+        this.restricoes = restricoes;
+        this.custo = custo != null ? custo : BigDecimal.ZERO;
+        this.status = status;
+        this.updatedAt = updatedAt;
+        this.layouts = new ArrayList<>();
+    }
+
+    /** Reconstitui um local a partir de dados persistidos (sem revalidar RNs). */
+    public static Local reconstituir(String id, String nome, int capacidade, String endereco,
+                                     String tipo, String infraestrutura, String restricoes,
+                                     BigDecimal custo, StatusLocal status, LocalDateTime updatedAt) {
+        return new Local(id, nome, capacidade, endereco, tipo, infraestrutura, restricoes, custo, status, updatedAt);
+    }
+
     // Método para atualizar os dados de um local existente (RN8 e RN3)
     public void atualizarDados(String nome, int capacidade, String endereco, String tipo, String infraestrutura, BigDecimal custo) {
         validarCamposObrigatorios(nome, capacidade, endereco, tipo, infraestrutura);
@@ -116,15 +140,25 @@ public class Local {
         }
     }
 
-    // RN6 e RN8
+    // RN6 and RN8
     public void desativar() {
         this.status = StatusLocal.INATIVO;
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void marcarEmManutencao() {
+        this.status = StatusLocal.EM_MANUTENCAO;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void marcarAtivo() {
+        this.status = StatusLocal.ATIVO;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // RN7
     public boolean isAtivo() {
-        return this.status == StatusLocal.ATIVO;
+        return this.status != StatusLocal.INATIVO;
     }
 
     // Getters
