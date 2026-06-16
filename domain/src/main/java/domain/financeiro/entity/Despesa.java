@@ -1,6 +1,7 @@
 package domain.financeiro.entity;
 
 import domain.financeiro.valueobject.CategoriaDespesa;
+import domain.financeiro.valueobject.StatusDespesa;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,8 +17,10 @@ public class Despesa {
     private LocalDateTime data;
     private final String lancadoPorUsuarioId;
     private final LocalDateTime dataHoraLancamento;
+    private StatusDespesa status;
+    private String aprovadorId;
+    private String motivoRejeicao;
 
-    
     public Despesa(String eventoId,
                    CategoriaDespesa categoria,
                    String fornecedorId,
@@ -25,27 +28,21 @@ public class Despesa {
                    LocalDateTime data,
                    String lancadoPorUsuarioId) {
 
-        
         if (eventoId == null || eventoId.trim().isEmpty()) {
             throw new IllegalArgumentException("ID do evento é obrigatório.");
         }
-        
         if (categoria == null) {
             throw new IllegalArgumentException("Categoria da despesa é obrigatória.");
         }
-        
         if (fornecedorId == null || fornecedorId.trim().isEmpty()) {
             throw new IllegalArgumentException("ID do fornecedor é obrigatório.");
         }
-        
         if (valor == null || valor.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Valor da despesa deve ser maior que zero.");
         }
-        
         if (data == null) {
             throw new IllegalArgumentException("Data da despesa é obrigatória.");
         }
-        
         if (lancadoPorUsuarioId == null || lancadoPorUsuarioId.trim().isEmpty()) {
             throw new IllegalArgumentException("Usuário responsável pelo lançamento é obrigatório.");
         }
@@ -57,23 +54,81 @@ public class Despesa {
         this.valor = valor;
         this.data = data;
         this.lancadoPorUsuarioId = lancadoPorUsuarioId;
-        this.dataHoraLancamento = LocalDateTime.now(); // RN9
+        this.dataHoraLancamento = LocalDateTime.now();
+        this.status = StatusDespesa.REGISTRADA;
+    }
+
+    public boolean podeSerAlterada() {
+        return status == StatusDespesa.REGISTRADA;
+    }
+
+    public void garantirPodeSerAlterada() {
+        if (!podeSerAlterada()) {
+            throw new IllegalStateException(
+                    "Despesa já enviada para aprovação, aprovada ou rejeitada não pode ser alterada ou excluída. Status atual: "
+                            + status);
+        }
     }
 
     public void corrigirValor(BigDecimal novoValor) {
+        garantirPodeSerAlterada();
         if (novoValor == null || novoValor.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Novo valor da despesa deve ser maior que zero.");
         }
         this.valor = novoValor;
     }
 
-    //Getters
-    public String getId() { return id; }
-    public String getEventoId() { return eventoId; }
-    public CategoriaDespesa getCategoria() { return categoria; }
-    public String getFornecedorId() { return fornecedorId; }
-    public BigDecimal getValor() { return valor; }
-    public LocalDateTime getData() { return data; }
-    public String getLancadoPorUsuarioId() { return lancadoPorUsuarioId; }
-    public LocalDateTime getDataHoraLancamento() { return dataHoraLancamento; }
+    public void corrigirData(LocalDateTime novaData) {
+        garantirPodeSerAlterada();
+        if (novaData == null) {
+            throw new IllegalArgumentException("Data da despesa é obrigatória.");
+        }
+        this.data = novaData;
+    }
+
+    public void marcarPendente() {
+        if (this.status != StatusDespesa.REGISTRADA) {
+            throw new IllegalStateException(
+                    "Apenas despesas REGISTRADAS podem ser marcadas como PENDENTE_APROVACAO. Status atual: " + this.status);
+        }
+        this.status = StatusDespesa.PENDENTE_APROVACAO;
+    }
+
+    public void aprovar(String aprovadorId) {
+        if (this.status != StatusDespesa.PENDENTE_APROVACAO) {
+            throw new IllegalStateException(
+                    "Apenas despesas PENDENTE_APROVACAO podem ser aprovadas. Status atual: " + this.status);
+        }
+        if (aprovadorId == null || aprovadorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID do aprovador é obrigatório.");
+        }
+        this.status = StatusDespesa.APROVADA;
+        this.aprovadorId = aprovadorId;
+    }
+
+    public void rejeitar(String aprovadorId, String motivo) {
+        if (this.status != StatusDespesa.PENDENTE_APROVACAO) {
+            throw new IllegalStateException(
+                    "Apenas despesas PENDENTE_APROVACAO podem ser rejeitadas. Status atual: " + this.status);
+        }
+        if (aprovadorId == null || aprovadorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID do aprovador é obrigatório.");
+        }
+        this.status = StatusDespesa.REJEITADA;
+        this.aprovadorId = aprovadorId;
+        this.motivoRejeicao = motivo;
+    }
+
+    // Getters
+    public String getId()                         { return id; }
+    public String getEventoId()                   { return eventoId; }
+    public CategoriaDespesa getCategoria()        { return categoria; }
+    public String getFornecedorId()               { return fornecedorId; }
+    public BigDecimal getValor()                  { return valor; }
+    public LocalDateTime getData()                { return data; }
+    public String getLancadoPorUsuarioId()        { return lancadoPorUsuarioId; }
+    public LocalDateTime getDataHoraLancamento()  { return dataHoraLancamento; }
+    public StatusDespesa getStatus()              { return status; }
+    public String getAprovadorId()                { return aprovadorId; }
+    public String getMotivoRejeicao()             { return motivoRejeicao; }
 }

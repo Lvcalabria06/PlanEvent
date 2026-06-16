@@ -1,7 +1,7 @@
 Feature: Gestão de Lembretes
 
   Como gestor
-  Quero gerenciar os lembretes vinculados aos compromissos
+  Quero gerenciar os lembretes vinculados aos compromissos ou eventos
   Para ser notificado antes do horário definido
 
   Scenario: Criar lembrete com sucesso
@@ -75,3 +75,14 @@ Feature: Gestão de Lembretes
   Scenario: Impedir listar lembretes de compromisso inexistente
     When eu tentar listar lembretes de compromisso inexistente
     Then o sistema deve impedir a visualização dos lembretes
+
+  Scenario: Criar lembrete vinculado apenas ao evento com sucesso
+    When eu criar um lembrete vinculado apenas a um evento
+    Then o lembrete é salvo com sucesso
+
+  Scenario: Marcar lembrete como notificado após disparo do alerta
+    Given existe um gestor válido para agenda
+    And existe um compromisso cadastrado para esse gestor
+    And existe um lembrete cadastrado para esse compromisso
+    When o sistema disparar a notificação desse lembrete
+    Then o lembrete é marcado como notificado

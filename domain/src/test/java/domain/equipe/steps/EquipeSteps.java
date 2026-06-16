@@ -18,10 +18,12 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import org.mockito.Mockito;
-
+ 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.function.Supplier;
+import io.cucumber.datatable.DataTable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -339,5 +341,54 @@ public class EquipeSteps {
                 "Equipe Alpha",
                 List.of(new MembroEquipe(FUNCIONARIO_ID, true))
         );
+    }
+
+    private List<MembroEquipe> membrosFiltrados;
+
+    @Given("existe uma equipe cadastrada com os seguintes funcionários:")
+    public void existe_uma_equipe_cadastrada_com_os_seguintes_funcionarios(DataTable dataTable) {
+        existe_um_evento_valido_para_equipe();
+        
+        List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
+        List<MembroEquipe> membros = new java.util.ArrayList<>();
+        
+        for (Map<String, String> row : rows) {
+            String nome = row.get("nome");
+            String cargo = row.get("cargo");
+            String disponibilidade = row.get("disponibilidade");
+            boolean lider = Boolean.parseBoolean(row.get("lider"));
+            
+            Funcionario f = new Funcionario(nome, cargo, disponibilidade);
+            String fId = f.getId();
+            
+            when(funcionarioRepository.buscarPorId(fId)).thenReturn(Optional.of(f));
+            
+            membros.add(new MembroEquipe(fId, lider));
+        }
+        
+        equipeEmContexto = new Equipe(EVENTO_ID, "Equipe Alpha", membros);
+        when(equipeRepository.buscarPorId(equipeEmContexto.getId()))
+                .thenReturn(Optional.of(equipeEmContexto));
+    }
+
+    @When("o gestor filtrar os membros com a expressão {string}")
+    public void o_gestor_filtrar_os_membros_com_a_expressao(String expressao) {
+        try {
+            membrosFiltrados = equipeService.filtrarMembros(equipeEmContexto.getId(), expressao);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @Then("o sistema deve retornar apenas o funcionário {string}")
+    public void o_sistema_deve_retornar_apenas_o_funcionario(String nomeEsperado) {
+        assertNull(excecaoLancada, "Não deveria lançar exceção ao filtrar");
+        assertNotNull(membrosFiltrados);
+        assertEquals(1, membrosFiltrados.size());
+        
+        MembroEquipe membro = membrosFiltrados.get(0);
+        Funcionario f = funcionarioRepository.buscarPorId(membro.getFuncionarioId()).orElse(null);
+        assertNotNull(f);
+        assertEquals(nomeEsperado, f.getNome());
     }
 }

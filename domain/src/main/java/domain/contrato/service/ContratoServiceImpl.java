@@ -4,6 +4,8 @@ import domain.contrato.entity.Contrato;
 import domain.contrato.repository.ContratoRepository;
 import domain.contrato.valueobject.DadosParteContrato;
 import domain.evento.repository.EventoRepository;
+import domain.fornecedor.entity.Fornecedor;
+import domain.fornecedor.repository.FornecedorRepository;
 
 import java.util.List;
 
@@ -11,16 +13,21 @@ public class ContratoServiceImpl implements ContratoService {
 
     private final ContratoRepository contratoRepository;
     private final EventoRepository eventoRepository;
+    private final FornecedorRepository fornecedorRepository;
 
-    public ContratoServiceImpl(ContratoRepository contratoRepository, EventoRepository eventoRepository) {
+    public ContratoServiceImpl(ContratoRepository contratoRepository,
+                               EventoRepository eventoRepository,
+                               FornecedorRepository fornecedorRepository) {
         this.contratoRepository = contratoRepository;
         this.eventoRepository = eventoRepository;
+        this.fornecedorRepository = fornecedorRepository;
     }
 
     @Override
     public Contrato criarContrato(Contrato contrato) {
         eventoRepository.buscarPorId(contrato.getEventoId())
                 .orElseThrow(() -> new IllegalArgumentException("Evento inválido ou não encontrado."));
+        validarFornecedorAtivo(contrato.getFornecedorId());
         return contratoRepository.salvar(contrato);
     }
 
@@ -28,6 +35,8 @@ public class ContratoServiceImpl implements ContratoService {
     public Contrato editarContrato(Contrato contratoEditado) {
         Contrato atual = contratoRepository.buscarPorId(contratoEditado.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Contrato não encontrado."));
+
+        validarFornecedorAtivo(atual.getFornecedorId());
 
         List<DadosParteContrato> dadosPartes = contratoEditado.getPartes().stream()
                 .map(p -> new DadosParteContrato(p.getNomeParte(), p.getTipoParte()))
@@ -51,6 +60,11 @@ public class ContratoServiceImpl implements ContratoService {
     }
 
     @Override
+    public List<Contrato> listarTodosContratos() {
+        return contratoRepository.listarTodos();
+    }
+
+    @Override
     public List<Contrato> listarContratosPorEvento(String eventoId) {
         return contratoRepository.listarPorEventoId(eventoId);
     }
@@ -61,5 +75,13 @@ public class ContratoServiceImpl implements ContratoService {
                 .orElseThrow(() -> new IllegalArgumentException("Contrato não encontrado."));
         contrato.encerrar();
         contratoRepository.salvar(contrato);
+    }
+
+    private void validarFornecedorAtivo(String fornecedorId) {
+        Fornecedor fornecedor = fornecedorRepository.buscarPorId(fornecedorId)
+                .orElseThrow(() -> new IllegalArgumentException("Fornecedor inválido ou não encontrado."));
+        if (!fornecedor.isAtivo()) {
+            throw new IllegalArgumentException("Fornecedor inativo não pode ser vinculado a contratos.");
+        }
     }
 }

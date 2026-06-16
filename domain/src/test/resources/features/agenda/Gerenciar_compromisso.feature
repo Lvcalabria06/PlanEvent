@@ -95,3 +95,4 @@ Feature: Gestão de Compromissos
   Scenario: Buscar compromisso inexistente falha
     When eu tentar buscar compromisso por id inexistente
     Then o sistema deve impedir a visualização do compromisso
+

@@ -11,5 +11,11 @@ public interface ContratoRepository {
 
     Optional<Contrato> buscarPorId(String id);
 
+    List<Contrato> listarTodos();
+
     List<Contrato> listarPorEventoId(String eventoId);
+
+    boolean possuiContratoAtivoPorFornecedorId(String fornecedorId);
+
+    void remover(String id);
 }

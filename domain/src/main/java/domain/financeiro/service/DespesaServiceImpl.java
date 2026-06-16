@@ -7,13 +7,17 @@ import domain.financeiro.entity.OrcamentoEvento;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
+import domain.financeiro.template.ProcessadorAtualizacaoDespesaTemplateMethod;
+import domain.financeiro.template.ProcessadorRegistroDespesaTemplateMethod;
+import domain.financeiro.template.ValidadorLimitePadraoTemplateMethod;
 import domain.financeiro.valueobject.CategoriaDespesa;
 import domain.financeiro.valueobject.DesvioOrcamentario;
+import domain.fornecedor.repository.FornecedorRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class DespesaServiceImpl implements DespesaService {
 
@@ -21,35 +25,31 @@ public class DespesaServiceImpl implements DespesaService {
     private final OrcamentoEventoRepository orcamentoEventoRepository;
     private final CategoriaOrcamentoRepository categoriaOrcamentoRepository;
     private final EventoRepository eventoRepository;
+    private final FornecedorRepository fornecedorRepository;
+    private final ValidadorLimitePadraoTemplateMethod validadorLimite;
 
     public DespesaServiceImpl(DespesaRepository despesaRepository,
                                OrcamentoEventoRepository orcamentoEventoRepository,
                                CategoriaOrcamentoRepository categoriaOrcamentoRepository,
-                               EventoRepository eventoRepository) {
+                               EventoRepository eventoRepository,
+                               FornecedorRepository fornecedorRepository) {
         this.despesaRepository = despesaRepository;
         this.orcamentoEventoRepository = orcamentoEventoRepository;
         this.categoriaOrcamentoRepository = categoriaOrcamentoRepository;
         this.eventoRepository = eventoRepository;
+        this.fornecedorRepository = fornecedorRepository;
+        this.validadorLimite = new ValidadorLimitePadraoTemplateMethod(
+                despesaRepository, orcamentoEventoRepository, categoriaOrcamentoRepository);
     }
 
     @Override
     public Despesa registrarDespesa(Despesa despesa) {
-        eventoRepository.buscarPorId(despesa.getEventoId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Evento inválido ou não encontrado."));
-
-        OrcamentoEvento orcamento = orcamentoEventoRepository
-                .buscarPorEventoId(despesa.getEventoId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Orçamento não encontrado para o evento. Cadastre o orçamento antes de registrar despesas."));
-
-        categoriaOrcamentoRepository
-                .buscarPorOrcamentoECategoria(orcamento.getId(), despesa.getCategoria())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Categoria '" + despesa.getCategoria()
-                                + "' não possui orçamento previsto cadastrado para este evento."));
-
-        return despesaRepository.salvar(despesa);
+        ProcessadorRegistroDespesaTemplateMethod processador = new ProcessadorRegistroDespesaTemplateMethod(
+                eventoRepository,
+                fornecedorRepository,
+                validadorLimite,
+                despesaRepository);
+        return processador.executar(despesa, BigDecimal.ZERO, despesa.getValor());
     }
 
     @Override
@@ -64,24 +64,56 @@ public class DespesaServiceImpl implements DespesaService {
     }
 
     @Override
+    public List<Despesa> pesquisarPorCategoria(String eventoId, CategoriaDespesa categoria) {
+        return despesaRepository.listarPorEventoECategoria(eventoId, categoria);
+    }
+
+    @Override
+    public List<Despesa> pesquisarPorFornecedor(String eventoId, String fornecedorId) {
+        if (fornecedorId == null || fornecedorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID do fornecedor é obrigatório para pesquisa.");
+        }
+        return despesaRepository.listarPorEventoEFornecedor(eventoId, fornecedorId);
+    }
+
+    @Override
+    public Despesa atualizarDespesa(String despesaId, BigDecimal novoValor, LocalDateTime novaData) {
+        if (novoValor == null || novoValor.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Novo valor da despesa deve ser maior que zero.");
+        }
+
+        Despesa despesa = buscarDespesa(despesaId);
+        BigDecimal valorAnterior = despesa.getValor();
+
+        ProcessadorAtualizacaoDespesaTemplateMethod processador =
+                new ProcessadorAtualizacaoDespesaTemplateMethod(
+                        eventoRepository,
+                        fornecedorRepository,
+                        validadorLimite,
+                        despesaRepository,
+                        novaData);
+
+        return processador.executar(despesa, valorAnterior, novoValor);
+    }
+
+    @Override
+    public void excluirDespesa(String despesaId) {
+        Despesa despesa = buscarDespesa(despesaId);
+        despesa.garantirPodeSerAlterada();
+        despesaRepository.excluir(despesaId);
+    }
+
+    @Override
     public DesvioOrcamentario calcularDesvio(String eventoId, CategoriaDespesa categoria) {
-        OrcamentoEvento orcamento = orcamentoEventoRepository
-                .buscarPorEventoId(eventoId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Orçamento não encontrado para o evento."));
+        CategoriaOrcamento categoriaOrcamento = obterCategoriaOrcamento(eventoId, categoria);
 
-        CategoriaOrcamento categoriaOrcamento = categoriaOrcamentoRepository
-                .buscarPorOrcamentoECategoria(orcamento.getId(), categoria)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Orçamento para a categoria '" + categoria + "' não encontrado."));
-
-        BigDecimal totalRealizado = despesaRepository
-                .somarValoresPorEventoECategoria(eventoId, categoria);
+        BigDecimal totalAtivo = despesaRepository
+                .somarValoresAtivosPorEventoECategoria(eventoId, categoria);
 
         return new DesvioOrcamentario(
                 categoria,
                 categoriaOrcamento.getValorPrevisto(),
-                totalRealizado != null ? totalRealizado : BigDecimal.ZERO);
+                totalAtivo != null ? totalAtivo : BigDecimal.ZERO);
     }
 
     @Override
@@ -96,14 +128,40 @@ public class DespesaServiceImpl implements DespesaService {
 
         List<DesvioOrcamentario> desvios = new ArrayList<>();
         for (CategoriaOrcamento cat : categorias) {
-            BigDecimal totalRealizado = despesaRepository
-                    .somarValoresPorEventoECategoria(eventoId, cat.getNome());
+            BigDecimal totalAtivo = despesaRepository
+                    .somarValoresAtivosPorEventoECategoria(eventoId, cat.getNome());
 
             desvios.add(new DesvioOrcamentario(
                     cat.getNome(),
                     cat.getValorPrevisto(),
-                    totalRealizado != null ? totalRealizado : BigDecimal.ZERO));
+                    totalAtivo != null ? totalAtivo : BigDecimal.ZERO));
         }
         return desvios;
+    }
+
+    @Override
+    public Despesa aprovarDespesa(String despesaId, String aprovadorId) {
+        Despesa despesa = buscarDespesa(despesaId);
+        despesa.aprovar(aprovadorId);
+        return despesaRepository.salvar(despesa);
+    }
+
+    @Override
+    public Despesa rejeitarDespesa(String despesaId, String aprovadorId, String motivo) {
+        Despesa despesa = buscarDespesa(despesaId);
+        despesa.rejeitar(aprovadorId, motivo);
+        return despesaRepository.salvar(despesa);
+    }
+
+    private CategoriaOrcamento obterCategoriaOrcamento(String eventoId, CategoriaDespesa categoria) {
+        OrcamentoEvento orcamento = orcamentoEventoRepository
+                .buscarPorEventoId(eventoId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Orçamento não encontrado para o evento."));
+
+        return categoriaOrcamentoRepository
+                .buscarPorOrcamentoECategoria(orcamento.getId(), categoria)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Orçamento para a categoria '" + categoria + "' não encontrado."));
     }
 }

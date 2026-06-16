@@ -2,6 +2,7 @@ package domain.estoque.steps;
 
 import domain.estoque.entity.ConsumoEvento;
 import domain.estoque.entity.ItemConsumoEvento;
+import domain.estoque.entity.ItemPrevisao;
 import domain.estoque.entity.PrevisaoConsumo;
 import domain.estoque.repository.ConsumoEventoRepository;
 import domain.estoque.repository.PrevisaoConsumoRepository;
@@ -19,9 +20,9 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.mockito.Mockito;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,13 +36,9 @@ import static org.mockito.Mockito.when;
 
 public class PrevisaoConsumoSteps {
 
-    private static final String EVENTO_ATUAL_ID = "evento-atual";
-    private static final String EVENTO_HISTORICO_1_ID = "evento-historico-1";
-    private static final String EVENTO_HISTORICO_2_ID = "evento-historico-2";
-    private static final String PREVISAO_ID = "previsao-1";
-    private static final String USUARIO_GESTOR_ID = "gestor-1";
-    private static final String USUARIO_AJUSTE_ID = "gestor-ajuste";
-    private static final String USUARIO_RECALCULO_ID = "gestor-recalculo";
+    private static final String ID_EVENTO = "evento-previsao-1";
+    private static final String ID_USUARIO = "gestor-estoque";
+    private static final String ID_USUARIO_AJUSTE = "gestor-ajuste";
 
     private EventoRepository eventoRepository;
     private ConsumoEventoRepository consumoEventoRepository;
@@ -49,11 +46,9 @@ public class PrevisaoConsumoSteps {
     private PrevisaoConsumoService previsaoConsumoService;
 
     private Evento eventoAtual;
-    private Evento eventoHistorico1;
-    private Evento eventoHistorico2;
+    private final List<ConsumoEvento> consumos = new ArrayList<>();
     private PrevisaoConsumo previsaoEmContexto;
     private Exception excecaoLancada;
-    private Map<String, Evento> eventosCadastrados;
 
     @Before
     public void setup() {
@@ -67,237 +62,207 @@ public class PrevisaoConsumoSteps {
                 previsaoConsumoRepository
         );
 
+        consumos.clear();
         eventoAtual = null;
-        eventoHistorico1 = null;
-        eventoHistorico2 = null;
         previsaoEmContexto = null;
         excecaoLancada = null;
-        eventosCadastrados = new HashMap<>();
 
+        when(consumoEventoRepository.listarTodos()).thenAnswer(invocation -> List.copyOf(consumos));
         when(previsaoConsumoRepository.salvar(any(PrevisaoConsumo.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(eventoRepository.buscarPorId(any()))
-                .thenAnswer(invocation -> Optional.ofNullable(eventosCadastrados.get(invocation.getArgument(0))));
     }
 
-    @Given("que existe um evento corporativo medio com estimativa de {int} participantes")
-    public void queExisteUmEventoCorporativoMedioComEstimativaDeParticipantes(int participantes) {
-        eventoAtual = novoEvento("Forum de Inovacao", TipoEvento.CORPORATIVO, PorteEvento.MEDIO, participantes, "Networking");
-        mockEvento(EVENTO_ATUAL_ID, eventoAtual);
+    @Given("existe um evento valido para previsao de consumo")
+    public void existeUmEventoValidoParaPrevisaoDeConsumo() {
+        eventoAtual = new Evento("Feira de Negocios", TipoEvento.CORPORATIVO, PorteEvento.MEDIO, 200, "Planejamento", "local-1");
+        eventoAtual.definirJanelaPlanejamento(LocalDateTime.of(2026, 6, 10, 8, 0), LocalDateTime.of(2026, 6, 10, 18, 0));
+        when(eventoRepository.buscarPorId(eq(ID_EVENTO))).thenReturn(Optional.of(eventoAtual));
+        when(eventoRepository.buscarPorId(eq(eventoAtual.getId()))).thenReturn(Optional.of(eventoAtual));
     }
 
-    @Given("que existe um evento academico medio com estimativa de {int} participantes")
-    public void queExisteUmEventoAcademicoMedioComEstimativaDeParticipantes(int participantes) {
-        eventoAtual = novoEvento("Congresso Academico", TipoEvento.ACADEMICO, PorteEvento.MEDIO, participantes, "Pesquisa");
-        mockEvento(EVENTO_ATUAL_ID, eventoAtual);
+    @Given("existem eventos concluidos similares do mesmo tipo, porte e categoria {string}")
+    public void existemEventosConcluidosSimilaresDoMesmoTipoPorteECategoria(String categoria) {
+        adicionarHistoricoValido("Historico 1", PorteEvento.MEDIO, 100, categoria, 100);
+        adicionarHistoricoValido("Historico 2", PorteEvento.MEDIO, 150, categoria, 150);
     }
 
-    @Given("que existe um evento corporativo pequeno com estimativa de {int} participantes")
-    public void queExisteUmEventoCorporativoPequenoComEstimativaDeParticipantes(int participantes) {
-        eventoAtual = novoEvento("Expo Negocios", TipoEvento.CORPORATIVO, PorteEvento.PEQUENO, participantes, "Lancamento");
-        mockEvento(EVENTO_ATUAL_ID, eventoAtual);
-    }
-
-    @Given("que existem {int} eventos historicos concluidos do mesmo tipo com consumos validos")
-    public void queExistemEventosHistoricosConcluidosDoMesmoTipoComConsumosValidos(int quantidadeEventos) {
-        eventoHistorico1 = novoEvento("Historico 1", eventoAtual.getTipo(), PorteEvento.MEDIO, 100, eventoAtual.getObjetivo());
-        eventoHistorico1.concluirEvento();
-        mockEvento(EVENTO_HISTORICO_1_ID, eventoHistorico1);
-
-        eventoHistorico2 = novoEvento("Historico 2", eventoAtual.getTipo(), PorteEvento.GRANDE, 400, eventoAtual.getObjetivo());
-        eventoHistorico2.concluirEvento();
-        mockEvento(EVENTO_HISTORICO_2_ID, eventoHistorico2);
-
-        if (quantidadeEventos == 2) {
-            when(consumoEventoRepository.listarTodos()).thenReturn(List.of(
-                    novoConsumo(EVENTO_HISTORICO_1_ID,
-                            new ItemConsumoEvento("cadeira", 100),
-                            new ItemConsumoEvento("agua", 200)),
-                    novoConsumo(EVENTO_HISTORICO_2_ID,
-                            new ItemConsumoEvento("cadeira", 360),
-                            new ItemConsumoEvento("agua", 600))
-            ));
-        }
-    }
-
-    @Given("que existe um unico evento historico concluido com consumo valido de agua igual a {int}")
-    public void queExisteUmUnicoEventoHistoricoConcluidoComConsumoValidoDeAguaIgualA(int quantidadeAgua) {
-        eventoHistorico1 = novoEvento("Historico Agua", eventoAtual.getTipo(), eventoAtual.getPorte(),
-                eventoAtual.getQuantidadeEstimadaParticipantes(), eventoAtual.getObjetivo());
-        eventoHistorico1.concluirEvento();
-        mockEvento(EVENTO_HISTORICO_1_ID, eventoHistorico1);
-
-        when(consumoEventoRepository.listarTodos()).thenReturn(List.of(
-                novoConsumo(EVENTO_HISTORICO_1_ID, new ItemConsumoEvento("agua", quantidadeAgua))
+    @Given("existe um registro inconsistente ou incompleto no historico da categoria {string}")
+    public void existeUmRegistroInconsistenteOuIncompletoNoHistoricoDaCategoria(String categoria) {
+        Evento historicoInvalido = new Evento("Historico Invalido", TipoEvento.CORPORATIVO, PorteEvento.MEDIO, 120, "Planejamento", "local-2");
+        when(eventoRepository.buscarPorId(eq(historicoInvalido.getId()))).thenReturn(Optional.of(historicoInvalido));
+        ConsumoEvento consumoInvalido = new ConsumoEvento(historicoInvalido.getId(), ID_USUARIO, List.of(
+                new ItemConsumoEvento("agua", categoria, 90)
         ));
+        consumoInvalido.invalidar();
+        consumos.add(consumoInvalido);
     }
 
-    @Given("que existe um unico evento historico concluido com consumo valido de copos igual a {int}")
-    public void queExisteUmUnicoEventoHistoricoConcluidoComConsumoValidoDeCoposIgualA(int quantidadeCopos) {
-        eventoHistorico1 = novoEvento("Historico Copo", eventoAtual.getTipo(), PorteEvento.PEQUENO, 100, "Lancamento");
-        eventoHistorico1.concluirEvento();
-        mockEvento(EVENTO_HISTORICO_1_ID, eventoHistorico1);
-
-        when(consumoEventoRepository.listarTodos()).thenReturn(List.of(
-                novoConsumo(EVENTO_HISTORICO_1_ID, new ItemConsumoEvento("copo", quantidadeCopos))
-        ));
+    @Given("existe um outlier historico na categoria {string}")
+    public void existeUmOutlierHistoricoNaCategoria(String categoria) {
+        adicionarHistoricoValido("Historico 3", PorteEvento.MEDIO, 100, categoria, 110);
+        adicionarHistoricoValido("Historico 4", PorteEvento.MEDIO, 100, categoria, 1000);
     }
 
-    @Given("que existe outro evento historico concluido de porte grande com consumo valido de copos igual a {int}")
-    public void queExisteOutroEventoHistoricoConcluidoDePorteGrandeComConsumoValidoDeCoposIgualA(int quantidadeCopos) {
-        eventoHistorico2 = novoEvento("Historico Copo Grande", eventoAtual.getTipo(), PorteEvento.GRANDE, 200, "Lancamento");
-        eventoHistorico2.concluirEvento();
-        mockEvento(EVENTO_HISTORICO_2_ID, eventoHistorico2);
-
-        when(consumoEventoRepository.listarTodos()).thenReturn(List.of(
-                novoConsumo(EVENTO_HISTORICO_1_ID, new ItemConsumoEvento("copo", 100)),
-                novoConsumo(EVENTO_HISTORICO_2_ID, new ItemConsumoEvento("copo", quantidadeCopos))
-        ));
+    @Given("nao existe historico suficiente para a categoria {string}")
+    public void naoExisteHistoricoSuficienteParaACategoria(String categoria) {
+        adicionarHistoricoValido("Historico Unico", PorteEvento.MEDIO, 100, categoria, 100);
     }
 
-    @When("eu gero a previsao de consumo para esse evento")
-    public void euGeroAPrevisaoDeConsumoParaEsseEvento() {
+    @When("eu gero a previsao de estoque para o evento")
+    public void euGeroAPrevisaoDeEstoqueParaOEvento() {
         try {
-            previsaoEmContexto = previsaoConsumoService.gerarPrevisao(EVENTO_ATUAL_ID, USUARIO_GESTOR_ID);
+            previsaoEmContexto = previsaoConsumoService.gerarPrevisao(ID_EVENTO, ID_USUARIO);
+            when(previsaoConsumoRepository.buscarPorId(eq(previsaoEmContexto.getId()))).thenReturn(Optional.of(previsaoEmContexto));
+            when(previsaoConsumoRepository.buscarPorEventoId(eq(ID_EVENTO))).thenReturn(Optional.of(previsaoEmContexto));
         } catch (Exception e) {
             excecaoLancada = e;
         }
     }
 
-    @When("eu ajusto manualmente a quantidade prevista do item {string} para {int}")
-    public void euAjustoManualmenteAQuantidadePrevistaDoItemPara(String itemId, int quantidade) {
+    @When("eu ajusto manualmente o item {string} para {int} unidades com justificativa {string}")
+    public void euAjustoManualmenteOItemParaUnidadesComJustificativa(String itemId, int quantidade, String justificativa) {
         try {
-            mockPrevisaoAtual();
             previsaoEmContexto = previsaoConsumoService.ajustarPrevisao(
                     previsaoEmContexto.getId(),
-                    Map.of(itemId, quantidade),
-                    USUARIO_AJUSTE_ID
+                    java.util.Map.of(itemId, quantidade),
+                    ID_USUARIO_AJUSTE,
+                    justificativa
             );
         } catch (Exception e) {
             excecaoLancada = e;
         }
     }
 
-    @When("eu altero o porte do evento para grande e a estimativa para {int} participantes")
-    public void euAlteroOPorteDoEventoParaGrandeEAEstimativaParaParticipantes(int participantes) {
+    @When("eu altero dados relevantes do evento para invalidar a previsao")
+    public void euAlteroDadosRelevantesDoEventoParaInvalidarAPrevisao() {
         eventoAtual.atualizarDados(
                 eventoAtual.getNome(),
                 eventoAtual.getTipo(),
                 PorteEvento.GRANDE,
-                participantes,
-                "Lancamento ampliado"
+                eventoAtual.getQuantidadeEstimadaParticipantes(),
+                eventoAtual.getObjetivo()
         );
-        mockEvento(EVENTO_ATUAL_ID, eventoAtual);
-    }
-
-    @When("eu recalculo a previsao desse evento")
-    public void euRecalculoAPrevisaoDesseEvento() {
+        when(eventoRepository.buscarPorId(eq(ID_EVENTO))).thenReturn(Optional.of(eventoAtual));
+        when(eventoRepository.buscarPorId(eq(eventoAtual.getId()))).thenReturn(Optional.of(eventoAtual));
         try {
-            mockPrevisaoAtual();
-            previsaoEmContexto = previsaoConsumoService.recalcularPrevisao(previsaoEmContexto.getId(), USUARIO_RECALCULO_ID);
+            previsaoEmContexto = previsaoConsumoService.invalidarPrevisaoPorAlteracaoEvento(ID_EVENTO, ID_USUARIO);
         } catch (Exception e) {
             excecaoLancada = e;
         }
     }
 
-    @Then("a previsao deve ser gerada com sucesso")
-    public void aPrevisaoDeveSerGeradaComSucesso() {
-        assertNull(excecaoLancada, "Nao deveria lancar excecao.");
+    @When("eu recalculo a previsao de estoque")
+    public void euRecalculoAPrevisaoDeEstoque() {
+        try {
+            previsaoEmContexto = previsaoConsumoService.recalcularPrevisao(previsaoEmContexto.getId(), ID_USUARIO);
+        } catch (Exception e) {
+            excecaoLancada = e;
+        }
+    }
+
+    @Then("a previsao deve ser gerada com media ponderada baseada em eventos similares")
+    public void aPrevisaoDeveSerGeradaComMediaPonderadaBaseadaEmEventosSimilares() {
+        assertNull(excecaoLancada);
         assertNotNull(previsaoEmContexto);
-    }
-
-    @Then("a previsao deve indicar historico suficiente")
-    public void aPrevisaoDeveIndicarHistoricoSuficiente() {
-        assertNull(excecaoLancada);
         assertEquals(StatusHistoricoPrevisao.SUFICIENTE, previsaoEmContexto.getStatusHistorico());
-        assertEquals(2, previsaoEmContexto.getTotalEventosBase());
+        assertTrue(previsaoEmContexto.getTotalEventosBase() >= 2);
     }
 
-    @Then("a previsao deve indicar historico inexistente")
-    public void aPrevisaoDeveIndicarHistoricoInexistente() {
+    @Then("o sistema deve ignorar registros historicos invalidos")
+    public void oSistemaDeveIgnorarRegistrosHistoricosInvalidos() {
         assertNull(excecaoLancada);
-        assertEquals(StatusHistoricoPrevisao.INEXISTENTE, previsaoEmContexto.getStatusHistorico());
-        assertEquals(0, previsaoEmContexto.getTotalEventosBase());
-        assertTrue(previsaoEmContexto.getItens().isEmpty());
+        assertEquals(4, previsaoEmContexto.getTotalEventosBase());
     }
 
-    @Then("a previsao deve indicar historico insuficiente")
-    public void aPrevisaoDeveIndicarHistoricoInsuficiente() {
+    @Then("a previsao deve estar normalizada ao contexto do evento atual")
+    public void aPrevisaoDeveEstarNormalizadaAoContextoDoEventoAtual() {
         assertNull(excecaoLancada);
-        assertEquals(StatusHistoricoPrevisao.INSUFICIENTE, previsaoEmContexto.getStatusHistorico());
-        assertEquals(1, previsaoEmContexto.getTotalEventosBase());
+        ItemPrevisao item = previsaoEmContexto.getItens().get(0);
+        assertTrue(item.getQuantidadeEstimada() > 150);
     }
 
-    @Then("a previsao deve conter o item {string} com quantidade ajustada igual a {int}")
-    public void aPrevisaoDeveConterOItemComQuantidadeAjustadaIgualA(String itemId, int quantidadeEsperada) {
+    @Then("o sistema deve desconsiderar outliers automaticamente")
+    public void oSistemaDeveDesconsiderarOutliersAutomaticamente() {
         assertNull(excecaoLancada);
-        assertEquals(quantidadeEsperada, buscarQuantidadeAjustada(itemId));
+        ItemPrevisao item = previsaoEmContexto.getItens().get(0);
+        assertTrue(item.getQuantidadeEstimada() < 500);
     }
 
-    @Then("a previsao deve registrar a geracao inicial vinculada ao evento e ao usuario")
-    public void aPrevisaoDeveRegistrarAGeracaoInicialVinculadaAoEventoEAoUsuario() {
+    @Then("o sistema deve aplicar fallback com indicacao explicita")
+    public void oSistemaDeveAplicarFallbackComIndicacaoExplicita() {
+        assertNull(excecaoLancada);
+        assertEquals(StatusHistoricoPrevisao.FALLBACK, previsaoEmContexto.getStatusHistorico());
+        assertTrue(previsaoEmContexto.isFallbackUtilizado());
+    }
+
+    @Then("cada item previsto deve possuir quantidade estimada e intervalo minimo maximo")
+    public void cadaItemPrevistoDevePossuirQuantidadeEstimadaEIntervaloMinimoMaximo() {
+        assertNull(excecaoLancada);
+        ItemPrevisao item = previsaoEmContexto.getItens().get(0);
+        assertTrue(item.getQuantidadeMinima() <= item.getQuantidadeEstimada());
+        assertTrue(item.getQuantidadeMaxima() >= item.getQuantidadeEstimada());
+    }
+
+    @Then("cada item previsto deve apresentar explicacao detalhada com eventos pesos e ajustes")
+    public void cadaItemPrevistoDeveApresentarExplicacaoDetalhadaComEventosPesosEAjustes() {
+        assertNull(excecaoLancada);
+        String explicacao = previsaoEmContexto.getItens().get(0).getExplicacaoCalculo();
+        assertTrue(explicacao.contains("Eventos usados"),
+                "Explicacao deve listar os eventos usados: " + explicacao);
+        assertTrue(explicacao.contains("Pesos"),
+                "Explicacao deve detalhar os pesos aplicados: " + explicacao);
+        assertTrue(explicacao.contains("Ajustes"),
+                "Explicacao deve descrever os ajustes aplicados: " + explicacao);
+    }
+
+    @Then("o ajuste manual deve sobrescrever a previsao com usuario data hora e justificativa")
+    public void oAjusteManualDeveSobrescreverAPrevisaoComUsuarioDataHoraEJustificativa() {
+        assertNull(excecaoLancada);
+        assertEquals(180, previsaoEmContexto.getItens().get(0).getQuantidadeFinal());
+        assertEquals(TipoRegistroPrevisao.AJUSTE_MANUAL,
+                previsaoEmContexto.getHistoricoRegistros().get(previsaoEmContexto.getHistoricoRegistros().size() - 1).getTipoRegistro());
+        assertEquals(ID_USUARIO_AJUSTE,
+                previsaoEmContexto.getHistoricoRegistros().get(previsaoEmContexto.getHistoricoRegistros().size() - 1).getUsuarioResponsavelId());
+        assertEquals("Ajuste operacional",
+                previsaoEmContexto.getHistoricoRegistros().get(previsaoEmContexto.getHistoricoRegistros().size() - 1).getJustificativa());
+        assertNotNull(previsaoEmContexto.getHistoricoRegistros().get(previsaoEmContexto.getHistoricoRegistros().size() - 1).getDataHora());
+    }
+
+    @Then("a previsao deve ficar vinculada ao evento com metadados de geracao")
+    public void aPrevisaoDeveFicarVinculadaAoEventoComMetadadosDeGeracao() {
         assertNull(excecaoLancada);
         assertEquals(eventoAtual.getId(), previsaoEmContexto.getEventoId());
-        assertEquals(USUARIO_GESTOR_ID, previsaoEmContexto.getGeradoPorUsuarioId());
+        assertEquals(ID_USUARIO, previsaoEmContexto.getGeradoPorUsuarioId());
         assertNotNull(previsaoEmContexto.getDataGeracao());
+    }
+
+    @Then("a previsao deve ser invalidada automaticamente por alteracao relevante")
+    public void aPrevisaoDeveSerInvalidadaAutomaticamentePorAlteracaoRelevante() {
+        assertNull(excecaoLancada);
+        assertTrue(previsaoEmContexto.isInvalidada());
+        assertEquals(StatusHistoricoPrevisao.INVALIDADA, previsaoEmContexto.getStatusHistorico());
+    }
+
+    @Then("o sistema deve manter historico da versao original e das recalculadas")
+    public void oSistemaDeveManterHistoricoDaVersaoOriginalEDasRecalculadas() {
+        assertNull(excecaoLancada);
+        assertTrue(previsaoEmContexto.getVersaoAtual() >= 2);
+        assertEquals(TipoRegistroPrevisao.RECALCULO,
+                previsaoEmContexto.getHistoricoRegistros().get(previsaoEmContexto.getHistoricoRegistros().size() - 1).getTipoRegistro());
         assertFalse(previsaoEmContexto.getHistoricoRegistros().isEmpty());
-        assertEquals(TipoRegistroPrevisao.GERACAO_INICIAL, previsaoEmContexto.getHistoricoRegistros().get(0).getTipoRegistro());
     }
 
-    @Then("o historico da previsao deve preservar o valor original de {int} para o item {string}")
-    public void oHistoricoDaPrevisaoDevePreservarOValorOriginalDeParaOItem(int quantidadeOriginal, String itemId) {
-        assertNull(excecaoLancada);
-        int quantidadeRegistrada = previsaoEmContexto.getHistoricoRegistros().get(0).getItens().stream()
-                .filter(item -> item.getItemEstoqueId().equals(itemId))
-                .findFirst()
-                .orElseThrow()
-                .getQuantidadeAjustada();
-        assertEquals(quantidadeOriginal, quantidadeRegistrada);
-    }
-
-    @Then("o historico da previsao deve registrar um ajuste manual")
-    public void oHistoricoDaPrevisaoDeveRegistrarUmAjusteManual() {
-        assertNull(excecaoLancada);
-        assertEquals(TipoRegistroPrevisao.AJUSTE_MANUAL, previsaoEmContexto.getHistoricoRegistros().get(1).getTipoRegistro());
-    }
-
-    @Then("o historico da previsao deve registrar um recalculo")
-    public void oHistoricoDaPrevisaoDeveRegistrarUmRecalculo() {
-        assertNull(excecaoLancada);
-        assertEquals(TipoRegistroPrevisao.RECALCULO, previsaoEmContexto.getHistoricoRegistros().get(1).getTipoRegistro());
-    }
-
-    @Then("o sistema deve impedir o recalculo da previsao")
-    public void oSistemaDeveImpedirORecalculoDaPrevisao() {
-        assertNotNull(excecaoLancada, "Era esperada uma excecao.");
-        assertTrue(excecaoLancada.getMessage().contains("alteracoes relevantes"));
-    }
-
-    private void mockEvento(String eventoId, Evento evento) {
-        eventosCadastrados.put(eventoId, evento);
-        eventosCadastrados.put(evento.getId(), evento);
-    }
-
-    private void mockPrevisaoAtual() {
-        when(previsaoConsumoRepository.buscarPorId(eq(previsaoEmContexto.getId())))
-                .thenReturn(Optional.of(previsaoEmContexto));
-        when(previsaoConsumoRepository.buscarPorEventoId(eq(EVENTO_ATUAL_ID)))
-                .thenReturn(Optional.of(previsaoEmContexto));
-    }
-
-    private Evento novoEvento(String nome, TipoEvento tipo, PorteEvento porte, int participantes, String objetivo) {
-        return new Evento(nome, tipo, porte, participantes, objetivo, "local-1");
-    }
-
-    private ConsumoEvento novoConsumo(String eventoId, ItemConsumoEvento... itens) {
-        return new ConsumoEvento(eventoId, USUARIO_GESTOR_ID, List.of(itens));
-    }
-
-    private int buscarQuantidadeAjustada(String itemId) {
-        return previsaoEmContexto.getItens().stream()
-                .filter(item -> item.getItemEstoqueId().equals(itemId))
-                .findFirst()
-                .orElseThrow()
-                .getQuantidadeAjustada();
+    private void adicionarHistoricoValido(String nomeEvento,
+                                          PorteEvento porte,
+                                          int participantes,
+                                          String categoria,
+                                          int consumo) {
+        Evento historico = new Evento(nomeEvento, TipoEvento.CORPORATIVO, porte, participantes, "Planejamento", "local-h");
+        historico.definirJanelaPlanejamento(LocalDateTime.of(2026, 5, 1, 8, 0), LocalDateTime.of(2026, 5, 1, 18, 0));
+        historico.concluirEvento();
+        when(eventoRepository.buscarPorId(eq(historico.getId()))).thenReturn(Optional.of(historico));
+        consumos.add(new ConsumoEvento(historico.getId(), ID_USUARIO, List.of(
+                new ItemConsumoEvento("agua", categoria, consumo)
+        )));
     }
 }
