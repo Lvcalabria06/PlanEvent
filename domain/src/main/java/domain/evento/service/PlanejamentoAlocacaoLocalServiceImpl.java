@@ -5,17 +5,22 @@ import domain.evento.planejamento.AlertaRiscoAlocacao;
 import domain.evento.planejamento.CandidatoAnaliseLocal;
 import domain.evento.planejamento.ResultadoAnaliseAlocacao;
 import domain.evento.repository.EventoRepository;
+import domain.evento.strategy.ClassificadorAlocacaoLocal;
+import domain.evento.strategy.ConflitoAgendaLocalEvaluator;
+import domain.evento.strategy.CriterioAgendaLocalStrategy;
+import domain.evento.strategy.CriterioCapacidadeLocalStrategy;
+import domain.evento.strategy.CriterioCustoTetoLocalStrategy;
+import domain.evento.strategy.CriterioInfraestruturaLocalStrategy;
+import domain.evento.strategy.CriterioLocalInativoStrategy;
+import domain.evento.strategy.CriterioRecomendadoLocalStrategy;
+import domain.evento.strategy.FabricaContextoAlocacaoLocal;
 import domain.evento.valueobject.ClassificacaoAlocacaoLocal;
 import domain.evento.valueobject.MotivoAlertaAlocacao;
-import domain.local.entity.IndisponibilidadeLocal;
 import domain.local.entity.Local;
-import domain.local.entity.ManutencaoLocal;
-import domain.local.entity.ReservaLocal;
 import domain.local.repository.IndisponibilidadeLocalRepository;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.repository.ReservaLocalRepository;
-import domain.local.util.IntervaloAgenda;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,13 +30,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+
 public class PlanejamentoAlocacaoLocalServiceImpl implements PlanejamentoAlocacaoLocalService {
 
     private final EventoRepository eventoRepository;
     private final LocalRepository localRepository;
-    private final ReservaLocalRepository reservaLocalRepository;
-    private final IndisponibilidadeLocalRepository indisponibilidadeLocalRepository;
-    private final ManutencaoRepository manutencaoRepository;
+    private final ConflitoAgendaLocalEvaluator conflitoAgendaEvaluator;
+    private final ClassificadorAlocacaoLocal classificador;
 
     public PlanejamentoAlocacaoLocalServiceImpl(
             EventoRepository eventoRepository,
@@ -41,9 +46,17 @@ public class PlanejamentoAlocacaoLocalServiceImpl implements PlanejamentoAlocaca
             ManutencaoRepository manutencaoRepository) {
         this.eventoRepository = eventoRepository;
         this.localRepository = localRepository;
-        this.reservaLocalRepository = reservaLocalRepository;
-        this.indisponibilidadeLocalRepository = indisponibilidadeLocalRepository;
-        this.manutencaoRepository = manutencaoRepository;
+        this.conflitoAgendaEvaluator = new ConflitoAgendaLocalEvaluator(
+                reservaLocalRepository,
+                indisponibilidadeLocalRepository,
+                manutencaoRepository);
+        this.classificador = new ClassificadorAlocacaoLocal(List.of(
+                new CriterioLocalInativoStrategy(),
+                new CriterioAgendaLocalStrategy(),
+                new CriterioCapacidadeLocalStrategy(),
+                new CriterioCustoTetoLocalStrategy(),
+                new CriterioInfraestruturaLocalStrategy(),
+                new CriterioRecomendadoLocalStrategy()));
     }
 
     @Override
@@ -225,147 +238,8 @@ public class PlanejamentoAlocacaoLocalServiceImpl implements PlanejamentoAlocaca
     }
 
     private CandidatoAnaliseLocal avaliarLocal(Evento evento, Local local, BigDecimal teto) {
-        String nome = local.getNome();
-        BigDecimal custo = local.getCusto() != null ? local.getCusto() : BigDecimal.ZERO;
-        boolean capacidadeOk = local.getCapacidade() >= evento.getQuantidadeEstimadaParticipantes();
-        boolean acimaDoTeto = custo.compareTo(teto) > 0;
-
-        if (!local.isAtivo()) {
-            return new CandidatoAnaliseLocal(
-                    local.getId(),
-                    nome,
-                    ClassificacaoAlocacaoLocal.INADEQUADO,
-                    "Local inativo não pode ser opção válida.",
-                    custo,
-                    acimaDoTeto,
-                    capacidadeOk,
-                    true);
-        }
-
-        LocalDateTime ji = evento.getJanelaInicioPlanejamento();
-        LocalDateTime jf = evento.getJanelaFimPlanejamento();
-        boolean avaliarAgenda = ji != null && jf != null;
-        boolean agendaOk = true;
-        String motivoAgenda = "";
-        if (avaliarAgenda) {
-            IntervaloAgenda.validarFimAposInicio(ji, jf);
-            MotivoIndisponibilidade agenda = avaliarConflitosAgenda(local.getId(), evento.getId(), ji, jf);
-            agendaOk = agenda == MotivoIndisponibilidade.NENHUM;
-            motivoAgenda = agenda.getDescricao();
-        }
-
-        boolean infraOk = requisitosInfraestruturaAtendidos(evento, local);
-        if (!agendaOk) {
-            return new CandidatoAnaliseLocal(
-                    local.getId(),
-                    nome,
-                    ClassificacaoAlocacaoLocal.INDISPONIVEL,
-                    motivoAgenda,
-                    custo,
-                    acimaDoTeto,
-                    capacidadeOk,
-                    false);
-        }
-        if (!capacidadeOk) {
-            return new CandidatoAnaliseLocal(
-                    local.getId(),
-                    nome,
-                    ClassificacaoAlocacaoLocal.INADEQUADO,
-                    "Capacidade inferior à quantidade estimada de participantes do evento.",
-                    custo,
-                    acimaDoTeto,
-                    false,
-                    true);
-        }
-        if (acimaDoTeto) {
-            return new CandidatoAnaliseLocal(
-                    local.getId(),
-                    nome,
-                    ClassificacaoAlocacaoLocal.INADEQUADO,
-                    "Custo do local acima do teto informado — não elegível como principal.",
-                    custo,
-                    true,
-                    capacidadeOk,
-                    true);
-        }
-        if (!infraOk) {
-            return new CandidatoAnaliseLocal(
-                    local.getId(),
-                    nome,
-                    ClassificacaoAlocacaoLocal.VIAVEL_COM_RESSALVA,
-                    "Infraestrutura cadastrada não cobre todos os requisitos informados para o evento.",
-                    custo,
-                    false,
-                    capacidadeOk,
-                    true);
-        }
-        return new CandidatoAnaliseLocal(
-                local.getId(),
-                nome,
-                ClassificacaoAlocacaoLocal.RECOMENDADO,
-                "Critérios atendidos: capacidade, custo dentro do teto, infraestrutura alinhada"
-                        + (avaliarAgenda ? " e disponibilidade na janela." : "."),
-                custo,
-                false,
-                capacidadeOk,
-                true);
-    }
-
-    private enum MotivoIndisponibilidade {
-        NENHUM(""),
-        INDISPONIBILIDADE("Conflito com bloqueio ou indisponibilidade na agenda do local."),
-        RESERVA("Conflito com reserva existente na mesma janela."),
-        MANUTENCAO("Conflito com manutenção agendada no local.");
-
-        private final String descricao;
-
-        MotivoIndisponibilidade(String descricao) {
-            this.descricao = descricao;
-        }
-
-        String getDescricao() {
-            return descricao;
-        }
-    }
-
-    private MotivoIndisponibilidade avaliarConflitosAgenda(String localId, String eventoId, LocalDateTime ini, LocalDateTime fim) {
-        for (IndisponibilidadeLocal ind : indisponibilidadeLocalRepository.listarPorLocalId(localId)) {
-            if (IntervaloAgenda.seSobrepoe(ind.getDataInicio(), ind.getDataFim(), ini, fim)) {
-                return MotivoIndisponibilidade.INDISPONIBILIDADE;
-            }
-        }
-        List<ReservaLocal> reservas = reservaLocalRepository.buscarReservasPorLocalEPeriodo(localId, ini, fim);
-        for (ReservaLocal r : reservas) {
-            if (!r.getEventoId().equals(eventoId)) {
-                return MotivoIndisponibilidade.RESERVA;
-            }
-        }
-        for (ManutencaoLocal m : manutencaoRepository.buscarPorLocalId(localId)) {
-            if (IntervaloAgenda.seSobrepoe(m.getDataInicio(), m.getDataFim(), ini, fim)) {
-                return MotivoIndisponibilidade.MANUTENCAO;
-            }
-        }
-        return MotivoIndisponibilidade.NENHUM;
-    }
-
-    private boolean requisitosInfraestruturaAtendidos(Evento evento, Local local) {
-        String req = evento.getRequisitosInfraestrutura();
-        if (req == null || req.isBlank()) {
-            return true;
-        }
-        String infra = local.getInfraestrutura() != null ? local.getInfraestrutura() : "";
-        String infraLower = infra.toLowerCase(Locale.ROOT);
-        String[] partes = req.split(",");
-        for (String p : partes) {
-            String token = p.trim().toLowerCase(Locale.ROOT);
-            if (token.isEmpty()) {
-                continue;
-            }
-            if (!infraLower.contains(token)) {
-                return false;
-            }
-        }
-        return true;
+        var contexto = FabricaContextoAlocacaoLocal.criar(evento, local, teto, conflitoAgendaEvaluator);
+        return classificador.classificar(contexto);
     }
 
     private Evento buscarEvento(String eventoId) {
