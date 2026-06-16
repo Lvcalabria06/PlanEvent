@@ -13,6 +13,7 @@ import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
 import TarefasApp from './app/TarefasApp'
 import FinanceiroApp from './financeiro/FinanceiroApp'
 import AprovacoesApp from './financeiro/AprovacoesApp'
+import LocaisApp from './locais/LocaisApp'
 
 interface Funcionario {
 	id: string;
@@ -1934,6 +1935,8 @@ export default function App() {
             <FinanceiroApp />
           ) : currentTab === 'aprovacoes' ? (
             <AprovacoesApp />
+          ) : currentTab === 'locais' ? (
+            <LocaisApp />
           ) : currentTab === 'fornecedores' ? (
             <FornecedoresSection />
           ) : currentTab === 'contratos' ? (

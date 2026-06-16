@@ -42,6 +42,10 @@ import domain.local.repository.IndisponibilidadeLocalRepository;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.repository.ReservaLocalRepository;
+import domain.local.service.LocalService;
+import domain.local.service.LocalServiceImpl;
+import domain.local.service.ManutencaoService;
+import domain.local.service.ManutencaoServiceImpl;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.service.DependenciaService;
@@ -173,5 +177,17 @@ public class BeanConfig {
             PlanejamentoAlocacaoLocalService planejamentoAlocacaoLocalService,
             LocalRepository localRepository) {
         return new AlocacaoLocalUseCaseImpl(planejamentoAlocacaoLocalService, localRepository);
+    }
+
+    @Bean
+    public LocalService localService(LocalRepository localRepository, ManutencaoRepository manutencaoRepository) {
+        return new LocalServiceImpl(localRepository, manutencaoRepository);
+    }
+
+    @Bean
+    public ManutencaoService manutencaoService(ManutencaoRepository manutencaoRepository,
+            LocalRepository localRepository,
+            ReservaLocalRepository reservaLocalRepository) {
+        return new ManutencaoServiceImpl(manutencaoRepository, localRepository, reservaLocalRepository);
     }
 }
