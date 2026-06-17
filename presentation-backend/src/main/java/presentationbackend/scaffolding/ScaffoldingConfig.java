@@ -119,9 +119,14 @@ public class ScaffoldingConfig {
         return args -> {
             EventoLocaisSeeder.semearSeVazio(localRepository);
 
-            boolean apoioStubsAtivo = eventoRepository.getClass().getSimpleName().equals("InMemoryEventoRepository")
-                    && funcionarioRepository.getClass().getSimpleName().equals("InMemoryFuncionarioRepository");
-            if (!apoioStubsAtivo) {
+            // O seed só faz sentido enquanto Funcionário ainda for um stub em memória
+            // (recriado com IDs novos a cada start). Usamos instanceof em vez de comparar
+            // getSimpleName(): repositórios anotados com @Repository (ex.: o EventoRepository
+            // da infraestrutura) são embrulhados em proxy CGLIB pelo Spring, e o nome simples
+            // da classe deixa de bater, fazendo o seed ser pulado por engano. O bean de
+            // funcionário é um @Bean simples (sem proxy), então o instanceof é confiável.
+            boolean funcionarioEmMemoria = funcionarioRepository instanceof InMemoryFuncionarioRepository;
+            if (!funcionarioEmMemoria) {
                 log.info("Seed de demonstração ignorado (repositório real de funcionário ativo).");
                 return;
             }
