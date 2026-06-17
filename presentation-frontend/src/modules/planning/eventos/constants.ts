@@ -28,6 +28,16 @@ export const STATUS_ALOCACAO_LABELS: Record<string, string> = {
 	EVENTO_CONCLUIDO: 'Evento concluído',
 };
 
+export const CATEGORIAS_ORCAMENTO: { value: string; label: string }[] = [
+	{ value: 'ALIMENTACAO', label: 'Alimentação' },
+	{ value: 'DECORACAO', label: 'Decoração' },
+	{ value: 'EQUIPAMENTO', label: 'Equipamento' },
+	{ value: 'LOGISTICA', label: 'Logística' },
+	{ value: 'MARKETING', label: 'Marketing' },
+	{ value: 'SERVICO', label: 'Serviço' },
+	{ value: 'OUTRO', label: 'Outro' },
+];
+
 export const MOTIVO_ALERTA_LABELS: Record<string, string> = {
 	CUSTO_ACIMA_DO_TETO: 'Custo acima do teto',
 	CAPACIDADE_INSUFICIENTE: 'Capacidade insuficiente',

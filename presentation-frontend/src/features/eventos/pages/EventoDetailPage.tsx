@@ -7,6 +7,13 @@ import {
 } from '../../../modules/planning/eventos/constants';
 import type { AlertaRiscoAlocacaoDto, EventoDto } from '../../../modules/planning/eventos/dto';
 import { formatPeriodo } from '../../../modules/planning/eventos/mappers';
+import {
+	buscarOrcamentoApi,
+	listarCategoriasOrcamentoApi,
+	type CategoriaOrcamentoDto,
+	type OrcamentoEventoDto,
+} from '../../../modules/planning/eventos/orcamentoApi';
+import { CATEGORIAS_ORCAMENTO } from '../../../modules/planning/eventos/constants';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { useEventos } from '../EventosContext';
 
@@ -59,9 +66,33 @@ export function EventoDetailPage({
 	const [trocaLoading, setTrocaLoading] = useState(false);
 	const [trocaFeedback, setTrocaFeedback] = useState<string | null>(null);
 
+	const [orcamento, setOrcamento] = useState<OrcamentoEventoDto | null>(null);
+	const [categoriasOrcamento, setCategoriasOrcamento] = useState<CategoriaOrcamentoDto[]>([]);
+
 	useEffect(() => {
 		void buscarEvento(evento.id);
 	}, [evento.id, buscarEvento]);
+
+	useEffect(() => {
+		let cancelled = false;
+		void (async () => {
+			const orc = await buscarOrcamentoApi(evento.id);
+			if (cancelled) return;
+			if (!orc) {
+				setOrcamento(null);
+				setCategoriasOrcamento([]);
+				return;
+			}
+			const cats = await listarCategoriasOrcamentoApi(evento.id);
+			if (!cancelled) {
+				setOrcamento(orc);
+				setCategoriasOrcamento(cats);
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [evento.id]);
 
 	const podeConfirmar =
 		evento.localId && !evento.planejamentoConfirmado && !evento.concluido;
@@ -232,9 +263,37 @@ export function EventoDetailPage({
 								? formatMoeda(evento.tetoCustoEspacoInformado)
 								: '—'}
 						</p>
+						<p className="contact-secondary" style={{ marginTop: '0.25rem', fontSize: '0.8rem' }}>
+							Limite para alocação de local (Planejar local), não é o orçamento financeiro.
+						</p>
 						{custoAcimaDoTeto && (
 							<p className="evento-status-warn" style={{ marginTop: '0.35rem' }}>
 								Custo do local acima do teto informado no planejamento.
+							</p>
+						)}
+					</div>
+					<div className="detail-field full-width">
+						<span className="detail-label">Orçamento previsto do evento</span>
+						{orcamento ? (
+							<>
+								<p>
+									Total: <strong>{formatMoeda(orcamento.valorTotal)}</strong>
+								</p>
+								{categoriasOrcamento.length > 0 && (
+									<ul className="evento-orcamento-resumo-list">
+										{categoriasOrcamento.map(cat => (
+											<li key={cat.id}>
+												{CATEGORIAS_ORCAMENTO.find(c => c.value === cat.categoria)?.label ??
+													cat.categoria}
+												: {formatMoeda(cat.valorPrevisto)}
+											</li>
+										))}
+									</ul>
+								)}
+							</>
+						) : (
+							<p className="contact-secondary">
+								Não cadastrado. Edite o evento para definir o orçamento previsto.
 							</p>
 						)}
 					</div>

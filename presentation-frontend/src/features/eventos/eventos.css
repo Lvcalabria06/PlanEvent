@@ -598,3 +598,58 @@
 	gap: 0.75rem;
 	animation: eventos-fade-slide-in 0.35s var(--evento-ease) both;
 }
+
+.eventos-module .evento-orcamento-section {
+	margin-top: 1.5rem;
+	padding-top: 1.25rem;
+	border-top: 1px solid #e5e7eb;
+}
+
+.eventos-module .evento-orcamento-header {
+	margin-bottom: 1rem;
+}
+
+.eventos-module .evento-section-title {
+	font-size: 1rem;
+	font-weight: 700;
+	color: #111827;
+	margin: 0 0 0.35rem;
+}
+
+.eventos-module .evento-section-hint {
+	font-size: 0.85rem;
+	color: #6b7280;
+	margin: 0;
+	line-height: 1.45;
+}
+
+.eventos-module .evento-muted {
+	font-size: 0.85rem;
+	color: #6b7280;
+}
+
+.eventos-module .evento-orcamento-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 0.65rem 1rem;
+	margin-top: 0.5rem;
+}
+
+.eventos-module .evento-orcamento-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.eventos-module .evento-orcamento-cat-label {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #374151;
+}
+
+.eventos-module .evento-orcamento-resumo-list {
+	margin: 0.5rem 0 0;
+	padding-left: 1.1rem;
+	font-size: 0.9rem;
+	color: #374151;
+}
