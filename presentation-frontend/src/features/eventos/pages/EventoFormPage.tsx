@@ -1,11 +1,20 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, type FormEvent } from 'react';
 import {
 	PORTE_EVENTO_OPTIONS,
 	TIPO_EVENTO_OPTIONS,
 } from '../../../modules/planning/eventos/constants';
 import type { CriarEventoDto, EventoDto } from '../../../modules/planning/eventos/dto';
 import { fromApiDateInput, toApiDateTime } from '../../../modules/planning/eventos/mappers';
+import {
+	extrairValoresCategoria,
+	persistirOrcamentoEvento,
+} from '../../../modules/planning/eventos/orcamentoApi';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
+import {
+	EventoOrcamentoSection,
+	validarOrcamentoForm,
+	type OrcamentoFormState,
+} from '../components/EventoOrcamentoSection';
 import { useEventos } from '../EventosContext';
 
 interface EventoFormPageProps {
@@ -48,6 +57,13 @@ export function EventoFormPage({ evento, onBack, onSaved }: EventoFormPageProps)
 	const [showCancelModal, setShowCancelModal] = useState(false);
 	const [canceling, setCanceling] = useState(false);
 	const [cancelError, setCancelError] = useState<string | null>(null);
+	const orcamentoRef = useRef<OrcamentoFormState>({
+		valorTotal: '',
+		categorias: {},
+		orcamentoExistente: null,
+		categoriasExistentes: [],
+	});
+	const [orcamentoError, setOrcamentoError] = useState<string | null>(null);
 
 	const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
 		setForm(prev => ({ ...prev, [key]: value }));
@@ -91,26 +107,61 @@ export function EventoFormPage({ evento, onBack, onSaved }: EventoFormPageProps)
 		e.preventDefault();
 		if (!validate()) return;
 
+		const orcamentoErr = validarOrcamentoForm(orcamentoRef.current);
+		if (orcamentoErr) {
+			setOrcamentoError(orcamentoErr);
+			return;
+		}
+		setOrcamentoError(null);
+
 		setSubmitting(true);
 		setSubmitError(null);
 		const payload = buildPayload();
+		const orcamentoState = orcamentoRef.current;
+		const valorTotal = parseFloat(orcamentoState.valorTotal);
 
 		try {
+			let eventoId = evento?.id;
+
 			if (isEditing && evento) {
 				const ok = await editarEvento(evento.id, payload);
 				if (!ok) {
 					setSubmitError('Não foi possível salvar. Verifique os dados e o status do evento.');
 					return;
 				}
-				onSaved();
 			} else {
 				const id = await criarEvento(payload);
 				if (!id) {
 					setSubmitError('Não foi possível cadastrar o evento. Verifique os dados.');
 					return;
 				}
-				onSaved();
+				eventoId = id;
 			}
+
+			if (eventoId) {
+				try {
+					await persistirOrcamentoEvento(
+						eventoId,
+						valorTotal,
+						extrairValoresCategoria(orcamentoState),
+						orcamentoState.orcamentoExistente,
+						orcamentoState.categoriasExistentes,
+					);
+				} catch (orcErr) {
+					const detalhe = orcErr instanceof Error ? orcErr.message : 'erro desconhecido';
+					setOrcamentoError(
+						isEditing
+							? `Evento atualizado, mas o orçamento não foi salvo: ${detalhe}`
+							: `Evento criado, mas o orçamento não foi salvo: ${detalhe}`,
+					);
+					return;
+				}
+			}
+
+			onSaved();
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : 'Erro ao salvar.';
+			setSubmitError(msg);
 		} finally {
 			setSubmitting(false);
 		}
@@ -277,12 +328,27 @@ export function EventoFormPage({ evento, onBack, onSaved }: EventoFormPageProps)
 						</div>
 					</div>
 
+					{orcamentoError && (
+						<div className="error-message" style={{ padding: '0.75rem', marginTop: '1rem' }}>
+							{orcamentoError}
+						</div>
+					)}
+
+					<EventoOrcamentoSection
+						eventoId={evento?.id}
+						disabled={locked}
+						onChange={state => {
+							orcamentoRef.current = state;
+						}}
+					/>
+
 					<div className="alert-box blue" style={{ marginTop: '1rem' }}>
 						<div className="alert-content">
 							<h4>Próximo passo</h4>
 							<p style={{ fontSize: '0.85rem', margin: 0 }}>
-								Após salvar, use &quot;Planejar local&quot; para definir o local principal e
-								contingências antes de confirmar a preparação.
+								Após salvar, use &quot;Planejar local&quot; para definir o local principal,
+								contingências e o <strong>teto de custo do espaço</strong> antes de confirmar a
+								preparação.
 							</p>
 						</div>
 					</div>
