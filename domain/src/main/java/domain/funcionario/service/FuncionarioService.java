@@ -10,4 +10,5 @@ public interface FuncionarioService {
     Funcionario buscarFuncionario(String id);
     List<Funcionario> listarFuncionarios();
     void inativarFuncionario(String id);
+    List<Funcionario> filtrarFuncionarios(String expressao);
 }

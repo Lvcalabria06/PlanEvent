@@ -50,6 +50,10 @@ import application.financeiro.usecase.OrcamentoEventoUseCase;
 import application.financeiro.usecase.OrcamentoEventoUseCaseImpl;
 import application.financeiro.usecase.RelatorioFinanceiroUseCase;
 import application.financeiro.usecase.RelatorioFinanceiroUseCaseImpl;
+import application.equipe.usecase.EquipeUseCase;
+import application.equipe.usecase.EquipeUseCaseImpl;
+import application.funcionario.usecase.FuncionarioUseCase;
+import application.funcionario.usecase.FuncionarioUseCaseImpl;
 import application.tarefa.usecase.TarefaUseCase;
 import application.tarefa.usecase.TarefaUseCaseImpl;
 import domain.agenda.observer.LembreteNotificacaoSubject;
@@ -65,6 +69,10 @@ import domain.contrato.repository.ContratoRepository;
 import domain.contrato.service.ContratoService;
 import domain.contrato.service.ContratoServiceImpl;
 import domain.equipe.repository.EquipeRepository;
+import domain.equipe.service.EquipeService;
+import domain.equipe.service.EquipeServiceImpl;
+import domain.funcionario.service.FuncionarioService;
+import domain.funcionario.service.FuncionarioServiceImpl;
 import domain.estoque.repository.CenarioRedistribuicaoRepository;
 import domain.estoque.repository.ConsumoEventoRepository;
 import domain.estoque.repository.ItemEstoqueRepository;
@@ -125,6 +133,30 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class BeanConfig {
+
+    @Bean
+    public FuncionarioService funcionarioService(FuncionarioRepository funcionarioRepository,
+            EquipeRepository equipeRepository) {
+        return new FuncionarioServiceImpl(funcionarioRepository, equipeRepository);
+    }
+
+    @Bean
+    public FuncionarioUseCase funcionarioUseCase(FuncionarioService funcionarioService) {
+        return new FuncionarioUseCaseImpl(funcionarioService);
+    }
+
+    @Bean
+    public EquipeService equipeService(EquipeRepository equipeRepository,
+            EventoRepository eventoRepository,
+            FuncionarioRepository funcionarioRepository,
+            TarefaRepository tarefaRepository) {
+        return new EquipeServiceImpl(equipeRepository, eventoRepository, funcionarioRepository, tarefaRepository);
+    }
+
+    @Bean
+    public EquipeUseCase equipeUseCase(EquipeService equipeService) {
+        return new EquipeUseCaseImpl(equipeService);
+    }
 
     @Bean
     public TarefaService tarefaService(TarefaRepository tarefaRepository,
