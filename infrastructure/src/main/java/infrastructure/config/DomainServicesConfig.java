@@ -1,6 +1,10 @@
 package infrastructure.config;
 
+import domain.conciliacao.repository.RelatorioConciliacaoRepository;
+import domain.conciliacao.repository.VinculoConciliacaoRepository;
 import domain.conciliacao.service.ConciliacaoService;
+import domain.conciliacao.service.ConciliacaoServiceImpl;
+import domain.contrato.repository.ContratoRepository;
 import domain.evento.repository.EventoRepository;
 import domain.financeiro.repository.AcaoPosRelatorioRepository;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
@@ -22,6 +26,15 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class DomainServicesConfig {
+
+    @Bean
+    public ConciliacaoService conciliacaoService(ContratoRepository contratoRepository,
+                                                  DespesaRepository despesaRepository,
+                                                  VinculoConciliacaoRepository vinculoRepository,
+                                                  RelatorioConciliacaoRepository relatorioRepository) {
+        return new ConciliacaoServiceImpl(contratoRepository, despesaRepository,
+                vinculoRepository, relatorioRepository);
+    }
 
     @Bean
     public DespesaService despesaService(DespesaRepository despesaRepository,

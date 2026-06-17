@@ -5,7 +5,6 @@ import domain.conciliacao.entity.VinculoConciliacao;
 import domain.conciliacao.service.ConciliacaoService;
 import domain.contrato.entity.Contrato;
 import domain.financeiro.entity.Despesa;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-@Primary
 public class ConciliacaoServiceMemory implements ConciliacaoService {
 
     private final InMemoryDespesaRepository despesaRepository;
@@ -50,6 +48,11 @@ public class ConciliacaoServiceMemory implements ConciliacaoService {
     @Override
     public VinculoConciliacao vincularManualmente(String despesaId, String contratoId, String responsavelId) {
         throw new UnsupportedOperationException("Conciliação manual não disponível no modo memória.");
+    }
+
+    @Override
+    public List<VinculoConciliacao> listarVinculosPorEvento(String eventoId) {
+        return List.of();
     }
 
     @Override

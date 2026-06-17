@@ -142,6 +142,11 @@ public class ConciliacaoServiceImpl implements ConciliacaoService {
     }
 
     @Override
+    public List<VinculoConciliacao> listarVinculosPorEvento(String eventoId) {
+        return vinculoRepository.listarPorEventoId(eventoId);
+    }
+
+    @Override
     public RelatorioConciliacao gerarRelatorio(String eventoId, String responsavelId) {
         List<Despesa> despesas = despesaRepository.listarPorEventoId(eventoId)
                 .stream()

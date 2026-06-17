@@ -17,5 +17,7 @@ public interface ConciliacaoService {
 
     VinculoConciliacao vincularManualmente(String despesaId, String contratoId, String responsavelId);
 
+    List<VinculoConciliacao> listarVinculosPorEvento(String eventoId);
+
     RelatorioConciliacao gerarRelatorio(String eventoId, String responsavelId);
 }
