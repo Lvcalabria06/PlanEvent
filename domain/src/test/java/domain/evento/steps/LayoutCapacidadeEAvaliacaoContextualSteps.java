@@ -49,7 +49,7 @@ public class LayoutCapacidadeEAvaliacaoContextualSteps {
         eventoRepository = new InMemoryEventoRepository();
         localRepository = new InMemoryLocalRepository();
         layoutLocalService = new LayoutLocalServiceImpl(localRepository, eventoRepository);
-        avaliacaoService = new AvaliacaoContextualLocalServiceImpl(eventoRepository, localRepository);
+        avaliacaoService = new AvaliacaoContextualLocalServiceImpl(eventoRepository, localRepository, new InmemoryAvaliacaoContextualRepository());
         eventoAtual = null;
         localAtual = null;
         compatibilidades = null;
