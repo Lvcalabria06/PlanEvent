@@ -32,8 +32,9 @@ class InMemoryDespesaRepository implements DespesaRepository {
     }
 
     @Override
-    public void excluir(String id) {}
-
+    public void excluir(String id) {
+        porId.remove(id);
+    }
 
     @Override
     public Optional<Despesa> buscarPorId(String id) {
@@ -45,11 +46,6 @@ class InMemoryDespesaRepository implements DespesaRepository {
         return porId.values().stream()
                 .filter(d -> d.getEventoId().equals(eventoId))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public void excluir(String id) {
-        porId.remove(id);
     }
 
     @Override
@@ -86,10 +82,5 @@ class InMemoryDespesaRepository implements DespesaRepository {
         return porId.values().stream()
                 .filter(d -> d.getFornecedorId().equals(fornecedorId))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Despesa> listarPorEventoEFornecedor(String eventoId, String fornecedorId) {
-        return List.of();
     }
 }

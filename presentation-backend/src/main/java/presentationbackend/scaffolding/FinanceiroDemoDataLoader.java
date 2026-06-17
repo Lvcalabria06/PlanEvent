@@ -43,13 +43,11 @@ public class FinanceiroDemoDataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) {
         List<Evento> eventos = eventoRepository.listarTodos();
-
-        Evento evento;
         if (eventos.isEmpty()) {
-            evento = eventoRepository.salvar(new Evento());
-        } else {
-            evento = eventos.get(0);
+            return;
         }
+
+        Evento evento = eventos.get(0);
         if (orcamentoEventoRepository.buscarPorEventoId(evento.getId()).isPresent()) {
             return;
         }

@@ -60,7 +60,7 @@ const EVENTOS_FALLBACK: EventoResumo[] = CONTRACT_EVENTS.map(e => ({
 export function PlanningDataProvider({ children }: { children: ReactNode }) {
 	const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
 	const [contratos, setContratos] = useState<Contrato[]>([]);
-	const [eventos, setEventos] = useState<EventoResumo[]>(EVENTOS_FALLBACK);
+	const [eventos, setEventos] = useState<EventoResumo[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [integrationPending, setIntegrationPending] = useState(true);
 	const [error, setError] = useState<string | null>(null);
