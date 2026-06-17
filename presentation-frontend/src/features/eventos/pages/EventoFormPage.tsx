@@ -6,12 +6,12 @@ import {
 import type { CriarEventoDto, EventoDto } from '../../../modules/planning/eventos/dto';
 import { fromApiDateInput, toApiDateTime } from '../../../modules/planning/eventos/mappers';
 import {
-	extrairValoresCategoria,
 	persistirOrcamentoEvento,
 } from '../../../modules/planning/eventos/orcamentoApi';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import {
 	EventoOrcamentoSection,
+	extrairValoresCategoria,
 	validarOrcamentoForm,
 	type OrcamentoFormState,
 } from '../components/EventoOrcamentoSection';

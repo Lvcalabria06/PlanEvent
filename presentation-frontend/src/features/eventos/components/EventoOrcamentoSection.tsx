@@ -21,7 +21,11 @@ interface EventoOrcamentoSectionProps {
 }
 
 function emptyCategorias(): Record<string, string> {
-	return Object.fromEntries(CATEGORIAS_ORCAMENTO.map(c => [c.value, ''));
+	const out: Record<string, string> = {};
+	for (const c of CATEGORIAS_ORCAMENTO) {
+		out[c.value] = '';
+	}
+	return out;
 }
 
 export function EventoOrcamentoSection({
