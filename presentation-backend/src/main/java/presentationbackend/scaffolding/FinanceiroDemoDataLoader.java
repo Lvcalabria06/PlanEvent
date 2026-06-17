@@ -7,8 +7,6 @@ import domain.financeiro.entity.OrcamentoEvento;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
 import domain.financeiro.valueobject.CategoriaDespesa;
-import domain.fornecedor.entity.Fornecedor;
-import domain.fornecedor.repository.FornecedorRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -26,16 +24,13 @@ import java.util.List;
 public class FinanceiroDemoDataLoader implements CommandLineRunner {
 
     private final EventoRepository eventoRepository;
-    private final FornecedorRepository fornecedorRepository;
     private final OrcamentoEventoRepository orcamentoEventoRepository;
     private final CategoriaOrcamentoRepository categoriaOrcamentoRepository;
 
     public FinanceiroDemoDataLoader(EventoRepository eventoRepository,
-                                   FornecedorRepository fornecedorRepository,
                                    OrcamentoEventoRepository orcamentoEventoRepository,
                                    CategoriaOrcamentoRepository categoriaOrcamentoRepository) {
         this.eventoRepository = eventoRepository;
-        this.fornecedorRepository = fornecedorRepository;
         this.orcamentoEventoRepository = orcamentoEventoRepository;
         this.categoriaOrcamentoRepository = categoriaOrcamentoRepository;
     }
@@ -50,24 +45,6 @@ public class FinanceiroDemoDataLoader implements CommandLineRunner {
         Evento evento = eventos.get(0);
         if (orcamentoEventoRepository.buscarPorEventoId(evento.getId()).isPresent()) {
             return;
-        }
-
-        if (fornecedorRepository.listarTodos().isEmpty()) {
-            fornecedorRepository.salvar(new Fornecedor(
-                    "Buffet Central",
-                    "04.252.011/0001-10",
-                    "Alimentação",
-                    "buffet@central.com"));
-            fornecedorRepository.salvar(new Fornecedor(
-                    "Audio Pro",
-                    "11.444.777/0001-61",
-                    "Som",
-                    "contato@audiopro.com"));
-            fornecedorRepository.salvar(new Fornecedor(
-                    "Decora Fest",
-                    "45.723.174/0001-10",
-                    "Decoração",
-                    "decor@fest.com"));
         }
 
         OrcamentoEvento orcamento = new OrcamentoEvento(evento.getId(), new BigDecimal("125000.00"));
