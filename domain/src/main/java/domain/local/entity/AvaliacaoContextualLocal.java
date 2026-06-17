@@ -21,6 +21,47 @@ public class AvaliacaoContextualLocal {
     private final String usuarioResponsavel;
     private final LocalDateTime dataHoraRegistro;
 
+    private AvaliacaoContextualLocal(
+            String id,
+            String eventoId,
+            String localId,
+            TipoEvento tipoEvento,
+            PorteEvento porteEvento,
+            int participantesContexto,
+            Map<String, Integer> notasPorCriterio,
+            double notaFinal,
+            String justificativa,
+            String usuarioResponsavel,
+            LocalDateTime dataHoraRegistro) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.localId = localId;
+        this.tipoEvento = tipoEvento;
+        this.porteEvento = porteEvento;
+        this.participantesContexto = participantesContexto;
+        this.notasPorCriterio = Collections.unmodifiableMap(notasPorCriterio);
+        this.notaFinal = notaFinal;
+        this.justificativa = justificativa;
+        this.usuarioResponsavel = usuarioResponsavel;
+        this.dataHoraRegistro = dataHoraRegistro;
+    }
+
+    public static AvaliacaoContextualLocal reconstituir(
+            String id,
+            String eventoId,
+            String localId,
+            TipoEvento tipoEvento,
+            PorteEvento porteEvento,
+            int participantesContexto,
+            Map<String, Integer> notasPorCriterio,
+            double notaFinal,
+            String justificativa,
+            String usuarioResponsavel,
+            LocalDateTime dataHoraRegistro) {
+        return new AvaliacaoContextualLocal(id, eventoId, localId, tipoEvento, porteEvento,
+                participantesContexto, notasPorCriterio, notaFinal, justificativa, usuarioResponsavel, dataHoraRegistro);
+    }
+
     public AvaliacaoContextualLocal(
             String eventoId,
             String localId,

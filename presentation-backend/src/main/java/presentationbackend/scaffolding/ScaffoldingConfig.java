@@ -13,10 +13,12 @@ import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.local.repository.AgendaLocalRepository;
+import domain.local.repository.AvaliacaoContextualLocalRepository;
 import domain.local.repository.IndisponibilidadeLocalRepository;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.repository.ReservaLocalRepository;
+import domain.local.turno.repository.TurnoOperacionalRepository;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.service.DependenciaService;
@@ -93,6 +95,18 @@ public class ScaffoldingConfig {
     @ConditionalOnMissingBean(ManutencaoRepository.class)
     public ManutencaoRepository inMemoryManutencaoRepository() {
         return new InMemoryManutencaoRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(AvaliacaoContextualLocalRepository.class)
+    public AvaliacaoContextualLocalRepository inMemoryAvaliacaoContextualRepository() {
+        return new InMemoryAvaliacaoContextualRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(TurnoOperacionalRepository.class)
+    public TurnoOperacionalRepository inMemoryTurnoOperacionalRepository() {
+        return new InMemoryTurnoOperacionalRepository();
     }
 
     /**

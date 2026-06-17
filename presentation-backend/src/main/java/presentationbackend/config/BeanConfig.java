@@ -14,6 +14,14 @@ import application.evento.usecase.EventoUseCase;
 import application.evento.usecase.EventoUseCaseImpl;
 import application.fornecedor.usecase.FornecedorUseCase;
 import application.fornecedor.usecase.FornecedorUseCaseImpl;
+import application.financeiro.usecase.AcaoPosRelatorioUseCase;
+import application.financeiro.usecase.AcaoPosRelatorioUseCaseImpl;
+import application.financeiro.usecase.DespesaUseCase;
+import application.financeiro.usecase.DespesaUseCaseImpl;
+import application.financeiro.usecase.OrcamentoEventoUseCase;
+import application.financeiro.usecase.OrcamentoEventoUseCaseImpl;
+import application.financeiro.usecase.RelatorioFinanceiroUseCase;
+import application.financeiro.usecase.RelatorioFinanceiroUseCaseImpl;
 import application.tarefa.usecase.TarefaUseCase;
 import application.tarefa.usecase.TarefaUseCaseImpl;
 import domain.agenda.observer.LembreteNotificacaoSubject;
@@ -42,14 +50,20 @@ import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.fornecedor.service.FornecedorServiceImpl;
 import domain.funcionario.repository.FuncionarioRepository;
+import domain.local.repository.AvaliacaoContextualLocalRepository;
 import domain.local.repository.IndisponibilidadeLocalRepository;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.repository.ReservaLocalRepository;
+import domain.local.service.AvaliacaoContextualLocalService;
+import domain.local.service.AvaliacaoContextualLocalServiceImpl;
 import domain.local.service.LocalService;
 import domain.local.service.LocalServiceImpl;
 import domain.local.service.ManutencaoService;
 import domain.local.service.ManutencaoServiceImpl;
+import domain.local.turno.repository.TurnoOperacionalRepository;
+import domain.local.turno.service.TurnoOperacionalService;
+import domain.local.turno.service.TurnoOperacionalServiceImpl;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.service.DependenciaService;
@@ -213,5 +227,20 @@ public class BeanConfig {
             LocalRepository localRepository,
             ReservaLocalRepository reservaLocalRepository) {
         return new ManutencaoServiceImpl(manutencaoRepository, localRepository, reservaLocalRepository);
+    }
+
+    @Bean
+    public AvaliacaoContextualLocalService avaliacaoContextualLocalService(
+            EventoRepository eventoRepository,
+            LocalRepository localRepository,
+            AvaliacaoContextualLocalRepository avaliacaoContextualLocalRepository) {
+        return new AvaliacaoContextualLocalServiceImpl(eventoRepository, localRepository, avaliacaoContextualLocalRepository);
+    }
+
+    @Bean
+    public TurnoOperacionalService turnoOperacionalService(
+            TurnoOperacionalRepository turnoOperacionalRepository,
+            LocalRepository localRepository) {
+        return new TurnoOperacionalServiceImpl(turnoOperacionalRepository, localRepository);
     }
 }
