@@ -12,6 +12,9 @@ import domain.financeiro.repository.RelatorioFinanceiroRepository;
 import domain.financeiro.repository.SimulacaoRelatorioRepository;
 import domain.financeiro.template.GeradorRelatorioPadraoTemplateMethod;
 import domain.financeiro.template.GeradorRelatorioFinanceiroTemplateMethod;
+import domain.financeiro.template.GeradorRelatorioWhatIfTemplateMethod;
+import domain.financeiro.valueobject.ComparativoRelatorioPar;
+import domain.financeiro.valueobject.ParametrosCenarioSimulacao;
 import domain.financeiro.valueobject.ResultadoGeracaoRelatorio;
 import domain.financeiro.valueobject.TipoRelatorio;
 
@@ -103,6 +106,34 @@ public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroServic
         ResultadoGeracaoRelatorio resultado = criarGerador().executar(eventoId, usuarioId);
         SimulacaoRelatorioFinanceiro simulacao = new SimulacaoRelatorioFinanceiro(resultado);
         return simulacaoRepository.salvar(simulacao);
+    }
+
+    @Override
+    public SimulacaoRelatorioFinanceiro simularRelatorioComCenario(String eventoId,
+                                                                    String usuarioId,
+                                                                    ParametrosCenarioSimulacao parametros) {
+        GeradorRelatorioWhatIfTemplateMethod gerador = new GeradorRelatorioWhatIfTemplateMethod(
+                relatorioRepository,
+                orcamentoEventoRepository,
+                categoriaOrcamentoRepository,
+                despesaRepository,
+                eventoRepository,
+                conciliacaoService,
+                parametros);
+        ResultadoGeracaoRelatorio resultado = gerador.executar(eventoId, usuarioId);
+        SimulacaoRelatorioFinanceiro simulacao = new SimulacaoRelatorioFinanceiro(resultado);
+        return simulacaoRepository.salvar(simulacao);
+    }
+
+    @Override
+    public ComparativoRelatorioPar compararRelatorios(String relatorioBaseId, String relatorioComparadoId) {
+        RelatorioFinanceiro base = relatorioRepository.buscarPorId(relatorioBaseId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Relatório base não encontrado: " + relatorioBaseId));
+        RelatorioFinanceiro comparado = relatorioRepository.buscarPorId(relatorioComparadoId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Relatório comparado não encontrado: " + relatorioComparadoId));
+        return ComparativoRelatorioPar.comparar(base, comparado);
     }
 
     @Override

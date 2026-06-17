@@ -12,6 +12,7 @@ public class CandidatoAnaliseLocal {
     private final String justificativa;
     private final BigDecimal custo;
     private final boolean acimaDoTeto;
+    private final int capacidade;
     private final boolean capacidadeOk;
     private final boolean agendaOk;
 
@@ -21,6 +22,7 @@ public class CandidatoAnaliseLocal {
             ClassificacaoAlocacaoLocal classificacao,
             String justificativa,
             BigDecimal custo,
+            int capacidade,
             boolean acimaDoTeto,
             boolean capacidadeOk,
             boolean agendaOk) {
@@ -29,6 +31,7 @@ public class CandidatoAnaliseLocal {
         this.classificacao = classificacao;
         this.justificativa = justificativa;
         this.custo = custo;
+        this.capacidade = capacidade;
         this.acimaDoTeto = acimaDoTeto;
         this.capacidadeOk = capacidadeOk;
         this.agendaOk = agendaOk;
@@ -52,6 +55,10 @@ public class CandidatoAnaliseLocal {
 
     public BigDecimal getCusto() {
         return custo;
+    }
+
+    public int getCapacidade() {
+        return capacidade;
     }
 
     public boolean isAcimaDoTeto() {

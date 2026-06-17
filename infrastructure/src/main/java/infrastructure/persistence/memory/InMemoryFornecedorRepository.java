@@ -42,9 +42,9 @@ public class InMemoryFornecedorRepository implements FornecedorRepository {
 
     @Override
     public void remover(String id) {
-        Fornecedor removido = porId.remove(id);
-        if (removido != null) {
-            cnpjParaId.remove(removido.getCnpj());
+        Fornecedor fornecedor = porId.remove(id);
+        if (fornecedor != null) {
+            cnpjParaId.remove(fornecedor.getCnpj());
         }
     }
 

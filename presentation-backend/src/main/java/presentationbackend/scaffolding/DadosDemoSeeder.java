@@ -105,12 +105,12 @@ class DadosDemoSeeder {
         criarContratos(eventoId);
 
         log.info("==================== SEED DE DEMONSTRAÇÃO ====================");
-        log.info("Evento, {} funcionários, {} equipes, {} tarefas, {} compromissos, {} fornecedores e {} contratos criados.",
+        log.info("Evento, {} funcionários, {} equipes, {} tarefas, {} compromissos, {} lembretes, {} fornecedores e {} contratos criados.",
                 funcIdPorNome.size(), equipeIdPorNome.size(), taskIdPorChave.size(),
-                compromissoIdPorChave.size(), fornecedorIdPorNome.size(),
+                compromissoIdPorChave.size(), lembreteRepo.listarTodos().size(), fornecedorIdPorNome.size(),
                 contratoRepo.listarTodos().size());
         log.info("Equipes: {}", equipeIdPorNome.keySet());
-        log.info("Abra as abas 'Tarefas', 'Fornecedores' e 'Contratos' no front.");
+        log.info("Abra as abas 'Tarefas', 'Agenda', 'Fornecedores' e 'Contratos' no front.");
         log.info("=============================================================");
     }
 
@@ -226,6 +226,27 @@ class DadosDemoSeeder {
         return LocalDate.of(2026, mes, dia).atTime(hora, min);
     }
 
+    private LocalDateTime proximoSlot(int diasOffset, int hora, int min) {
+        LocalDateTime candidato = LocalDate.now().plusDays(diasOffset).atTime(hora, min);
+        LocalDateTime agora = LocalDateTime.now();
+        while (!candidato.isAfter(agora)) {
+            candidato = candidato.plusDays(1);
+        }
+        return candidato;
+    }
+
+    private LocalDateTime horarioLembreteAntes(LocalDateTime inicioCompromisso) {
+        LocalDateTime candidato = inicioCompromisso.minusHours(1);
+        LocalDateTime agora = LocalDateTime.now();
+        if (!candidato.isAfter(agora)) {
+            candidato = agora.plusMinutes(10);
+        }
+        if (!candidato.isBefore(inicioCompromisso)) {
+            candidato = inicioCompromisso.minusMinutes(15);
+        }
+        return candidato;
+    }
+
     private void compromisso(String chave, String gestorId, String eventoId, String titulo,
             LocalDateTime inicio, LocalDateTime fim) {
         Compromisso c = compromissoService.criarCompromisso(
@@ -246,22 +267,36 @@ class DadosDemoSeeder {
     private void criarAgenda(String eventoId) {
         String gestorId = funcIdPorNome.get("Maria Silva");
 
+        LocalDateTime c1Inicio = proximoSlot(1, 15, 0);
+        LocalDateTime c2Inicio = proximoSlot(2, 10, 0);
+        LocalDateTime c3Inicio = proximoSlot(3, 10, 0);
+        LocalDateTime c4Inicio = proximoSlot(4, 11, 0);
+        LocalDateTime c5Inicio = proximoSlot(6, 9, 0);
+        LocalDateTime c6Inicio = proximoSlot(1, 18, 0);
+
         compromisso("c1", gestorId, eventoId, "Revisão do Plano de Segurança",
-                dt(7, 10, 9, 0), dt(7, 10, 10, 30));
+                c1Inicio, c1Inicio.plusMinutes(90));
         compromisso("c2", gestorId, eventoId, "Alinhamento com Equipe Técnica",
-                dt(7, 10, 14, 0), dt(7, 10, 15, 0));
+                c2Inicio, c2Inicio.plusHours(1));
         compromisso("c3", gestorId, eventoId, "Visita ao Local do Evento",
-                dt(7, 11, 10, 0), dt(7, 11, 12, 0));
+                c3Inicio, c3Inicio.plusHours(2));
         compromisso("c4", gestorId, eventoId, "Briefing com Fornecedores",
-                dt(7, 12, 11, 0), dt(7, 12, 12, 30));
+                c4Inicio, c4Inicio.plusMinutes(90));
+        compromisso("c5", gestorId, eventoId, "Checkpoint Semanal da Agenda",
+                c5Inicio, c5Inicio.plusHours(1));
+        compromisso("c6", gestorId, eventoId, "Sincronização com Patrocinadores",
+                c6Inicio, c6Inicio.plusHours(1));
 
         compromissoService.iniciarCompromisso(compromissoIdPorChave.get("c4"));
+        compromissoService.iniciarCompromisso(compromissoIdPorChave.get("c6"));
+        compromissoService.concluirCompromisso(compromissoIdPorChave.get("c6"));
 
-        lembreteCompromisso("c1", dt(7, 9, 18, 0));
-        lembreteCompromisso("c2", dt(7, 10, 8, 0));
-        lembreteCompromisso("c3", dt(7, 10, 19, 0));
-        lembreteCompromisso("c4", dt(7, 11, 17, 0));
-        lembreteEvento(eventoId, dt(7, 15, 9, 0));
+        lembreteCompromisso("c1", horarioLembreteAntes(c1Inicio));
+        lembreteCompromisso("c2", horarioLembreteAntes(c2Inicio));
+        lembreteCompromisso("c3", horarioLembreteAntes(c3Inicio));
+        lembreteCompromisso("c4", horarioLembreteAntes(c4Inicio));
+        lembreteCompromisso("c5", horarioLembreteAntes(c5Inicio));
+        lembreteEvento(eventoId, proximoSlot(5, 9, 0));
     }
 
     // ---- Fornecedores ----

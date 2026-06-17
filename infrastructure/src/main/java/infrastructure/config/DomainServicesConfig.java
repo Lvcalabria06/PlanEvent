@@ -6,13 +6,18 @@ import domain.conciliacao.service.ConciliacaoService;
 import domain.conciliacao.service.ConciliacaoServiceImpl;
 import domain.contrato.repository.ContratoRepository;
 import domain.evento.repository.EventoRepository;
+import domain.financeiro.repository.AcaoPosRelatorioRepository;
 import domain.financeiro.repository.CategoriaOrcamentoRepository;
 import domain.financeiro.repository.DespesaRepository;
 import domain.financeiro.repository.OrcamentoEventoRepository;
 import domain.financeiro.repository.RelatorioFinanceiroRepository;
 import domain.financeiro.repository.SimulacaoRelatorioRepository;
+import domain.financeiro.service.AcaoPosRelatorioService;
+import domain.financeiro.service.AcaoPosRelatorioServiceImpl;
 import domain.financeiro.service.DespesaService;
 import domain.financeiro.service.DespesaServiceImpl;
+import domain.financeiro.service.OrcamentoEventoService;
+import domain.financeiro.service.OrcamentoEventoServiceImpl;
 import domain.financeiro.service.RelatorioFinanceiroService;
 import domain.financeiro.service.RelatorioFinanceiroServiceImpl;
 import domain.fornecedor.repository.FornecedorRepository;
@@ -62,5 +67,25 @@ public class DomainServicesConfig {
                 despesaRepository,
                 eventoRepository,
                 conciliacaoService);
+    }
+
+    @Bean
+    public OrcamentoEventoService orcamentoEventoService(
+            OrcamentoEventoRepository orcamentoEventoRepository,
+            CategoriaOrcamentoRepository categoriaOrcamentoRepository,
+            EventoRepository eventoRepository) {
+        return new OrcamentoEventoServiceImpl(
+                orcamentoEventoRepository,
+                categoriaOrcamentoRepository,
+                eventoRepository);
+    }
+
+    @Bean
+    public AcaoPosRelatorioService acaoPosRelatorioService(
+            AcaoPosRelatorioRepository acaoPosRelatorioRepository,
+            RelatorioFinanceiroRepository relatorioFinanceiroRepository) {
+        return new AcaoPosRelatorioServiceImpl(
+                acaoPosRelatorioRepository,
+                relatorioFinanceiroRepository);
     }
 }

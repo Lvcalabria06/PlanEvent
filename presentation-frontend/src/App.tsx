@@ -3,6 +3,8 @@ import { Toaster } from 'sonner'
 import './App.css'
 import { FornecedoresSection } from './features/fornecedores/FornecedoresSection'
 import { ContratosSection } from './features/contratos/ContratosSection'
+import { EventosSection } from './features/eventos/EventosSection'
+import { EventosProvider } from './features/eventos/EventosContext'
 import { PlanningDataProvider } from './modules/planning/PlanningDataContext'
 import './agenda/agenda.css'
 import AgendaModule from './agenda/AgendaModule'
@@ -12,6 +14,7 @@ import TarefasApp from './app/TarefasApp'
 import FinanceiroApp from './financeiro/FinanceiroApp'
 import AprovacoesApp from './financeiro/AprovacoesApp'
 import ConciliacaoApp from './conciliacao/ConciliacaoApp'
+import LocaisApp from './locais/LocaisApp'
 
 interface Funcionario {
 	id: string;
@@ -1921,6 +1924,10 @@ export default function App() {
                 </div>
               )}
             </div>
+          ) : currentTab === 'eventos' ? (
+            <EventosProvider>
+              <EventosSection />
+            </EventosProvider>
           ) : currentTab === 'tarefas' ? (
             <TarefasApp />
           ) : currentTab === 'agenda' ? (
@@ -1929,6 +1936,8 @@ export default function App() {
             <FinanceiroApp />
           ) : currentTab === 'aprovacoes' ? (
             <AprovacoesApp />
+          ) : currentTab === 'locais' ? (
+            <LocaisApp />
           ) : currentTab === 'fornecedores' ? (
             <FornecedoresSection />
           ) : currentTab === 'contratos' ? (
@@ -1943,7 +1952,7 @@ export default function App() {
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>Módulo em Desenvolvimento</h2>
-              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot;, &quot;Contratos&quot; ou &quot;Conciliação&quot; no menu lateral.</p>
+              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Eventos&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot;, &quot;Contratos&quot;, &quot;Locais&quot; ou &quot;Conciliação&quot; no menu lateral.</p>
             </div>
           )}
         </div>

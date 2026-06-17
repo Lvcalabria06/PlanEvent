@@ -24,6 +24,24 @@ public class ManutencaoLocal {
         this.updatedAt = this.createdAt;
     }
 
+    private ManutencaoLocal(String id, String localId, LocalDateTime dataInicio, LocalDateTime dataFim,
+                            String responsavel, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.localId = localId;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.responsavel = responsavel;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /** Reconstitui uma manutenção a partir de dados persistidos (sem revalidar RNs). */
+    public static ManutencaoLocal reconstituir(String id, String localId, LocalDateTime dataInicio,
+                                               LocalDateTime dataFim, String responsavel,
+                                               LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new ManutencaoLocal(id, localId, dataInicio, dataFim, responsavel, createdAt, updatedAt);
+    }
+
     public void atualizar(LocalDateTime dataInicio, LocalDateTime dataFim, String responsavel) {
         validarCampos(this.localId, dataInicio, dataFim, responsavel);
         this.dataInicio = dataInicio;

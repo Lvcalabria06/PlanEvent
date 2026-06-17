@@ -11,7 +11,7 @@ import presentationbackend.config.DotEnvLoader;
  * {@link presentationbackend.config.BeanConfig}, mantendo as camadas internas
  * livres de anotações de framework.
  */
-@SpringBootApplication(scanBasePackages = {"presentationbackend", "dev.proj", "infrastructure", "domain"})
+@SpringBootApplication(scanBasePackages = {"presentationbackend", "infrastructure", "domain"})
 public class PlanEventApplication {
 
     public static void main(String[] args) {

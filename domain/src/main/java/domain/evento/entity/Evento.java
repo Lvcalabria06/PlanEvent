@@ -25,6 +25,7 @@ public class Evento {
     private boolean validacaoLayoutPendente;
     private boolean planejamentoConfirmado;
     private boolean concluido;
+    private boolean cancelado;
     private LocalDateTime janelaInicioPlanejamento;
     private LocalDateTime janelaFimPlanejamento;
     private BigDecimal tetoCustoEspacoInformado;
@@ -55,6 +56,8 @@ public class Evento {
         this.justificativaExcecaoLayout = null;
         this.validacaoLayoutPendente = false;
         this.planejamentoConfirmado = false;
+        this.concluido = false;
+        this.cancelado = false;
         this.locaisContingenciaOrdenados = new ArrayList<>();
         this.historicoTrocasLocal = new ArrayList<>();
         this.dataCriacao = LocalDateTime.now();
@@ -62,6 +65,9 @@ public class Evento {
     }
 
     public void atualizarDados(String nome, TipoEvento tipo, PorteEvento porte, int quantidadeEstimadaParticipantes, String objetivo) {
+        if (this.cancelado) {
+            throw new IllegalStateException("Não é possível editar evento cancelado.");
+        }
         if (this.planejamentoConfirmado) {
             throw new IllegalStateException("Não é possível editar o evento após confirmar o planejamento.");
         }
@@ -79,6 +85,9 @@ public class Evento {
     }
 
     public void confirmarPlanejamento() {
+        if (this.cancelado) {
+            throw new IllegalStateException("Não é possível confirmar evento cancelado.");
+        }
         if (this.planejamentoConfirmado) {
             throw new IllegalStateException("O planejamento já está confirmado.");
         }
@@ -185,6 +194,9 @@ public class Evento {
     }
 
     public void concluirEvento() {
+        if (cancelado) {
+            throw new IllegalStateException("Não é possível concluir evento cancelado.");
+        }
         if (concluido) {
             throw new IllegalStateException("O evento já está concluído.");
         }
@@ -192,6 +204,24 @@ public class Evento {
             throw new IllegalStateException("Não é possível concluir o evento sem local vinculado.");
         }
         this.concluido = true;
+        this.atualizarData();
+    }
+
+    /**
+     * Cancelamento lógico (soft delete): o registro permanece, mas o evento deixa a listagem ativa.
+     */
+    public void cancelar() {
+        if (cancelado) {
+            throw new IllegalStateException("O evento já está cancelado.");
+        }
+        if (concluido) {
+            throw new IllegalStateException("Não é possível cancelar evento já concluído.");
+        }
+        if (planejamentoConfirmado) {
+            throw new IllegalStateException(
+                    "Não é possível cancelar evento após confirmar a preparação inicial.");
+        }
+        this.cancelado = true;
         this.atualizarData();
     }
 
@@ -227,6 +257,7 @@ public class Evento {
     public String getLocalId() { return localId; }
     public boolean isPlanejamentoConfirmado() { return planejamentoConfirmado; }
     public boolean isConcluido() { return concluido; }
+    public boolean isCancelado() { return cancelado; }
     public String getLayoutLocalId() { return layoutLocalId; }
     public String getJustificativaExcecaoLayout() { return justificativaExcecaoLayout; }
     public boolean isValidacaoLayoutPendente() { return validacaoLayoutPendente; }

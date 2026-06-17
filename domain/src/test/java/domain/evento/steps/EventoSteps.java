@@ -1,6 +1,7 @@
 package domain.evento.steps;
 
 import domain.evento.entity.Evento;
+import domain.contrato.repository.ContratoRepository;
 import domain.evento.repository.EventoRepository;
 import domain.evento.service.EventoService;
 import domain.evento.service.EventoServiceImpl;
@@ -26,6 +27,7 @@ public class EventoSteps {
 
     private EventoRepository eventoRepository;
     private LocalRepository localRepository;
+    private ContratoRepository contratoRepository;
     private EventoService eventoService;
 
     private Evento eventoAtual;
@@ -38,9 +40,11 @@ public class EventoSteps {
     public void setup() {
         eventoRepository = mock(EventoRepository.class);
         localRepository = mock(LocalRepository.class);
-        eventoService = new EventoServiceImpl(eventoRepository, localRepository);
+        contratoRepository = mock(ContratoRepository.class);
+        eventoService = new EventoServiceImpl(eventoRepository, localRepository, contratoRepository);
 
         when(eventoRepository.salvar(any(Evento.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(contratoRepository.listarPorEventoId(any())).thenReturn(List.of());
 
         eventoAtual = null;
         eventoCadastrado = null;

@@ -1572,8 +1572,55 @@ body {
 
 .row-actions {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	align-items: center;
+	gap: 0.5rem 0.75rem;
+}
+
+.actions-cell {
+	min-width: 10.5rem;
+	vertical-align: middle;
+}
+
+.evento-actions-stack {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.4rem;
+}
+
+.table-cta-btn {
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	color: #1d4ed8;
+	padding: 0.35rem 0.7rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+	line-height: 1.2;
+}
+
+.table-cta-btn:hover {
+	background: #dbeafe;
+	border-color: #93c5fd;
+}
+
+.row-actions-secondary {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex-wrap: nowrap;
+}
+
+.action-sep {
+	color: #d1d5db;
+	font-size: 0.75rem;
+	user-select: none;
 }
 
 .link-button {
@@ -1588,6 +1635,16 @@ body {
 
 .link-button:hover {
 	text-decoration: underline;
+}
+
+.evento-name-link {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #111827;
+}
+
+.evento-name-link:hover {
+	color: #2563eb;
 }
 
 .objeto-cell {

@@ -23,23 +23,18 @@
 						<artifactId>jib-maven-plugin</artifactId>
 					</plugin>
 				</plugins>
-			</build>
+			</build>			
 		</profile>
 	</profiles>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<mainClass>presentationbackend.PlanEventApplication</mainClass>
-					<!-- Roda a partir da raiz do projeto multi-módulo, onde fica o .env -->
-					<workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -63,6 +58,12 @@
             <groupId>dev.proj</groupId>
             <artifactId>PlanEvent-infrastructure</artifactId>
             <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 

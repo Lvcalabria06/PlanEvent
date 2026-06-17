@@ -12,6 +12,11 @@ import domain.financeiro.repository.DespesaRepository;
 import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.funcionario.repository.FuncionarioRepository;
+import domain.local.repository.AgendaLocalRepository;
+import domain.local.repository.IndisponibilidadeLocalRepository;
+import domain.local.repository.LocalRepository;
+import domain.local.repository.ManutencaoRepository;
+import domain.local.repository.ReservaLocalRepository;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.service.DependenciaService;
@@ -60,6 +65,36 @@ public class ScaffoldingConfig {
         return new InMemoryDespesaRepository();
     }
 
+    @Bean
+    @ConditionalOnMissingBean(LocalRepository.class)
+    public LocalRepository inMemoryLocalRepository() {
+        return new InMemoryLocalRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(AgendaLocalRepository.class)
+    public AgendaLocalRepository inMemoryAgendaLocalRepository() {
+        return new InMemoryAgendaLocalRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ReservaLocalRepository.class)
+    public ReservaLocalRepository inMemoryReservaLocalRepository(AgendaLocalRepository agendaLocalRepository) {
+        return new InMemoryReservaLocalRepository(agendaLocalRepository);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(IndisponibilidadeLocalRepository.class)
+    public IndisponibilidadeLocalRepository inMemoryIndisponibilidadeLocalRepository() {
+        return new InMemoryIndisponibilidadeLocalRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ManutencaoRepository.class)
+    public ManutencaoRepository inMemoryManutencaoRepository() {
+        return new InMemoryManutencaoRepository();
+    }
+
     /**
      * Semeia um conjunto realista de dados de demonstração (via {@link DadosDemoSeeder})
      * apenas enquanto Evento e Funcionário ainda forem stubs em memória.
@@ -79,11 +114,15 @@ public class ScaffoldingConfig {
             FornecedorRepository fornecedorRepository,
             FornecedorService fornecedorService,
             ContratoRepository contratoRepository,
-            ContratoService contratoService) {
+            ContratoService contratoService,
+            LocalRepository localRepository) {
         return args -> {
-            boolean apoioStubsAtivo = eventoRepository instanceof InMemoryEventoRepository
-                    && funcionarioRepository instanceof InMemoryFuncionarioRepository;
+            EventoLocaisSeeder.semearSeVazio(localRepository);
+
+            boolean apoioStubsAtivo = eventoRepository.getClass().getSimpleName().equals("InMemoryEventoRepository")
+                    && funcionarioRepository.getClass().getSimpleName().equals("InMemoryFuncionarioRepository");
             if (!apoioStubsAtivo) {
+                log.info("Seed de demonstração ignorado (repositório real de funcionário ativo).");
                 return;
             }
 
