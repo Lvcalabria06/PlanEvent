@@ -71,3 +71,32 @@
 .tarefas-root {
   background-color: #ffffff;
 }
+
+/*
+ * Correção de layout ESCOPADA no módulo de Tarefas.
+ *
+ * O shell global (App.css) passou a definir:
+ *   .main-content      { display: flex; flex-direction: column }
+ *   .main-content > *  { flex: 1; display: flex; flex-direction: column }
+ * Essa regra foi criada para as abas novas (eventos/financeiro/etc.) e
+ * transforma o .tarefas-root num flex item de coluna. A página de Tarefas
+ * usava uma altura fixa calc(100vh - 6rem) que não bate mais com esse
+ * contexto, deixando o diagrama (React Flow) mal posicionado.
+ *
+ * Aqui resolvemos SOMENTE dentro do módulo de Tarefas, sem tocar no CSS
+ * global nem nas outras telas: tornamos o .tarefas-root um flex column
+ * autossuficiente e fazemos a página preencher a área disponível.
+ */
+.tarefas-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Página de Tarefas: preenche a altura da área de conteúdo em vez de
+ * chutar 100vh-6rem. min-height:0 permite que os filhos com overflow
+ * (lista, kanban e o canvas do diagrama) encolham corretamente. */
+.tarefas-page {
+  flex: 1;
+  min-height: 0;
+}

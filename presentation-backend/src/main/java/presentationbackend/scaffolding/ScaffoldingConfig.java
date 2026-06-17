@@ -13,10 +13,12 @@ import domain.fornecedor.repository.FornecedorRepository;
 import domain.fornecedor.service.FornecedorService;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.local.repository.AgendaLocalRepository;
+import domain.local.repository.AvaliacaoContextualLocalRepository;
 import domain.local.repository.IndisponibilidadeLocalRepository;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.repository.ReservaLocalRepository;
+import domain.local.turno.repository.TurnoOperacionalRepository;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
 import domain.tarefa.service.DependenciaService;
@@ -95,6 +97,18 @@ public class ScaffoldingConfig {
         return new InMemoryManutencaoRepository();
     }
 
+    @Bean
+    @ConditionalOnMissingBean(AvaliacaoContextualLocalRepository.class)
+    public AvaliacaoContextualLocalRepository inMemoryAvaliacaoContextualRepository() {
+        return new InMemoryAvaliacaoContextualRepository();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(TurnoOperacionalRepository.class)
+    public TurnoOperacionalRepository inMemoryTurnoOperacionalRepository() {
+        return new InMemoryTurnoOperacionalRepository();
+    }
+
     /**
      * Semeia um conjunto realista de dados de demonstração (via {@link DadosDemoSeeder})
      * apenas enquanto Evento e Funcionário ainda forem stubs em memória.
@@ -119,9 +133,14 @@ public class ScaffoldingConfig {
         return args -> {
             EventoLocaisSeeder.semearSeVazio(localRepository);
 
-            boolean apoioStubsAtivo = eventoRepository.getClass().getSimpleName().equals("InMemoryEventoRepository")
-                    && funcionarioRepository.getClass().getSimpleName().equals("InMemoryFuncionarioRepository");
-            if (!apoioStubsAtivo) {
+            // O seed só faz sentido enquanto Funcionário ainda for um stub em memória
+            // (recriado com IDs novos a cada start). Usamos instanceof em vez de comparar
+            // getSimpleName(): repositórios anotados com @Repository (ex.: o EventoRepository
+            // da infraestrutura) são embrulhados em proxy CGLIB pelo Spring, e o nome simples
+            // da classe deixa de bater, fazendo o seed ser pulado por engano. O bean de
+            // funcionário é um @Bean simples (sem proxy), então o instanceof é confiável.
+            boolean funcionarioEmMemoria = funcionarioRepository instanceof InMemoryFuncionarioRepository;
+            if (!funcionarioEmMemoria) {
                 log.info("Seed de demonstração ignorado (repositório real de funcionário ativo).");
                 return;
             }

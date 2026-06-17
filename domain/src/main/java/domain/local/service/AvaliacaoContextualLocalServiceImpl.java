@@ -5,9 +5,9 @@ import domain.evento.repository.EventoRepository;
 import domain.evento.valueobject.PorteEvento;
 import domain.evento.valueobject.TipoEvento;
 import domain.local.entity.AvaliacaoContextualLocal;
+import domain.local.repository.AvaliacaoContextualLocalRepository;
 import domain.local.repository.LocalRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,15 +15,18 @@ public class AvaliacaoContextualLocalServiceImpl implements AvaliacaoContextualL
 
     private final EventoRepository eventoRepository;
     private final LocalRepository localRepository;
-    private final List<AvaliacaoContextualLocal> avaliacoes = new ArrayList<>();
+    private final AvaliacaoContextualLocalRepository avaliacaoRepository;
 
-    public AvaliacaoContextualLocalServiceImpl(EventoRepository eventoRepository, LocalRepository localRepository) {
+    public AvaliacaoContextualLocalServiceImpl(EventoRepository eventoRepository,
+            LocalRepository localRepository,
+            AvaliacaoContextualLocalRepository avaliacaoRepository) {
         this.eventoRepository = eventoRepository;
         this.localRepository = localRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
     }
 
     @Override
-    public synchronized AvaliacaoContextualLocal registrarAvaliacao(
+    public AvaliacaoContextualLocal registrarAvaliacao(
             String eventoId,
             String localId,
             Map<String, Integer> notasPorCriterio,
@@ -39,9 +42,7 @@ public class AvaliacaoContextualLocalServiceImpl implements AvaliacaoContextualL
         if (evento.getLocalId() == null || !evento.getLocalId().equals(localId)) {
             throw new IllegalArgumentException("Local avaliado deve ser o local vinculado ao evento.");
         }
-        boolean jaExistePrincipal = avaliacoes.stream()
-                .anyMatch(a -> a.getEventoId().equals(eventoId) && a.getLocalId().equals(localId));
-        if (jaExistePrincipal) {
+        if (avaliacaoRepository.existePorEventoIdELocalId(eventoId, localId)) {
             throw new IllegalStateException("Já existe avaliação principal para este evento e local.");
         }
         AvaliacaoContextualLocal avaliacao = new AvaliacaoContextualLocal(
@@ -53,19 +54,15 @@ public class AvaliacaoContextualLocalServiceImpl implements AvaliacaoContextualL
                 notasPorCriterio,
                 justificativa,
                 usuarioResponsavel);
-        avaliacoes.add(avaliacao);
-        return avaliacao;
+        return avaliacaoRepository.salvar(avaliacao);
     }
 
     @Override
-    public synchronized ResumoDesempenhoContextualLocal consultarResumo(String localId, TipoEvento tipoEvento, PorteEvento porteEvento) {
+    public ResumoDesempenhoContextualLocal consultarResumo(String localId, TipoEvento tipoEvento, PorteEvento porteEvento) {
         localRepository.buscarPorId(localId)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado."));
-        List<AvaliacaoContextualLocal> doLocal = avaliacoes.stream()
-                .filter(a -> a.getLocalId().equals(localId))
-                .toList();
-        List<AvaliacaoContextualLocal> doContexto = avaliacoes.stream()
-                .filter(a -> a.getLocalId().equals(localId))
+        List<AvaliacaoContextualLocal> doLocal = avaliacaoRepository.buscarPorLocalId(localId);
+        List<AvaliacaoContextualLocal> doContexto = doLocal.stream()
                 .filter(a -> a.getTipoEvento() == tipoEvento && a.getPorteEvento() == porteEvento)
                 .toList();
 
@@ -84,16 +81,14 @@ public class AvaliacaoContextualLocalServiceImpl implements AvaliacaoContextualL
     }
 
     @Override
-    public synchronized List<AvaliacaoContextualLocal> listarHistorico(String localId) {
+    public List<AvaliacaoContextualLocal> listarHistorico(String localId) {
         localRepository.buscarPorId(localId)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado."));
-        return avaliacoes.stream().filter(a -> a.getLocalId().equals(localId)).toList();
+        return avaliacaoRepository.buscarPorLocalId(localId);
     }
 
     private double media(List<AvaliacaoContextualLocal> lista) {
-        if (lista.isEmpty()) {
-            return 0.0;
-        }
+        if (lista.isEmpty()) return 0.0;
         double soma = 0.0;
         for (AvaliacaoContextualLocal avaliacao : lista) {
             soma += avaliacao.getNotaFinal();
@@ -102,12 +97,8 @@ public class AvaliacaoContextualLocalServiceImpl implements AvaliacaoContextualL
     }
 
     private String classificar(double media) {
-        if (media >= 4.0) {
-            return "RECOMENDADO";
-        }
-        if (media >= 3.0) {
-            return "RECOMENDADO_COM_RESSALVAS";
-        }
+        if (media >= 4.0) return "RECOMENDADO";
+        if (media >= 3.0) return "RECOMENDADO_COM_RESSALVAS";
         return "NAO_RECOMENDADO";
     }
 }

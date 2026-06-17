@@ -10,8 +10,23 @@ import {
   cadastrarManutencao,
   editarManutencao,
   removerManutencao,
+  listarTurnos,
+  cadastrarTurno,
+  editarTurno,
+  desativarTurno,
+  listarAvaliacoes,
+  registrarAvaliacao,
 } from '../api/locaisApi';
-import type { LocalDTO, ManutencaoDTO, ManutencaoCreateDTO, LocalCreateDTO } from '../api/locaisApi';
+import type {
+  LocalDTO,
+  ManutencaoDTO,
+  ManutencaoCreateDTO,
+  LocalCreateDTO,
+  TurnoDTO,
+  TurnoCreateDTO,
+  AvaliacaoContextualDTO,
+  AvaliacaoCreateDTO,
+} from '../api/locaisApi';
 import './locais.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -517,6 +532,250 @@ function LocalForm({ local, onBack, onSaved }: LocalFormProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Turno Modal
+// ─────────────────────────────────────────────────────────────────────────────
+const DIAS_SEMANA = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
+const DIAS_LABEL: Record<string, string> = {
+  SEGUNDA: 'Seg', TERCA: 'Ter', QUARTA: 'Qua', QUINTA: 'Qui',
+  SEXTA: 'Sex', SABADO: 'Sáb', DOMINGO: 'Dom',
+};
+
+interface TurnoModalProps {
+  localId: string;
+  turno?: TurnoDTO | null;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function TurnoModal({ localId, turno, onClose, onSaved }: TurnoModalProps) {
+  const isEdit = !!turno;
+  const parseDias = (str?: string) => (str ? str.split(',') : []);
+  const [nome, setNome] = useState(turno?.nome ?? '');
+  const [horaInicio, setHoraInicio] = useState(turno?.horaInicio ? String(turno.horaInicio).slice(0, 5) : '');
+  const [horaFim, setHoraFim] = useState(turno?.horaFim ? String(turno.horaFim).slice(0, 5) : '');
+  const [dias, setDias] = useState<string[]>(parseDias(turno?.diasDaSemana));
+  const [capacidade, setCapacidade] = useState(turno?.capacidade ? String(turno.capacidade) : '');
+  const [observacoes, setObservacoes] = useState(turno?.observacoes ?? '');
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const toggleDia = (dia: string) =>
+    setDias((prev) => (prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]));
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!nome.trim()) e.nome = 'Nome é obrigatório.';
+    if (!horaInicio) e.horaInicio = 'Horário de início é obrigatório.';
+    if (!horaFim) e.horaFim = 'Horário de fim é obrigatório.';
+    if (horaInicio && horaFim && horaFim <= horaInicio) e.horaFim = 'Fim deve ser após o início.';
+    if (dias.length === 0) e.dias = 'Selecione ao menos um dia.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const dto: TurnoCreateDTO = {
+        nome: nome.trim(),
+        horaInicio: horaInicio + ':00',
+        horaFim: horaFim + ':00',
+        diasDaSemana: dias.join(','),
+        capacidade: capacidade ? Number(capacidade) : undefined,
+        observacoes: observacoes.trim() || undefined,
+      };
+      if (isEdit) {
+        await editarTurno(localId, turno!.id, dto);
+        toast.success('Turno atualizado com sucesso!');
+      } else {
+        await cadastrarTurno(localId, dto);
+        toast.success('Turno cadastrado com sucesso!');
+      }
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao salvar turno.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="loc-modal-overlay" onClick={onClose}>
+      <div className="loc-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="loc-modal-header">
+          <div className="loc-modal-title-row">
+            <span>🕐</span>
+            <h3>{isEdit ? 'Editar Turno' : 'Cadastrar Turno'}</h3>
+          </div>
+          <button className="loc-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="loc-modal-body">
+          <div className="loc-form-group">
+            <label className="loc-label">Nome do Turno <span className="loc-required">*</span></label>
+            <input type="text" className={`loc-input ${errors.nome ? 'loc-input-error' : ''}`}
+              placeholder="Ex: Turno Manhã" value={nome} onChange={(e) => setNome(e.target.value)} />
+            {errors.nome && <span className="loc-error-msg">{errors.nome}</span>}
+          </div>
+          <div className="loc-form-row">
+            <div className="loc-form-group">
+              <label className="loc-label">Início <span className="loc-required">*</span></label>
+              <input type="time" className={`loc-input ${errors.horaInicio ? 'loc-input-error' : ''}`}
+                value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
+              {errors.horaInicio && <span className="loc-error-msg">{errors.horaInicio}</span>}
+            </div>
+            <div className="loc-form-group">
+              <label className="loc-label">Fim <span className="loc-required">*</span></label>
+              <input type="time" className={`loc-input ${errors.horaFim ? 'loc-input-error' : ''}`}
+                value={horaFim} onChange={(e) => setHoraFim(e.target.value)} />
+              {errors.horaFim && <span className="loc-error-msg">{errors.horaFim}</span>}
+            </div>
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Dias da Semana <span className="loc-required">*</span></label>
+            {errors.dias && <span className="loc-error-msg">{errors.dias}</span>}
+            <div className="loc-infra-grid">
+              {DIAS_SEMANA.map((d) => (
+                <label key={d} className={`loc-infra-item ${dias.includes(d) ? 'loc-infra-checked' : ''}`}
+                  onClick={() => toggleDia(d)}>
+                  <input type="checkbox" checked={dias.includes(d)} onChange={() => toggleDia(d)} />
+                  <span>{DIAS_LABEL[d]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Capacidade no Turno (opcional)</label>
+            <input type="number" className="loc-input" placeholder="Deixe em branco para usar a do local"
+              value={capacidade} onChange={(e) => setCapacidade(e.target.value)} min={1} />
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Observações</label>
+            <textarea className="loc-textarea" rows={2} value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)} />
+          </div>
+          <div className="loc-modal-actions">
+            <button type="button" className="loc-btn-outline" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="loc-btn-primary" disabled={saving}>
+              <span>💾</span> {saving ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Cadastrar Turno'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Avaliação Modal
+// ─────────────────────────────────────────────────────────────────────────────
+const CRITERIOS_PADRAO = ['Acústica', 'Iluminação', 'Limpeza', 'Acessibilidade', 'Infraestrutura'];
+
+interface AvaliacaoModalProps {
+  localId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function AvaliacaoModal({ localId, onClose, onSaved }: AvaliacaoModalProps) {
+  const [eventoId, setEventoId] = useState('');
+  const [notas, setNotas] = useState<Record<string, number>>(() =>
+    Object.fromEntries(CRITERIOS_PADRAO.map((c) => [c, 3]))
+  );
+  const [justificativa, setJustificativa] = useState('');
+  const [usuarioResponsavel, setUsuarioResponsavel] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!eventoId.trim()) e.eventoId = 'ID do evento é obrigatório.';
+    if (!justificativa.trim()) e.justificativa = 'Justificativa é obrigatória.';
+    if (!usuarioResponsavel.trim()) e.usuarioResponsavel = 'Responsável é obrigatório.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const dto: AvaliacaoCreateDTO = {
+        eventoId: eventoId.trim(),
+        notasPorCriterio: notas,
+        justificativa: justificativa.trim(),
+        usuarioResponsavel: usuarioResponsavel.trim(),
+      };
+      await registrarAvaliacao(localId, dto);
+      toast.success('Avaliação registrada com sucesso!');
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao registrar avaliação.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="loc-modal-overlay" onClick={onClose}>
+      <div className="loc-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="loc-modal-header">
+          <div className="loc-modal-title-row">
+            <span>📊</span>
+            <h3>Registrar Avaliação Contextual</h3>
+          </div>
+          <button className="loc-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="loc-modal-body">
+          <div className="loc-form-group">
+            <label className="loc-label">ID do Evento <span className="loc-required">*</span></label>
+            <input type="text" className={`loc-input ${errors.eventoId ? 'loc-input-error' : ''}`}
+              placeholder="ID do evento concluído" value={eventoId} onChange={(e) => setEventoId(e.target.value)} />
+            {errors.eventoId && <span className="loc-error-msg">{errors.eventoId}</span>}
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Notas por Critério (0–5)</label>
+            {CRITERIOS_PADRAO.map((criterio) => (
+              <div key={criterio} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                <span style={{ width: '120px', fontSize: '0.875rem' }}>{criterio}</span>
+                <input type="range" min={0} max={5} value={notas[criterio]}
+                  onChange={(e) => setNotas((prev) => ({ ...prev, [criterio]: Number(e.target.value) }))}
+                  style={{ flex: 1 }} />
+                <span style={{ width: '24px', textAlign: 'center', fontWeight: 600 }}>{notas[criterio]}</span>
+              </div>
+            ))}
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Justificativa <span className="loc-required">*</span></label>
+            <textarea className={`loc-textarea ${errors.justificativa ? 'loc-input-error' : ''}`} rows={3}
+              placeholder="Descreva a avaliação do local neste evento..." value={justificativa}
+              onChange={(e) => setJustificativa(e.target.value)} />
+            {errors.justificativa && <span className="loc-error-msg">{errors.justificativa}</span>}
+          </div>
+          <div className="loc-form-group">
+            <label className="loc-label">Responsável pela Avaliação <span className="loc-required">*</span></label>
+            <input type="text" className={`loc-input ${errors.usuarioResponsavel ? 'loc-input-error' : ''}`}
+              placeholder="Nome do responsável" value={usuarioResponsavel}
+              onChange={(e) => setUsuarioResponsavel(e.target.value)} />
+            {errors.usuarioResponsavel && <span className="loc-error-msg">{errors.usuarioResponsavel}</span>}
+          </div>
+          <div className="loc-modal-actions">
+            <button type="button" className="loc-btn-outline" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="loc-btn-primary" disabled={saving}>
+              <span>💾</span> {saving ? 'Registrando...' : 'Registrar Avaliação'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Local Detail View
 // ─────────────────────────────────────────────────────────────────────────────
 interface LocalDetailProps {
@@ -530,21 +789,30 @@ interface LocalDetailProps {
 function LocalDetail({ localId, onBack, onEdit, onDesativar, refreshTrigger }: LocalDetailProps) {
   const [local, setLocal] = useState<LocalDTO | null>(null);
   const [manutencoes, setManutencoes] = useState<ManutencaoDTO[]>([]);
+  const [turnos, setTurnos] = useState<TurnoDTO[]>([]);
+  const [avaliacoes, setAvaliacoes] = useState<AvaliacaoContextualDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'info' | 'turnos' | 'avaliacao'>('info');
   const [showManutencaoModal, setShowManutencaoModal] = useState(false);
   const [editingManutencao, setEditingManutencao] = useState<ManutencaoDTO | null>(null);
   const [deletingManutencaoId, setDeletingManutencaoId] = useState<string | null>(null);
+  const [showTurnoModal, setShowTurnoModal] = useState(false);
+  const [editingTurno, setEditingTurno] = useState<TurnoDTO | null>(null);
+  const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [l, m] = await Promise.all([
+      const [l, m, t, av] = await Promise.all([
         buscarLocal(localId),
         listarManutencoes(localId),
+        listarTurnos(localId),
+        listarAvaliacoes(localId),
       ]);
       setLocal(l);
       setManutencoes(m);
+      setTurnos(t);
+      setAvaliacoes(av);
     } catch {
       toast.error('Erro ao carregar dados do local.');
     } finally {
@@ -844,19 +1112,128 @@ function LocalDetail({ localId, onBack, onEdit, onDesativar, refreshTrigger }: L
 
       {activeTab === 'turnos' && (
         <div className="loc-detail-card">
-          <div className="loc-empty-tab">
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🕐</div>
-            <p>Nenhum turno operacional cadastrado para este local.</p>
+          <div className="loc-detail-section-header">
+            <div>
+              <span>🕐</span>
+              <h3>Turnos Operacionais {turnos.length > 0 ? turnos.length : ''}</h3>
+            </div>
+            <button className="loc-btn-add-manut" onClick={() => { setEditingTurno(null); setShowTurnoModal(true); }}>
+              + Cadastrar Turno
+            </button>
           </div>
+          {turnos.length === 0 ? (
+            <div className="loc-empty-manut">
+              <div className="loc-empty-manut-icon">🕐</div>
+              <p>Nenhum turno operacional cadastrado</p>
+              <small>Cadastre turnos para definir a disponibilidade por horário.</small>
+            </div>
+          ) : (
+            <div className="loc-manut-list">
+              {turnos.map((t) => {
+                const dias = t.diasDaSemana.split(',').map((d) => DIAS_LABEL[d] ?? d).join(' · ');
+                return (
+                  <div key={t.id} className="loc-manut-card">
+                    <div className="loc-manut-card-header">
+                      <div className="loc-manut-card-id-row">
+                        <span className="loc-manut-id">{t.nome}</span>
+                        <span className={`loc-manut-status ${t.status === 'ATIVO' ? 'loc-manut-andamento' : 'loc-manut-agendada'}`}>
+                          {t.status === 'ATIVO' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </div>
+                      {t.status === 'ATIVO' && (
+                        <div className="loc-manut-card-btns">
+                          <button className="loc-icon-btn" title="Editar"
+                            onClick={() => { setEditingTurno(t); setShowTurnoModal(true); }}>✏</button>
+                          <button className="loc-icon-btn loc-icon-btn-danger" title="Desativar"
+                            onClick={async () => {
+                              try {
+                                await desativarTurno(localId, t.id);
+                                toast.success('Turno desativado.');
+                                load();
+                              } catch (err: any) {
+                                toast.error(err?.message || 'Erro ao desativar turno.');
+                              }
+                            }}>🚫</button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="loc-manut-datas">🕐 {String(t.horaInicio).slice(0, 5)} — {String(t.horaFim).slice(0, 5)}</p>
+                    <p className="loc-manut-resp">📅 {dias}</p>
+                    {t.capacidade && <p className="loc-manut-desc">👥 Capacidade no turno: {t.capacidade}</p>}
+                    {t.observacoes && <p className="loc-manut-desc">{t.observacoes}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === 'avaliacao' && (
         <div className="loc-detail-card">
-          <div className="loc-empty-tab">
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📊</div>
-            <p>Nenhuma avaliação de desempenho disponível.</p>
+          <div className="loc-detail-section-header">
+            <div>
+              <span>📊</span>
+              <h3>Avaliações Contextuais {avaliacoes.length > 0 ? avaliacoes.length : ''}</h3>
+            </div>
+            <button className="loc-btn-add-manut" onClick={() => setShowAvaliacaoModal(true)}>
+              + Registrar Avaliação
+            </button>
           </div>
+
+          {avaliacoes.length > 0 && (
+            <div className="loc-detail-info-grid" style={{ marginBottom: '1.5rem' }}>
+              <div className="loc-detail-info-item">
+                <span className="loc-detail-info-icon">⭐</span>
+                <div>
+                  <p className="loc-detail-info-label">NOTA MÉDIA GERAL</p>
+                  <p className="loc-detail-info-value">
+                    {(avaliacoes.reduce((s, a) => s + a.notaFinal, 0) / avaliacoes.length).toFixed(1)} / 5.0
+                  </p>
+                </div>
+              </div>
+              <div className="loc-detail-info-item">
+                <span className="loc-detail-info-icon">📋</span>
+                <div>
+                  <p className="loc-detail-info-label">TOTAL DE AVALIAÇÕES</p>
+                  <p className="loc-detail-info-value">{avaliacoes.length}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {avaliacoes.length === 0 ? (
+            <div className="loc-empty-manut">
+              <div className="loc-empty-manut-icon">📊</div>
+              <p>Nenhuma avaliação contextual registrada</p>
+              <small>Avaliações só podem ser registradas após a conclusão de eventos neste local.</small>
+            </div>
+          ) : (
+            <div className="loc-manut-list">
+              {avaliacoes.map((av) => (
+                <div key={av.id} className="loc-manut-card">
+                  <div className="loc-manut-card-header">
+                    <div className="loc-manut-card-id-row">
+                      <span className="loc-manut-id">Nota Final: {av.notaFinal.toFixed(1)}/5.0</span>
+                      <span className="loc-manut-status loc-manut-andamento">{av.tipoEvento} · {av.porteEvento}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.5rem 0' }}>
+                    {Object.entries(av.notasPorCriterio).map(([criterio, nota]) => (
+                      <span key={criterio} className="loc-infra-tag-sm">
+                        {criterio}: {nota}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="loc-manut-desc">{av.justificativa}</p>
+                  <p className="loc-manut-resp">👤 {av.usuarioResponsavel}</p>
+                  <p className="loc-manut-reg">
+                    👥 {av.participantesContexto} participantes · {formatDate(av.dataHoraRegistro)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -866,6 +1243,25 @@ function LocalDetail({ localId, onBack, onEdit, onDesativar, refreshTrigger }: L
           localId={localId}
           manutencao={editingManutencao}
           onClose={() => setShowManutencaoModal(false)}
+          onSaved={load}
+        />
+      )}
+
+      {/* Turno Modal */}
+      {showTurnoModal && (
+        <TurnoModal
+          localId={localId}
+          turno={editingTurno}
+          onClose={() => setShowTurnoModal(false)}
+          onSaved={load}
+        />
+      )}
+
+      {/* Avaliação Modal */}
+      {showAvaliacaoModal && (
+        <AvaliacaoModal
+          localId={localId}
+          onClose={() => setShowAvaliacaoModal(false)}
           onSaved={load}
         />
       )}
