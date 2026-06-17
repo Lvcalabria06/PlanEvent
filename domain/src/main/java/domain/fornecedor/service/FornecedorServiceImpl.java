@@ -1,5 +1,6 @@
 package domain.fornecedor.service;
 
+import domain.contrato.iterator.ContratosAtivosFornecedor;
 import domain.contrato.repository.ContratoRepository;
 import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
@@ -60,7 +61,8 @@ public class FornecedorServiceImpl implements FornecedorService {
         Fornecedor fornecedor = fornecedorRepository.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Fornecedor não encontrado."));
 
-        if (contratoRepository.possuiContratoAtivoPorFornecedorId(id)) {
+        ContratosAtivosFornecedor contratosAtivos = new ContratosAtivosFornecedor(contratoRepository, id);
+        if (contratosAtivos.possuiAtivos()) {
             throw new IllegalStateException(
                     "Não é possível desativar fornecedor com contratos ativos vinculados.");
         }

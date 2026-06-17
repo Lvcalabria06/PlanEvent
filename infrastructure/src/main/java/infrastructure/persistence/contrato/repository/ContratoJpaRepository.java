@@ -1,6 +1,5 @@
 package infrastructure.persistence.contrato.repository;
 
-import domain.contrato.valueobject.StatusContrato;
 import infrastructure.persistence.contrato.entity.ContratoJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,5 +9,5 @@ public interface ContratoJpaRepository extends JpaRepository<ContratoJpaEntity, 
 
     List<ContratoJpaEntity> findByEventoId(String eventoId);
 
-    boolean existsByFornecedorIdAndStatusNotIn(String fornecedorId, List<StatusContrato> statusExcluidos);
+    List<ContratoJpaEntity> findByFornecedorId(String fornecedorId);
 }

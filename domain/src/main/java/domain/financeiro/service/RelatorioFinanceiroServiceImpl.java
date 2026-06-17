@@ -217,6 +217,11 @@ public class RelatorioFinanceiroServiceImpl implements RelatorioFinanceiroServic
         }
 
         @Override
+        public List<domain.conciliacao.entity.VinculoConciliacao> listarVinculosPorEvento(String eventoId) {
+            return List.of();
+        }
+
+        @Override
         public domain.conciliacao.entity.RelatorioConciliacao gerarRelatorio(
                 String eventoId, String responsavelId) {
             return null;

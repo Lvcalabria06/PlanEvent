@@ -64,6 +64,27 @@ public class VinculoConciliacao {
         this.updatedAt = this.dataConciliacao;
     }
 
+    private VinculoConciliacao(String id, String eventoId, String despesaId, String contratoId,
+            MetodoConciliacao metodo, String responsavelId, LocalDateTime dataConciliacao,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.despesaId = despesaId;
+        this.contratoId = contratoId;
+        this.metodo = metodo;
+        this.responsavelId = responsavelId;
+        this.dataConciliacao = dataConciliacao;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public static VinculoConciliacao reconstituir(String id, String eventoId, String despesaId,
+            String contratoId, MetodoConciliacao metodo, String responsavelId,
+            LocalDateTime dataConciliacao, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new VinculoConciliacao(id, eventoId, despesaId, contratoId, metodo,
+                responsavelId, dataConciliacao, createdAt, updatedAt);
+    }
+
     public String getId() { return id; }
     public String getEventoId() { return eventoId; }
     public String getDespesaId() { return despesaId; }

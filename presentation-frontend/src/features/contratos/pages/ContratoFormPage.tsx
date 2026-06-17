@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import {
 	CONTRATANTE_PADRAO,
 	CONTRACT_CATEGORIES,
@@ -8,6 +8,7 @@ import { buildPartes } from '../../../modules/planning/contratos/utils';
 import { usePlanningData } from '../../../modules/planning/PlanningDataContext';
 import type { Contrato, ContratoInput } from '../../../modules/planning/types';
 import { IntegrationPendingBanner } from '../../../shared/components/IntegrationPendingBanner';
+import { financeiroApi, type EventoResumo } from '../../../api/financeiroApi';
 
 interface ContratoFormPageProps {
 	contrato?: Contrato;
@@ -30,8 +31,13 @@ type FormState = {
 export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPageProps) {
 	const isEditing = !!contrato;
 	const locked = isEditing && contrato?.status === 'ENCERRADO';
-	const { criarContrato, atualizarContrato, fornecedoresAtivos, obterFornecedor, eventos, integrationPending } =
+	const { criarContrato, atualizarContrato, fornecedoresAtivos, obterFornecedor, integrationPending } =
 		usePlanningData();
+
+	const [eventos, setEventos] = useState<EventoResumo[]>([]);
+	useEffect(() => {
+		financeiroApi.listarEventos().then(setEventos).catch(() => setEventos([]));
+	}, []);
 
 	const [form, setForm] = useState<FormState>(() => ({
 		tipo: contrato?.tipo ?? 'Prestação de Serviços',
@@ -41,13 +47,20 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 		valor: contrato?.valor?.toString() ?? '',
 		dataInicio: contrato?.dataInicio ?? '',
 		dataFim: contrato?.dataFim ?? '',
-		eventoId: contrato?.eventoId ?? eventos[0]?.id ?? '',
+		eventoId: contrato?.eventoId ?? '',
 		categoria: contrato?.categoria ?? 'Buffet/Alimentação',
 	}));
 	const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [savedId, setSavedId] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+
+	useEffect(() => {
+		if (eventos.length === 0) return;
+		if (!form.eventoId || !eventos.some(e => e.id === form.eventoId)) {
+			setForm(prev => ({ ...prev, eventoId: eventos[0]?.id ?? '' }));
+		}
+	}, [eventos]);
 
 	const selectedSupplier = obterFornecedor(form.fornecedorId);
 
@@ -59,6 +72,7 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 
 	const validate = (): boolean => {
 		const next: Partial<Record<keyof FormState, string>> = {};
+		if (!form.eventoId) next.eventoId = 'Selecione um evento.';
 		if (!form.tipo) next.tipo = 'Selecione o tipo.';
 		if (!form.contratante.trim()) next.contratante = 'Informe o contratante.';
 		if (!form.fornecedorId) next.fornecedorId = 'Selecione um fornecedor ativo.';
@@ -234,12 +248,16 @@ export function ContratoFormPage({ contrato, onBack, onSaved }: ContratoFormPage
 								disabled={locked}
 								onChange={e => update('eventoId', e.target.value)}
 							>
+								{!form.eventoId && (
+									<option value="">— Selecione um evento —</option>
+								)}
 								{eventos.map(e => (
 									<option key={e.id} value={e.id}>
-										{e.id} — {e.name}
+										{e.nome}
 									</option>
 								))}
 							</select>
+							{errors.eventoId && <span className="error-message">{errors.eventoId}</span>}
 						</div>
 						<div className="form-group full-width">
 							<label>Contratante (Parte 1) *</label>

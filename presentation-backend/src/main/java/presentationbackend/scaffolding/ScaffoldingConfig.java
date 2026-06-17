@@ -4,13 +4,9 @@ import domain.agenda.repository.CompromissoRepository;
 import domain.agenda.repository.LembreteRepository;
 import domain.agenda.service.CompromissoService;
 import domain.agenda.service.LembreteService;
-import domain.contrato.repository.ContratoRepository;
-import domain.contrato.service.ContratoService;
 import domain.equipe.repository.EquipeRepository;
 import domain.evento.repository.EventoRepository;
 import domain.financeiro.repository.DespesaRepository;
-import domain.fornecedor.repository.FornecedorRepository;
-import domain.fornecedor.service.FornecedorService;
 import domain.funcionario.repository.FuncionarioRepository;
 import domain.local.repository.AgendaLocalRepository;
 import domain.local.repository.AvaliacaoContextualLocalRepository;
@@ -30,14 +26,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Andaime (scaffolding) provisório para testar a fatia de Tarefas/Dependências
- * fim-a-fim sem depender da persistência dos módulos de Equipe/Evento/Funcionário
- * (responsabilidade de outros integrantes).
- *
- * <p>Cada bean usa {@link ConditionalOnMissingBean}: assim que o módulo real
- * fornecer sua implementação, este stub deixa de ser registrado, sem conflito.</p>
- */
 @Configuration
 public class ScaffoldingConfig {
 
@@ -125,10 +113,6 @@ public class ScaffoldingConfig {
             LembreteRepository lembreteRepository,
             CompromissoService compromissoService,
             LembreteService lembreteService,
-            FornecedorRepository fornecedorRepository,
-            FornecedorService fornecedorService,
-            ContratoRepository contratoRepository,
-            ContratoService contratoService,
             LocalRepository localRepository) {
         return args -> {
             EventoLocaisSeeder.semearSeVazio(localRepository);
@@ -147,8 +131,7 @@ public class ScaffoldingConfig {
 
             new DadosDemoSeeder(eventoRepository, funcionarioRepository, equipeRepository,
                     tarefaRepository, responsavelTarefaRepository, tarefaService, dependenciaService,
-                    compromissoRepository, lembreteRepository, compromissoService, lembreteService,
-                    fornecedorRepository, fornecedorService, contratoRepository, contratoService, log)
+                    compromissoRepository, lembreteRepository, compromissoService, lembreteService, log)
                     .semear();
         };
     }
