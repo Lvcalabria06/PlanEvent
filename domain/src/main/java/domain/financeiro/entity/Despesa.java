@@ -57,6 +57,30 @@ public class Despesa {
         this.dataHoraLancamento = LocalDateTime.now();
         this.status = StatusDespesa.REGISTRADA;
     }
+    private Despesa(String id, String eventoId, CategoriaDespesa categoria, String fornecedorId,
+                    BigDecimal valor, LocalDateTime data, String lancadoPorUsuarioId,
+                    LocalDateTime dataHoraLancamento, StatusDespesa status, String aprovadorId,
+                    String motivoRejeicao) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.categoria = categoria;
+        this.fornecedorId = fornecedorId;
+        this.valor = valor;
+        this.data = data;
+        this.lancadoPorUsuarioId = lancadoPorUsuarioId;
+        this.dataHoraLancamento = dataHoraLancamento;
+        this.status = status;
+        this.aprovadorId = aprovadorId;
+        this.motivoRejeicao = motivoRejeicao;
+    }
+
+    public static Despesa reconstruir(String id, String eventoId, CategoriaDespesa categoria, String fornecedorId,
+                                      BigDecimal valor, LocalDateTime data, String lancadoPorUsuarioId,
+                                      LocalDateTime dataHoraLancamento, StatusDespesa status, String aprovadorId,
+                                      String motivoRejeicao) {
+        return new Despesa(id, eventoId, categoria, fornecedorId, valor, data, lancadoPorUsuarioId,
+                           dataHoraLancamento, status, aprovadorId, motivoRejeicao);
+    }
 
     public boolean podeSerAlterada() {
         return status == StatusDespesa.REGISTRADA;

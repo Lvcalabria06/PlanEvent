@@ -72,6 +72,17 @@ public class RelatorioFinanceiro {
                 resultado.getConteudo());
     }
 
+    public static RelatorioFinanceiro reconstruir(String id, String eventoId, String geradoPorUsuarioId,
+                                                  LocalDateTime dataGeracao, TipoRelatorio tipo,
+                                                  String motivoNovaVersaoOficial, BigDecimal totalGeralPrevisto,
+                                                  BigDecimal totalGeralRealizado, List<ItemRelatorioCategoria> itensPorCategoria,
+                                                  SaudeFinanceira saudeFinanceira, IndicadorCoberturaContratual coberturaContratual,
+                                                  ComparativoRelatorioFinanceiro comparativo, List<RecomendacaoFinanceira> recomendacoes,
+                                                  String conteudo) {
+        return new RelatorioFinanceiro(id, eventoId, geradoPorUsuarioId, dataGeracao, tipo, motivoNovaVersaoOficial,
+                totalGeralPrevisto, totalGeralRealizado, itensPorCategoria, saudeFinanceira, coberturaContratual, comparativo, recomendacoes, conteudo);
+    }
+
     private RelatorioFinanceiro(String id,
                                  String eventoId,
                                  String geradoPorUsuarioId,

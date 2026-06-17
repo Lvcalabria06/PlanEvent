@@ -42,14 +42,7 @@ import application.financeiro.usecase.RelatorioFinanceiroUseCase;
 import application.financeiro.usecase.RelatorioFinanceiroUseCaseImpl;
 import application.fornecedor.usecase.FornecedorUseCase;
 import application.fornecedor.usecase.FornecedorUseCaseImpl;
-import application.financeiro.usecase.AcaoPosRelatorioUseCase;
-import application.financeiro.usecase.AcaoPosRelatorioUseCaseImpl;
-import application.financeiro.usecase.DespesaUseCase;
-import application.financeiro.usecase.DespesaUseCaseImpl;
-import application.financeiro.usecase.OrcamentoEventoUseCase;
-import application.financeiro.usecase.OrcamentoEventoUseCaseImpl;
-import application.financeiro.usecase.RelatorioFinanceiroUseCase;
-import application.financeiro.usecase.RelatorioFinanceiroUseCaseImpl;
+
 import application.equipe.usecase.EquipeUseCase;
 import application.equipe.usecase.EquipeUseCaseImpl;
 import application.funcionario.usecase.FuncionarioUseCase;

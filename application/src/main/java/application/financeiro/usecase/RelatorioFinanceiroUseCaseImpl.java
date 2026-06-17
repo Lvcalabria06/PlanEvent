@@ -40,6 +40,7 @@ public class RelatorioFinanceiroUseCaseImpl implements RelatorioFinanceiroUseCas
     @Override
     public FinanceiroDtos.SimulacaoDto simularWhatIf(String eventoId, String usuarioId,
                                                       FinanceiroDtos.SimularWhatIfRequest request) {
+        System.out.println("[WHAT-IF] request=" + request);
         List<ParametrosCenarioSimulacao.DespesaHipotetica> hipoteticas = request.despesasHipoteticas() == null
                 ? List.of()
                 : request.despesasHipoteticas().stream()
@@ -52,8 +53,15 @@ public class RelatorioFinanceiroUseCaseImpl implements RelatorioFinanceiroUseCas
                 request.cenarioPessimistaCobertura(),
                 hipoteticas);
 
+        System.out.println("[WHAT-IF] parametros.isIncluirPendentes=" + parametros.isIncluirPendentes());
+        System.out.println("[WHAT-IF] parametros.isCenarioPessimistaCobertura=" + parametros.isCenarioPessimistaCobertura());
+        System.out.println("[WHAT-IF] parametros.getDespesasHipoteticas=" + parametros.getDespesasHipoteticas());
+
         SimulacaoRelatorioFinanceiro simulacao = relatorioService
                 .simularRelatorioComCenario(eventoId, usuarioId, parametros);
+        
+        System.out.println("[WHAT-IF] gerou simulacao com score=" + simulacao.getResultado().getSaudeFinanceira().getScore());
+        
         return FinanceiroMapper.toSimulacaoDto(simulacao);
     }
 

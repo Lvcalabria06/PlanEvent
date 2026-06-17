@@ -39,10 +39,27 @@ export default function FinanceiroShell({
 
   if (eventos.length === 0) {
     return (
-      <div className="content-card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-        <p style={{ margin: 0 }}>
-          Nenhum evento cadastrado. Crie um evento primeiro para utilizar este módulo.
+      <div className="content-card" style={{ textAlign: 'center', padding: '4rem 2rem', color: '#4b5563', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ fontSize: '3rem', opacity: 0.5 }}>📅</div>
+        <h2 style={{ margin: 0, fontWeight: 600 }}>Nenhum evento cadastrado</h2>
+        <p style={{ margin: 0, maxWidth: '400px' }}>
+          Para começar a lançar despesas e emitir relatórios financeiros, você precisa criar um evento primeiro.
         </p>
+      </div>
+    );
+  }
+
+  if (!eventoId) {
+    return (
+      <div className="financeiro-root">
+        <EventoSelectorBar eventos={eventos} eventoId={eventoId} onChange={setEventoId} />
+        <div className="content-card" style={{ textAlign: 'center', padding: '4rem 2rem', color: '#4b5563', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '3rem', opacity: 0.5 }}>👆</div>
+          <h2 style={{ margin: 0, fontWeight: 600 }}>Nenhum evento selecionado</h2>
+          <p style={{ margin: 0 }}>
+            Selecione um evento na barra superior para gerenciar seu orçamento e despesas.
+          </p>
+        </div>
       </div>
     );
   }
@@ -50,7 +67,7 @@ export default function FinanceiroShell({
   return (
     <div className="financeiro-root">
       <EventoSelectorBar eventos={eventos} eventoId={eventoId} onChange={setEventoId} />
-      {eventoId ? children : null}
+      {children}
     </div>
   );
 }
