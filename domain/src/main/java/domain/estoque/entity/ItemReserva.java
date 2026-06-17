@@ -21,6 +21,17 @@ public class ItemReserva {
         this.quantidade = quantidade;
     }
 
+    private ItemReserva(String id, String reservaId, String itemEstoqueId, int quantidade) {
+        this.id = id;
+        this.reservaId = reservaId;
+        this.itemEstoqueId = itemEstoqueId;
+        this.quantidade = quantidade;
+    }
+
+    public static ItemReserva reconstituir(String id, String reservaId, String itemEstoqueId, int quantidade) {
+        return new ItemReserva(id, reservaId, itemEstoqueId, quantidade);
+    }
+
     public void atualizarQuantidade(int novaQuantidade) {
         if (novaQuantidade <= 0) {
             throw new IllegalArgumentException("A quantidade deve ser maior que zero.");

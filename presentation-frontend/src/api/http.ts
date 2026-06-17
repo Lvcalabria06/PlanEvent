@@ -21,7 +21,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     let mensagem = response.statusText;
     try {
       const body = await response.json();
-      if (body.mensagem) mensagem = body.mensagem;
+      if (body.message) mensagem = body.message;
+      else if (body.mensagem) mensagem = body.mensagem;
     } catch {
       /* ignore */
     }

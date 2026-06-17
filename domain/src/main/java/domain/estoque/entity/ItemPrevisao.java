@@ -43,6 +43,27 @@ public class ItemPrevisao {
         this.quantidadeFinal = quantidadeEstimada;
     }
 
+    private ItemPrevisao(String id, String previsaoId, String itemEstoqueId, String categoriaConsumo,
+                         int quantidadeEstimada, int quantidadeMinima, int quantidadeMaxima,
+                         String explicacaoCalculo, int quantidadeFinal) {
+        this.id = id;
+        this.previsaoId = previsaoId;
+        this.itemEstoqueId = itemEstoqueId;
+        this.categoriaConsumo = categoriaConsumo;
+        this.quantidadeEstimada = quantidadeEstimada;
+        this.quantidadeMinima = quantidadeMinima;
+        this.quantidadeMaxima = quantidadeMaxima;
+        this.explicacaoCalculo = explicacaoCalculo;
+        this.quantidadeFinal = quantidadeFinal;
+    }
+
+    public static ItemPrevisao reconstituir(String id, String previsaoId, String itemEstoqueId, String categoriaConsumo,
+                                            int quantidadeEstimada, int quantidadeMinima, int quantidadeMaxima,
+                                            String explicacaoCalculo, int quantidadeFinal) {
+        return new ItemPrevisao(id, previsaoId, itemEstoqueId, categoriaConsumo, quantidadeEstimada,
+                quantidadeMinima, quantidadeMaxima, explicacaoCalculo, quantidadeFinal);
+    }
+
     public void sobrescreverQuantidadeFinal(int novaQuantidade) {
         if (novaQuantidade < 0) {
             throw new IllegalArgumentException("Quantidade final nao pode ser negativa.");

@@ -12,6 +12,7 @@ import domain.evento.entity.Evento;
 import domain.evento.repository.EventoRepository;
 import domain.funcionario.entity.Funcionario;
 import domain.funcionario.repository.FuncionarioRepository;
+import domain.local.repository.LocalRepository;
 import domain.tarefa.entity.Tarefa;
 import domain.tarefa.repository.ResponsavelTarefaRepository;
 import domain.tarefa.repository.TarefaRepository;
@@ -46,6 +47,7 @@ class DadosDemoSeeder {
     private final LembreteRepository lembreteRepo;
     private final CompromissoService compromissoService;
     private final LembreteService lembreteService;
+    private final LocalRepository localRepository;
     private final Logger log;
 
     private final Map<String, String> funcIdPorNome = new LinkedHashMap<>();
@@ -57,7 +59,8 @@ class DadosDemoSeeder {
             TarefaRepository tarefaRepo, ResponsavelTarefaRepository responsavelRepo,
             TarefaService tarefaService, DependenciaService dependenciaService,
             CompromissoRepository compromissoRepo, LembreteRepository lembreteRepo,
-            CompromissoService compromissoService, LembreteService lembreteService, Logger log) {
+            CompromissoService compromissoService, LembreteService lembreteService,
+            LocalRepository localRepository, Logger log) {
         this.eventoRepo = eventoRepo;
         this.funcRepo = funcRepo;
         this.equipeRepo = equipeRepo;
@@ -69,13 +72,15 @@ class DadosDemoSeeder {
         this.lembreteRepo = lembreteRepo;
         this.compromissoService = compromissoService;
         this.lembreteService = lembreteService;
+        this.localRepository = localRepository;
         this.log = log;
     }
 
     void semear() {
         limparPersistidos();
 
-        String eventoId = eventoRepo.salvar(new Evento()).getId();
+        Evento eventoDemo = DemoEventoBasicoSeeder.criarEventoDemo(localRepository);
+        String eventoId = eventoRepo.salvar(eventoDemo).getId();
         criarFuncionarios();
         criarEquipes(eventoId);
         criarTarefas();

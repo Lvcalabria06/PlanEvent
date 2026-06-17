@@ -1,6 +1,7 @@
 package domain.estoque.service;
 
 import domain.estoque.entity.ItemEstoque;
+import domain.estoque.entity.ItemSubstituicao;
 import domain.estoque.repository.ItemEstoqueRepository;
 
 import java.util.List;
@@ -61,6 +62,20 @@ public class ItemEstoqueServiceImpl implements ItemEstoqueService {
     @Override
     public List<ItemEstoque> listarAtivos() {
         return itemEstoqueRepository.listarAtivos();
+    }
+
+    @Override
+    public ItemSubstituicao registrarSubstituicao(String itemOriginalId, String itemSubstitutoId,
+            double fatorEquivalencia) {
+        exigirExistente(itemOriginalId);
+        exigirExistente(itemSubstitutoId);
+        return itemEstoqueRepository.salvarSubstituicao(
+                new ItemSubstituicao(itemOriginalId, itemSubstitutoId, fatorEquivalencia));
+    }
+
+    @Override
+    public List<ItemSubstituicao> listarSubstituicoes() {
+        return itemEstoqueRepository.listarSubstituicoes();
     }
 
     private ItemEstoque exigirExistente(String id) {

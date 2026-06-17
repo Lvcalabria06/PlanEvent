@@ -112,6 +112,24 @@ public class PrevisaoConsumoServiceImpl implements PrevisaoConsumoService {
                 .orElseThrow(() -> new IllegalArgumentException("Previsao nao encontrada para o evento informado."));
     }
 
+    @Override
+    public Optional<PrevisaoConsumo> buscarPorId(String previsaoId) {
+        return previsaoConsumoRepository.buscarPorId(previsaoId);
+    }
+
+    @Override
+    public List<PrevisaoConsumo> listarTodas() {
+        return previsaoConsumoRepository.listarTodas();
+    }
+
+    @Override
+    public void tentarInvalidarPorAlteracaoEvento(String eventoId, String usuarioId) {
+        if (previsaoConsumoRepository.buscarPorEventoId(eventoId).isEmpty()) {
+            return;
+        }
+        invalidarPrevisaoPorAlteracaoEvento(eventoId, usuarioId);
+    }
+
     private BaseCalculo montarBaseCalculo(Evento eventoAtual) {
         List<RegistroHistoricoNormalizado> historicosValidos = consumoEventoRepository.listarTodos().stream()
                 .filter(ConsumoEvento::isValido)

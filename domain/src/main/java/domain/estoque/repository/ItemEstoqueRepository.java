@@ -12,4 +12,8 @@ public interface ItemEstoqueRepository {
     List<ItemEstoque> listarTodos();
     List<ItemEstoque> listarAtivos();
     List<ItemSubstituicao> buscarSubstituicoesPorItem(String itemOriginalId);
+
+    List<ItemSubstituicao> listarSubstituicoes();
+
+    ItemSubstituicao salvarSubstituicao(ItemSubstituicao substituicao);
 }

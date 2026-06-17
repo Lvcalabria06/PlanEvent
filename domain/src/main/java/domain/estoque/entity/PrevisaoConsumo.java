@@ -55,6 +55,38 @@ public class PrevisaoConsumo {
         registrarHistorico(TipoRegistroPrevisao.GERACAO_INICIAL, geradoPorUsuarioId, "Previsao inicial gerada.");
     }
 
+    private PrevisaoConsumo(String id, String eventoId, String geradoPorUsuarioId, LocalDateTime dataGeracao,
+                              StatusHistoricoPrevisao statusHistorico, boolean fallbackUtilizado, boolean invalidada,
+                              int versaoAtual, int totalEventosBase, TipoEvento tipoEventoReferencia,
+                              PorteEvento porteEventoReferencia, long duracaoHorasReferencia,
+                              List<ItemPrevisao> itens, List<RegistroHistoricoPrevisao> historicoRegistros) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.geradoPorUsuarioId = geradoPorUsuarioId;
+        this.dataGeracao = dataGeracao;
+        this.statusHistorico = statusHistorico;
+        this.fallbackUtilizado = fallbackUtilizado;
+        this.invalidada = invalidada;
+        this.versaoAtual = versaoAtual;
+        this.totalEventosBase = totalEventosBase;
+        this.tipoEventoReferencia = tipoEventoReferencia;
+        this.porteEventoReferencia = porteEventoReferencia;
+        this.duracaoHorasReferencia = duracaoHorasReferencia;
+        this.itens = new ArrayList<>(itens);
+        this.historicoRegistros = new ArrayList<>(historicoRegistros);
+    }
+
+    public static PrevisaoConsumo reconstituir(String id, String eventoId, String geradoPorUsuarioId,
+                                               LocalDateTime dataGeracao, StatusHistoricoPrevisao statusHistorico,
+                                               boolean fallbackUtilizado, boolean invalidada, int versaoAtual,
+                                               int totalEventosBase, TipoEvento tipoEventoReferencia,
+                                               PorteEvento porteEventoReferencia, long duracaoHorasReferencia,
+                                               List<ItemPrevisao> itens, List<RegistroHistoricoPrevisao> historicoRegistros) {
+        return new PrevisaoConsumo(id, eventoId, geradoPorUsuarioId, dataGeracao, statusHistorico, fallbackUtilizado,
+                invalidada, versaoAtual, totalEventosBase, tipoEventoReferencia, porteEventoReferencia,
+                duracaoHorasReferencia, itens, historicoRegistros);
+    }
+
     public void invalidarPorAlteracaoEvento(Evento evento, String usuarioId) {
         if (!possuiMudancaRelevante(evento)) {
             return;
@@ -155,4 +187,7 @@ public class PrevisaoConsumo {
     public int getTotalEventosBase() { return totalEventosBase; }
     public List<ItemPrevisao> getItens() { return Collections.unmodifiableList(itens); }
     public List<RegistroHistoricoPrevisao> getHistoricoRegistros() { return Collections.unmodifiableList(historicoRegistros); }
+    public TipoEvento getTipoEventoReferencia() { return tipoEventoReferencia; }
+    public PorteEvento getPorteEventoReferencia() { return porteEventoReferencia; }
+    public long getDuracaoHorasReferencia() { return duracaoHorasReferencia; }
 }

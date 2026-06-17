@@ -35,6 +35,22 @@ public class ReservaEstoque {
         this.itensReservados.clear();
     }
 
+    private ReservaEstoque(String id, String eventoId, LocalDateTime dataInicio, LocalDateTime dataFim,
+                           StatusReservaEstoque status, List<ItemReserva> itensReservados) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.status = status;
+        this.itensReservados = new ArrayList<>(itensReservados);
+    }
+
+    public static ReservaEstoque reconstituir(String id, String eventoId, LocalDateTime dataInicio,
+                                              LocalDateTime dataFim, StatusReservaEstoque status,
+                                              List<ItemReserva> itensReservados) {
+        return new ReservaEstoque(id, eventoId, dataInicio, dataFim, status, itensReservados);
+    }
+
     public void atualizarSolicitacao(LocalDateTime novaDataInicio, LocalDateTime novaDataFim, List<ItemReserva> novosItens) {
         validar(this.eventoId, novaDataInicio, novaDataFim, novosItens);
         this.dataInicio = novaDataInicio;

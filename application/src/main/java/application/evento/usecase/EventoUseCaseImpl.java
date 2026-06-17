@@ -4,6 +4,7 @@ import application.evento.dto.CriarEventoRequest;
 import application.evento.dto.EditarEventoRequest;
 import application.evento.dto.EventoResponse;
 import application.evento.mapper.EventoDtoMapper;
+import domain.estoque.service.PrevisaoConsumoService;
 import domain.evento.entity.Evento;
 import domain.evento.service.EventoService;
 import domain.local.repository.LocalRepository;
@@ -13,12 +14,17 @@ import java.util.List;
 
 public class EventoUseCaseImpl implements EventoUseCase {
 
+    private static final String USUARIO_SISTEMA = "gestor@empresa.com";
+
     private final EventoService eventoService;
     private final LocalRepository localRepository;
+    private final PrevisaoConsumoService previsaoConsumoService;
 
-    public EventoUseCaseImpl(EventoService eventoService, LocalRepository localRepository) {
+    public EventoUseCaseImpl(EventoService eventoService, LocalRepository localRepository,
+            PrevisaoConsumoService previsaoConsumoService) {
         this.eventoService = eventoService;
         this.localRepository = localRepository;
+        this.previsaoConsumoService = previsaoConsumoService;
     }
 
     @Override
@@ -49,6 +55,7 @@ public class EventoUseCaseImpl implements EventoUseCase {
                 request.dataInicio(),
                 request.dataFim(),
                 request.requisitosInfraestrutura());
+        previsaoConsumoService.tentarInvalidarPorAlteracaoEvento(id, USUARIO_SISTEMA);
         return EventoDtoMapper.paraResposta(evento, localRepository);
     }
 

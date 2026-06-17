@@ -143,6 +143,16 @@ public class RedistribuicaoEstoqueServiceImpl implements RedistribuicaoEstoqueSe
         return buscarCenarioExistente(cenarioId);
     }
 
+    @Override
+    public List<CenarioRedistribuicao> listarPendentes() {
+        return cenarioRedistribuicaoRepository.listarPendentes();
+    }
+
+    @Override
+    public List<CenarioRedistribuicao> listarTodos() {
+        return cenarioRedistribuicaoRepository.listarTodos();
+    }
+
     private Map<String, List<DemandaEvento>> montarDemandas(List<ReservaEstoque> reservasRedistribuiveis,
                                                              Map<String, Double> prioridadesPorEvento,
                                                              List<ReservaEstoque> reservasNoPeriodo,

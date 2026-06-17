@@ -8,6 +8,7 @@ import { EventosProvider } from './features/eventos/EventosContext'
 import { PlanningDataProvider } from './modules/planning/PlanningDataContext'
 import './agenda/agenda.css'
 import AgendaModule from './agenda/AgendaModule'
+import EstoqueApp from './estoque/EstoqueApp'
 import { AgendaProvider, useAgenda } from './agenda/AgendaContext'
 import LembretesNotificacaoPopup from './agenda/LembretesNotificacaoPopup'
 import TarefasApp from './app/TarefasApp'
@@ -1932,6 +1933,8 @@ export default function App() {
             <TarefasApp />
           ) : currentTab === 'agenda' ? (
             <AgendaModule />
+          ) : currentTab === 'estoque' ? (
+            <EstoqueApp />
           ) : currentTab === 'financeiro' ? (
             <FinanceiroApp />
           ) : currentTab === 'aprovacoes' ? (
@@ -1952,7 +1955,7 @@ export default function App() {
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '0.5rem' }}>Módulo em Desenvolvimento</h2>
-              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Eventos&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot;, &quot;Contratos&quot;, &quot;Locais&quot; ou &quot;Conciliação&quot; no menu lateral.</p>
+              <p style={{ fontSize: '0.9rem' }}>Esta área de apresentação está temporariamente sob construção. Escolha &quot;Dashboard&quot;, &quot;Equipe&quot;, &quot;Eventos&quot;, &quot;Estoque&quot;, &quot;Tarefas&quot;, &quot;Agenda&quot;, &quot;Financeiro&quot;, &quot;Aprovações&quot;, &quot;Fornecedores&quot;, &quot;Contratos&quot;, &quot;Locais&quot; ou &quot;Conciliação&quot; no menu lateral.</p>
             </div>
           )}
         </div>

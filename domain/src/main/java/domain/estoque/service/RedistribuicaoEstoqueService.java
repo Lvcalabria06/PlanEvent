@@ -15,4 +15,8 @@ public interface RedistribuicaoEstoqueService {
     CenarioRedistribuicao invalidarCenario(String cenarioId, String usuarioId, String motivo);
 
     CenarioRedistribuicao buscarCenario(String cenarioId);
+
+    java.util.List<CenarioRedistribuicao> listarPendentes();
+
+    java.util.List<CenarioRedistribuicao> listarTodos();
 }

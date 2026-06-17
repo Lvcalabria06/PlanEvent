@@ -53,6 +53,37 @@ public class CenarioRedistribuicao {
         this.historico = new ArrayList<>();
     }
 
+    private CenarioRedistribuicao(String id, LocalDateTime dataCriacao, String geradoPorUsuarioId,
+                                  LocalDateTime periodoInicio, LocalDateTime periodoFim, StatusRedistribuicao status,
+                                  List<AlocacaoRedistribuicao> alocacoesAtuais,
+                                  List<AlocacaoRedistribuicao> alocacoesOtimizadas,
+                                  List<RegistroHistorico> historico, LocalDateTime dataAplicacao,
+                                  String aplicadoPorUsuarioId) {
+        this.id = id;
+        this.dataCriacao = dataCriacao;
+        this.geradoPorUsuarioId = geradoPorUsuarioId;
+        this.periodoInicio = periodoInicio;
+        this.periodoFim = periodoFim;
+        this.status = status;
+        this.alocacoesAtuais = new ArrayList<>(alocacoesAtuais);
+        this.alocacoesOtimizadas = new ArrayList<>(alocacoesOtimizadas);
+        this.impactosPorEvento = calcularImpactos();
+        this.historico = new ArrayList<>(historico);
+        this.dataAplicacao = dataAplicacao;
+        this.aplicadoPorUsuarioId = aplicadoPorUsuarioId;
+    }
+
+    public static CenarioRedistribuicao reconstituir(String id, LocalDateTime dataCriacao, String geradoPorUsuarioId,
+                                                     LocalDateTime periodoInicio, LocalDateTime periodoFim,
+                                                     StatusRedistribuicao status,
+                                                     List<AlocacaoRedistribuicao> alocacoesAtuais,
+                                                     List<AlocacaoRedistribuicao> alocacoesOtimizadas,
+                                                     List<RegistroHistorico> historico, LocalDateTime dataAplicacao,
+                                                     String aplicadoPorUsuarioId) {
+        return new CenarioRedistribuicao(id, dataCriacao, geradoPorUsuarioId, periodoInicio, periodoFim, status,
+                alocacoesAtuais, alocacoesOtimizadas, historico, dataAplicacao, aplicadoPorUsuarioId);
+    }
+
     public void aplicar(String usuarioId) {
         if (this.status != StatusRedistribuicao.PENDENTE) {
             throw new IllegalStateException("Apenas cenarios pendentes podem ser aplicados.");
@@ -119,7 +150,23 @@ public class CenarioRedistribuicao {
     }
 
     private void registrarHistorico(String usuarioId, String descricao) {
-        historico.add(new RegistroHistorico(this.id, usuarioId, descricao, new ArrayList<>(alocacoesOtimizadas)));
+        historico.add(new RegistroHistorico(this.id, usuarioId, descricao, copiarAlocacoes(alocacoesOtimizadas)));
+    }
+
+    private static List<AlocacaoRedistribuicao> copiarAlocacoes(List<AlocacaoRedistribuicao> originais) {
+        List<AlocacaoRedistribuicao> copias = new ArrayList<>();
+        for (AlocacaoRedistribuicao original : originais) {
+            AlocacaoRedistribuicao copia = new AlocacaoRedistribuicao(
+                    original.getEventoId(),
+                    original.getItemEstoqueId(),
+                    original.getQuantidadeAnterior(),
+                    original.getQuantidadeRedistribuida());
+            if (original.possuiSubstituicao()) {
+                copia.aplicarSubstituicao(original.getItemSubstitutoId(), original.getQuantidadeSubstituto());
+            }
+            copias.add(copia);
+        }
+        return copias;
     }
 
     public String getId() { return id; }
@@ -197,6 +244,24 @@ public class CenarioRedistribuicao {
             this.dataHora = LocalDateTime.now();
             this.descricao = descricao;
             this.alocacoesSnapshot = Collections.unmodifiableList(new ArrayList<>(alocacoesSnapshot));
+        }
+
+        private RegistroHistorico(String id, String cenarioRedistribuicaoId, String usuarioResponsavelId,
+                                  LocalDateTime dataHora, String descricao,
+                                  List<AlocacaoRedistribuicao> alocacoesSnapshot) {
+            this.id = id;
+            this.cenarioRedistribuicaoId = cenarioRedistribuicaoId;
+            this.usuarioResponsavelId = usuarioResponsavelId;
+            this.dataHora = dataHora;
+            this.descricao = descricao;
+            this.alocacoesSnapshot = Collections.unmodifiableList(new ArrayList<>(alocacoesSnapshot));
+        }
+
+        public static RegistroHistorico reconstituir(String id, String cenarioRedistribuicaoId,
+                                                     String usuarioResponsavelId, LocalDateTime dataHora,
+                                                     String descricao, List<AlocacaoRedistribuicao> alocacoesSnapshot) {
+            return new RegistroHistorico(id, cenarioRedistribuicaoId, usuarioResponsavelId, dataHora, descricao,
+                    alocacoesSnapshot);
         }
 
         public String getId() { return id; }

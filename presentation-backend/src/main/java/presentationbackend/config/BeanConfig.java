@@ -18,6 +18,16 @@ import application.contrato.usecase.ContratoUseCase;
 import application.contrato.usecase.ContratoUseCaseImpl;
 import application.dependencia.usecase.DependenciaUseCase;
 import application.dependencia.usecase.DependenciaUseCaseImpl;
+import application.estoque.usecase.ConsumoEventoUseCase;
+import application.estoque.usecase.ConsumoEventoUseCaseImpl;
+import application.estoque.usecase.ItemEstoqueUseCase;
+import application.estoque.usecase.ItemEstoqueUseCaseImpl;
+import application.estoque.usecase.PrevisaoConsumoUseCase;
+import application.estoque.usecase.PrevisaoConsumoUseCaseImpl;
+import application.estoque.usecase.RedistribuicaoEstoqueUseCase;
+import application.estoque.usecase.RedistribuicaoEstoqueUseCaseImpl;
+import application.estoque.usecase.ReservaEstoqueUseCase;
+import application.estoque.usecase.ReservaEstoqueUseCaseImpl;
 import application.evento.usecase.AlocacaoLocalUseCase;
 import application.evento.usecase.AlocacaoLocalUseCaseImpl;
 import application.evento.usecase.EventoUseCase;
@@ -55,6 +65,22 @@ import domain.contrato.repository.ContratoRepository;
 import domain.contrato.service.ContratoService;
 import domain.contrato.service.ContratoServiceImpl;
 import domain.equipe.repository.EquipeRepository;
+import domain.estoque.repository.CenarioRedistribuicaoRepository;
+import domain.estoque.repository.ConsumoEventoRepository;
+import domain.estoque.repository.ItemEstoqueRepository;
+import domain.estoque.repository.PrevisaoConsumoRepository;
+import domain.estoque.repository.ReservaEstoqueRepository;
+import domain.estoque.service.ConsumoEventoService;
+import domain.estoque.service.ConsumoEventoServiceImpl;
+import domain.estoque.service.ItemEstoqueService;
+import domain.estoque.service.ItemEstoqueServiceImpl;
+import domain.estoque.service.PrevisaoConsumoService;
+import domain.estoque.service.PrevisaoConsumoServiceImpl;
+import domain.estoque.service.RedistribuicaoEstoqueService;
+import domain.estoque.service.RedistribuicaoEstoqueServiceImpl;
+import domain.estoque.service.ReservaEstoqueService;
+import domain.estoque.service.ReservaEstoqueServiceImpl;
+import domain.estoque.strategy.PrioridadePadraoEventoStrategy;
 import domain.evento.repository.EventoRepository;
 import domain.evento.service.EventoService;
 import domain.evento.service.EventoServiceImpl;
@@ -210,8 +236,9 @@ public class BeanConfig {
     }
 
     @Bean
-    public EventoUseCase eventoUseCase(EventoService eventoService, LocalRepository localRepository) {
-        return new EventoUseCaseImpl(eventoService, localRepository);
+    public EventoUseCase eventoUseCase(EventoService eventoService, LocalRepository localRepository,
+            PrevisaoConsumoService previsaoConsumoService) {
+        return new EventoUseCaseImpl(eventoService, localRepository, previsaoConsumoService);
     }
 
     @Bean
@@ -266,5 +293,72 @@ public class BeanConfig {
             TurnoOperacionalRepository turnoOperacionalRepository,
             LocalRepository localRepository) {
         return new TurnoOperacionalServiceImpl(turnoOperacionalRepository, localRepository);
+    }
+
+    @Bean
+    public ItemEstoqueService itemEstoqueService(ItemEstoqueRepository itemEstoqueRepository) {
+        return new ItemEstoqueServiceImpl(itemEstoqueRepository);
+    }
+
+    @Bean
+    public ReservaEstoqueService reservaEstoqueService(ReservaEstoqueRepository reservaEstoqueRepository,
+            EventoRepository eventoRepository,
+            ItemEstoqueRepository itemEstoqueRepository) {
+        return new ReservaEstoqueServiceImpl(reservaEstoqueRepository, eventoRepository, itemEstoqueRepository);
+    }
+
+    @Bean
+    public ConsumoEventoService consumoEventoService(ConsumoEventoRepository consumoEventoRepository,
+            EventoRepository eventoRepository) {
+        return new ConsumoEventoServiceImpl(consumoEventoRepository, eventoRepository);
+    }
+
+    @Bean
+    public PrevisaoConsumoService previsaoConsumoService(EventoRepository eventoRepository,
+            ConsumoEventoRepository consumoEventoRepository,
+            PrevisaoConsumoRepository previsaoConsumoRepository) {
+        return new PrevisaoConsumoServiceImpl(eventoRepository, consumoEventoRepository, previsaoConsumoRepository);
+    }
+
+    @Bean
+    public RedistribuicaoEstoqueService redistribuicaoEstoqueService(
+            ReservaEstoqueRepository reservaEstoqueRepository,
+            ItemEstoqueRepository itemEstoqueRepository,
+            EventoRepository eventoRepository,
+            CenarioRedistribuicaoRepository cenarioRedistribuicaoRepository,
+            PrevisaoConsumoRepository previsaoConsumoRepository) {
+        return new RedistribuicaoEstoqueServiceImpl(
+                reservaEstoqueRepository,
+                itemEstoqueRepository,
+                eventoRepository,
+                cenarioRedistribuicaoRepository,
+                previsaoConsumoRepository,
+                new PrioridadePadraoEventoStrategy());
+    }
+
+    @Bean
+    public ItemEstoqueUseCase itemEstoqueUseCase(ItemEstoqueService itemEstoqueService) {
+        return new ItemEstoqueUseCaseImpl(itemEstoqueService);
+    }
+
+    @Bean
+    public ReservaEstoqueUseCase reservaEstoqueUseCase(ReservaEstoqueService reservaEstoqueService) {
+        return new ReservaEstoqueUseCaseImpl(reservaEstoqueService);
+    }
+
+    @Bean
+    public ConsumoEventoUseCase consumoEventoUseCase(ConsumoEventoService consumoEventoService) {
+        return new ConsumoEventoUseCaseImpl(consumoEventoService);
+    }
+
+    @Bean
+    public PrevisaoConsumoUseCase previsaoConsumoUseCase(PrevisaoConsumoService previsaoConsumoService) {
+        return new PrevisaoConsumoUseCaseImpl(previsaoConsumoService);
+    }
+
+    @Bean
+    public RedistribuicaoEstoqueUseCase redistribuicaoEstoqueUseCase(
+            RedistribuicaoEstoqueService redistribuicaoEstoqueService) {
+        return new RedistribuicaoEstoqueUseCaseImpl(redistribuicaoEstoqueService);
     }
 }

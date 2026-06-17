@@ -1,6 +1,7 @@
 package domain.estoque.service;
 
 import domain.estoque.entity.ItemEstoque;
+import domain.estoque.entity.ItemSubstituicao;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +23,8 @@ public interface ItemEstoqueService {
     List<ItemEstoque> listarTodos();
 
     List<ItemEstoque> listarAtivos();
+
+    ItemSubstituicao registrarSubstituicao(String itemOriginalId, String itemSubstitutoId, double fatorEquivalencia);
+
+    List<ItemSubstituicao> listarSubstituicoes();
 }

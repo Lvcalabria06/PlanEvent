@@ -29,6 +29,24 @@ public class AlocacaoRedistribuicao {
         this.quantidadeSubstituto = 0;
     }
 
+    private AlocacaoRedistribuicao(String id, String eventoId, String itemEstoqueId, int quantidadeAnterior,
+                                   int quantidadeRedistribuida, String itemSubstitutoId, int quantidadeSubstituto) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.itemEstoqueId = itemEstoqueId;
+        this.quantidadeAnterior = quantidadeAnterior;
+        this.quantidadeRedistribuida = quantidadeRedistribuida;
+        this.itemSubstitutoId = itemSubstitutoId;
+        this.quantidadeSubstituto = quantidadeSubstituto;
+    }
+
+    public static AlocacaoRedistribuicao reconstituir(String id, String eventoId, String itemEstoqueId,
+                                                      int quantidadeAnterior, int quantidadeRedistribuida,
+                                                      String itemSubstitutoId, int quantidadeSubstituto) {
+        return new AlocacaoRedistribuicao(id, eventoId, itemEstoqueId, quantidadeAnterior, quantidadeRedistribuida,
+                itemSubstitutoId, quantidadeSubstituto);
+    }
+
     public void aplicarSubstituicao(String itemSubstitutoId, int quantidadeSubstituto) {
         if (itemSubstitutoId == null || itemSubstitutoId.isBlank()) {
             throw new IllegalArgumentException("Item substituto e obrigatorio para aplicar substituicao.");

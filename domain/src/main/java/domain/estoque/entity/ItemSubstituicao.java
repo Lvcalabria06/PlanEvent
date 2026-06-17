@@ -24,6 +24,18 @@ public class ItemSubstituicao {
         this.fatorEquivalencia = fatorEquivalencia;
     }
 
+    private ItemSubstituicao(String id, String itemOriginalId, String itemSubstitutoId, double fatorEquivalencia) {
+        this.id = id;
+        this.itemOriginalId = itemOriginalId;
+        this.itemSubstitutoId = itemSubstitutoId;
+        this.fatorEquivalencia = fatorEquivalencia;
+    }
+
+    public static ItemSubstituicao reconstituir(String id, String itemOriginalId, String itemSubstitutoId,
+                                                double fatorEquivalencia) {
+        return new ItemSubstituicao(id, itemOriginalId, itemSubstitutoId, fatorEquivalencia);
+    }
+
     public String getId() { return id; }
     public String getItemOriginalId() { return itemOriginalId; }
     public String getItemSubstitutoId() { return itemSubstitutoId; }

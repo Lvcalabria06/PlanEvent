@@ -37,6 +37,22 @@ public class ItemEstoque {
         this.dataAtualizacao = this.dataCriacao;
     }
 
+    private ItemEstoque(String id, String nome, int quantidadeTotal, int quantidadeDisponivel,
+                        boolean ativo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        this.id = id;
+        this.nome = nome;
+        this.quantidadeTotal = quantidadeTotal;
+        this.quantidadeDisponivel = quantidadeDisponivel;
+        this.ativo = ativo;
+        this.dataCriacao = dataCriacao;
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public static ItemEstoque reconstituir(String id, String nome, int quantidadeTotal, int quantidadeDisponivel,
+                                           boolean ativo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+        return new ItemEstoque(id, nome, quantidadeTotal, quantidadeDisponivel, ativo, dataCriacao, dataAtualizacao);
+    }
+
     public void atualizarDados(String nome, int quantidadeTotal) {
         garantirAtivo();
         validar(nome, quantidadeTotal);

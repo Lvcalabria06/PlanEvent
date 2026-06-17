@@ -32,6 +32,22 @@ public class ConsumoEvento {
         this.valido = true;
     }
 
+    private ConsumoEvento(String id, String eventoId, String registradoPorUsuarioId, LocalDateTime dataRegistro,
+                          List<ItemConsumoEvento> itensConsumidos, boolean valido) {
+        this.id = id;
+        this.eventoId = eventoId;
+        this.registradoPorUsuarioId = registradoPorUsuarioId;
+        this.dataRegistro = dataRegistro;
+        this.itensConsumidos = Collections.unmodifiableList(new ArrayList<>(itensConsumidos));
+        this.valido = valido;
+    }
+
+    public static ConsumoEvento reconstituir(String id, String eventoId, String registradoPorUsuarioId,
+                                             LocalDateTime dataRegistro, List<ItemConsumoEvento> itensConsumidos,
+                                             boolean valido) {
+        return new ConsumoEvento(id, eventoId, registradoPorUsuarioId, dataRegistro, itensConsumidos, valido);
+    }
+
     public void invalidar() {
         this.valido = false;
     }

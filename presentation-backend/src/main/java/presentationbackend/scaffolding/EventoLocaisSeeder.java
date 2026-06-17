@@ -18,9 +18,6 @@ public final class EventoLocaisSeeder {
     private EventoLocaisSeeder() {}
 
     public static void semearSeVazio(LocalRepository localRepository) {
-        if (!(localRepository instanceof InMemoryLocalRepository)) {
-            return;
-        }
         if (!localRepository.listarTodos().isEmpty()) {
             return;
         }

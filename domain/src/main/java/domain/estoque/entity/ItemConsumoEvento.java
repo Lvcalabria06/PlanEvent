@@ -28,6 +28,18 @@ public class ItemConsumoEvento {
         this.quantidadeConsumida = quantidadeConsumida;
     }
 
+    private ItemConsumoEvento(String id, String itemEstoqueId, String categoriaConsumo, int quantidadeConsumida) {
+        this.id = id;
+        this.itemEstoqueId = itemEstoqueId;
+        this.categoriaConsumo = categoriaConsumo;
+        this.quantidadeConsumida = quantidadeConsumida;
+    }
+
+    public static ItemConsumoEvento reconstituir(String id, String itemEstoqueId, String categoriaConsumo,
+                                                 int quantidadeConsumida) {
+        return new ItemConsumoEvento(id, itemEstoqueId, categoriaConsumo, quantidadeConsumida);
+    }
+
     public String getId() {
         return id;
     }

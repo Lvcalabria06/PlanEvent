@@ -46,6 +46,17 @@ public class InMemoryItemEstoqueRepository implements ItemEstoqueRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ItemSubstituicao> listarSubstituicoes() {
+        return new ArrayList<>(substituicoes);
+    }
+
+    @Override
+    public ItemSubstituicao salvarSubstituicao(ItemSubstituicao substituicao) {
+        substituicoes.add(substituicao);
+        return substituicao;
+    }
+
     public void registrarSubstituicao(ItemSubstituicao substituicao) {
         substituicoes.add(substituicao);
     }

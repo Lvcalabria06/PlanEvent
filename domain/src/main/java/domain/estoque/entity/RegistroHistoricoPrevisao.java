@@ -31,6 +31,25 @@ public class RegistroHistoricoPrevisao {
         this.itens = Collections.unmodifiableList(new ArrayList<>(itens));
     }
 
+    private RegistroHistoricoPrevisao(String id, int versao, TipoRegistroPrevisao tipoRegistro,
+                                      String usuarioResponsavelId, LocalDateTime dataHora, String justificativa,
+                                      List<ItemPrevisaoHistorico> itens) {
+        this.id = id;
+        this.versao = versao;
+        this.tipoRegistro = tipoRegistro;
+        this.usuarioResponsavelId = usuarioResponsavelId;
+        this.dataHora = dataHora;
+        this.justificativa = justificativa;
+        this.itens = Collections.unmodifiableList(new ArrayList<>(itens));
+    }
+
+    public static RegistroHistoricoPrevisao reconstituir(String id, int versao, TipoRegistroPrevisao tipoRegistro,
+                                                         String usuarioResponsavelId, LocalDateTime dataHora,
+                                                         String justificativa, List<ItemPrevisaoHistorico> itens) {
+        return new RegistroHistoricoPrevisao(id, versao, tipoRegistro, usuarioResponsavelId, dataHora,
+                justificativa, itens);
+    }
+
     public String getId() {
         return id;
     }
