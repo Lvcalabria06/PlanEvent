@@ -2,6 +2,8 @@ package domain.funcionario.service;
 
 import domain.equipe.repository.EquipeRepository;
 import domain.funcionario.entity.Funcionario;
+import domain.funcionario.interpreter.AnalisadorExpressaoFuncionario;
+import domain.funcionario.interpreter.ExpressaoFuncionario;
 import domain.funcionario.repository.FuncionarioRepository;
 
 import java.util.List;
@@ -56,5 +58,13 @@ public class FuncionarioServiceImpl implements FuncionarioService {
 
         funcionario.inativar();
         funcionarioRepository.salvar(funcionario);
+    }
+
+    @Override
+    public List<Funcionario> filtrarFuncionarios(String expressao) {
+        ExpressaoFuncionario expr = AnalisadorExpressaoFuncionario.parse(expressao);
+        return funcionarioRepository.listarTodos().stream()
+                .filter(f -> expr.interpretar(f))
+                .toList();
     }
 }

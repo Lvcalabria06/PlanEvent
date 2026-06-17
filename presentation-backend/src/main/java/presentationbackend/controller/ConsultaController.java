@@ -1,7 +1,6 @@
 package presentationbackend.controller;
 
 import application.consulta.dto.EquipeResumoResponse;
-import application.consulta.dto.FuncionarioResumoResponse;
 import application.consulta.dto.MembroResumoResponse;
 import domain.equipe.entity.Equipe;
 import domain.equipe.entity.MembroEquipe;
@@ -16,6 +15,8 @@ import java.util.List;
 /**
  * Endpoints de leitura usados pela camada de apresentação das tarefas para
  * popular seletores de equipe e responsáveis com dados reais (não mockados).
+ *
+ * Nota: GET /api/funcionarios foi movido para FuncionarioController.
  */
 @RestController
 @RequestMapping("/api")
@@ -34,16 +35,6 @@ public class ConsultaController {
     public List<EquipeResumoResponse> listarEquipes() {
         return equipeRepository.listarTodos().stream()
                 .map(this::paraResumo)
-                .toList();
-    }
-
-    @GetMapping("/funcionarios")
-    public List<FuncionarioResumoResponse> listarFuncionarios() {
-        return funcionarioRepository.listarTodos().stream()
-                .map(f -> new FuncionarioResumoResponse(
-                        f.getId(),
-                        f.getNome(),
-                        f.getCargo() != null ? f.getCargo().name() : null))
                 .toList();
     }
 

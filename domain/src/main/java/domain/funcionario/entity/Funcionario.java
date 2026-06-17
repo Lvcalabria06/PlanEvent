@@ -95,4 +95,29 @@ public class Funcionario {
     public boolean isAtivo() { return ativo; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    private Funcionario(String id, String nome, CargoFuncionario cargo,
+            DisponibilidadeFuncionario disponibilidade, boolean ativo,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.nome = nome;
+        this.cargo = cargo;
+        this.disponibilidade = disponibilidade;
+        this.ativo = ativo;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public static Funcionario reconstituir(String id, String nome, String cargo,
+            String disponibilidade, boolean ativo,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Funcionario(
+                id,
+                nome,
+                CargoFuncionario.fromString(cargo),
+                DisponibilidadeFuncionario.fromString(disponibilidade),
+                ativo,
+                createdAt,
+                updatedAt);
+    }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Toaster } from 'sonner'
 import './App.css'
 import { FornecedoresSection } from './features/fornecedores/FornecedoresSection'
@@ -16,6 +16,17 @@ import FinanceiroApp from './financeiro/FinanceiroApp'
 import AprovacoesApp from './financeiro/AprovacoesApp'
 import ConciliacaoApp from './conciliacao/ConciliacaoApp'
 import LocaisApp from './locais/LocaisApp'
+import { listarEventosApi } from './modules/planning/eventos/api'
+import {
+  listarFuncionarios,
+  cadastrarFuncionario,
+  editarFuncionario as editarFuncionarioApi,
+  inativarFuncionario as inativarFuncionarioApi,
+  criarEquipe as criarEquipeApi,
+  editarEquipe as editarEquipeApi,
+  removerEquipe as removerEquipeApi,
+  type FuncionarioApiDto,
+} from './api/equipeApi'
 
 interface Funcionario {
 	id: string;
@@ -78,60 +89,31 @@ export default function App() {
   // Shared state for navigation
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'equipe' | 'eventos' | 'locais' | 'estoque' | 'financeiro' | 'aprovacoes' | 'tarefas' | 'agenda' | 'contratos' | 'fornecedores' | 'conciliacao'>('dashboard');
 
-  // Shared state for team management
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([
-    {
-      id: '1',
-      nome: 'Maria Silva',
-      email: 'maria.silva@empresa.com',
-      cargo: 'Coordenador',
-      competencias: ['Gestão', 'Eventos Corporativos', 'Liderança'],
-      disponibilidade: 'INTEGRAL',
-      status: 'Em equipe',
-      ativo: true,
-      lider: true,
-      criadoEm: '01/04/2026, 10:00:00',
-      atualizadoEm: '01/04/2026, 10:00:00'
-    },
-    {
-      id: '2',
-      nome: 'João Santos',
-      email: 'joao.santos@empresa.com',
-      cargo: 'Técnico A/V',
-      competencias: ['Áudio', 'Vídeo', 'Iluminação'],
-      disponibilidade: 'TARDE',
-      status: 'Em equipe',
-      ativo: true,
-      lider: false,
-      criadoEm: '01/04/2026, 10:00:00',
-      atualizadoEm: '01/04/2026, 10:00:00'
-    },
-    {
-      id: '3',
-      nome: 'Ana Costa',
-      email: 'ana.costa@empresa.com',
-      cargo: 'Logística',
-      competencias: ['Logística', 'Transporte', 'Estoque'],
-      disponibilidade: 'MANHÃ',
-      status: 'Disponível',
-      ativo: true,
-      lider: false,
-      criadoEm: '01/04/2026, 10:00:00',
-      atualizadoEm: '01/04/2026, 10:00:00'
-    }
-  ]);
+  // Shared state for team management — loaded from backend
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
 
-  const [equipes, setEquipes] = useState<Equipe[]>([
-    {
-      id: 'equipe-1',
-      eventoId: 'evento-1',
-      nome: 'Equipe Alpha',
-      membros: [
-        { funcionarioId: '1', lider: true },
-        { funcionarioId: '2', lider: false }
-      ]
-    }
-  ]);
+  // Helper: convert API DTO → local Funcionario shape
+  const dtoParaFuncionario = (dto: FuncionarioApiDto): Funcionario => ({
+    id: dto.id,
+    nome: dto.nome,
+    email: '',
+    cargo: dto.cargo,
+    competencias: [],
+    disponibilidade: dto.disponibilidade,
+    status: dto.ativo ? 'Disponível' : 'Inativo',
+    ativo: dto.ativo,
+    lider: false,
+    criadoEm: dto.createdAt,
+    atualizadoEm: dto.updatedAt,
+  });
+
+  // Carrega funcionários do backend ao montar
+  useEffect(() => {
+    listarFuncionarios()
+      .then(dtos => setFuncionarios(dtos.map(dtoParaFuncionario)))
+      .catch(() => {/* mantém vazio se API indisponível */});
+  }, []);
 
   // Team management navigation and form states
   const [currentView, setCurrentView] = useState<'list' | 'create' | 'edit' | 'create-team' | 'edit-team'>('list');
@@ -158,12 +140,18 @@ export default function App() {
   const [showInativarModal, setShowInativarModal] = useState<boolean>(false);
   const [funcToInativar, setFuncToInativar] = useState<Funcionario | null>(null);
 
-  // List of events for the team selection
-  const [eventosList] = useState<{ id: string; nome: string; dataEvento?: string }[]>([
-    { id: 'evento-1', nome: 'Conferência Anual de TI 2026', dataEvento: '2026-05-15' },
-    { id: 'evento-2', nome: 'Workshop de Liderança Q2', dataEvento: '2026-06-10' },
-    { id: 'evento-3', nome: 'Convenção Anual 2026', dataEvento: '2026-04-20' },
-  ]);
+  // List of events for the team selection — fetched from backend
+  const [eventosList, setEventosList] = useState<{ id: string; nome: string; dataEvento?: string }[]>([]);
+
+  useEffect(() => {
+    listarEventosApi()
+      .then(dtos => setEventosList(dtos.map(e => ({
+        id: e.id,
+        nome: e.nome,
+        dataEvento: e.dataInicio ?? undefined,
+      }))))
+      .catch(() => {/* mantém lista vazia se API indisponível */});
+  }, []);
 
   // JS expression evaluator representing the Interpreter pattern
   const evaluateInterpreterExpression = (func: Funcionario, expr: string): boolean => {
@@ -234,56 +222,39 @@ export default function App() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const newFunc: Funcionario = {
-      id: String(funcionarios.length + 1),
+    cadastrarFuncionario({
       nome: formNome.trim(),
-      email: formEmail.trim(),
       cargo: formCargo,
-      competencias: formCompetencias.split(',').map(s => s.trim()).filter(Boolean),
       disponibilidade: formDisponibilidade.toUpperCase(),
-      status: 'Disponível',
-      ativo: true,
-      lider: false,
-      criadoEm: new Date().toLocaleString('pt-BR'),
-      atualizadoEm: new Date().toLocaleString('pt-BR')
-    };
-
-    setFuncionarios([...funcionarios, newFunc]);
-    resetForm();
-    setCurrentView('list');
+    })
+      .then(dto => {
+        setFuncionarios(prev => [...prev, dtoParaFuncionario(dto)]);
+        resetForm();
+        setCurrentView('list');
+      })
+      .catch(err => setFormErrors({ geral: err.message ?? 'Erro ao cadastrar funcionário.' }));
   };
 
   const handleEditFuncionario = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm() || !selectedFuncId) return;
 
-    setFuncionarios(
-      funcionarios.map(f => {
-        if (f.id === selectedFuncId) {
-          return {
-            ...f,
-            nome: formNome.trim(),
-            email: formEmail.trim(),
-            cargo: formCargo,
-            competencias: formCompetencias.split(',').map(s => s.trim()).filter(Boolean),
-            disponibilidade: formDisponibilidade.toUpperCase(),
-            atualizadoEm: new Date().toLocaleString('pt-BR')
-          };
-        }
-        return f;
+    editarFuncionarioApi(selectedFuncId, {
+      nome: formNome.trim(),
+      cargo: formCargo,
+      disponibilidade: formDisponibilidade.toUpperCase(),
+    })
+      .then(dto => {
+        setFuncionarios(prev =>
+          prev.map(f => f.id === selectedFuncId ? { ...dtoParaFuncionario(dto), email: f.email, competencias: f.competencias } : f)
+        );
+        resetForm();
+        setCurrentView('list');
       })
-    );
-
-    resetForm();
-    setCurrentView('list');
+      .catch(err => setFormErrors({ geral: err.message ?? 'Erro ao editar funcionário.' }));
   };
 
   const triggerInativarConfirmation = (id: string) => {
-    const isLinkedToTeam = equipes.some(eq => eq.membros.some(m => m.funcionarioId === id));
-    if (isLinkedToTeam) {
-      alert('Não é possível inativar funcionário vinculado a uma equipe.');
-      return;
-    }
     const func = funcionarios.find(f => f.id === id);
     if (func) {
       setFuncToInativar(func);
@@ -292,31 +263,28 @@ export default function App() {
   };
 
   const confirmInativarFuncionario = () => {
-    if (funcToInativar) {
-      setFuncionarios(
-        funcionarios.map(f => {
-          if (f.id === funcToInativar.id) {
-            return { ...f, ativo: false, status: 'Inativo', atualizadoEm: new Date().toLocaleString('pt-BR') };
-          }
-          return f;
-        })
-      );
-      setShowInativarModal(false);
-      setFuncToInativar(null);
-      resetForm();
-      setCurrentView('list');
-    }
+    if (!funcToInativar) return;
+    inativarFuncionarioApi(funcToInativar.id)
+      .then(() => {
+        setFuncionarios(prev =>
+          prev.map(f => f.id === funcToInativar!.id
+            ? { ...f, ativo: false, status: 'Inativo' }
+            : f)
+        );
+        setShowInativarModal(false);
+        setFuncToInativar(null);
+        resetForm();
+        setCurrentView('list');
+      })
+      .catch(err => {
+        alert(err.message ?? 'Não foi possível inativar o funcionário.');
+        setShowInativarModal(false);
+        setFuncToInativar(null);
+      });
   };
 
-  const handleAtivarFuncionario = (id: string) => {
-    setFuncionarios(
-      funcionarios.map(f => {
-        if (f.id === id) {
-          return { ...f, ativo: true, status: 'Disponível', atualizadoEm: new Date().toLocaleString('pt-BR') };
-        }
-        return f;
-      })
-    );
+  const handleAtivarFuncionario = (_id: string) => {
+    // reativação não é suportada pelo backend atual
   };
 
   const handleCreateEquipe = (e: React.FormEvent) => {
@@ -349,36 +317,28 @@ export default function App() {
       return;
     }
 
-    const newTeam: Equipe = {
-      id: 'equipe-' + (equipes.length + 1),
+    criarEquipeApi({
       eventoId: teamEventoId,
       nome: teamNome.trim(),
-      membros: selectedMembros.map(mId => ({
-        funcionarioId: mId,
-        lider: mId === teamLiderId
-      }))
-    };
-
-    setFuncionarios(
-      funcionarios.map(f => {
-        if (selectedMembros.includes(f.id)) {
-          return {
-            ...f,
-            status: 'Em equipe',
-            lider: f.id === teamLiderId
-          };
-        }
-        return f;
+      membros: selectedMembros.map(mId => ({ funcionarioId: mId, lider: mId === teamLiderId })),
+    })
+      .then(dto => {
+        const newTeam: Equipe = {
+          id: dto.id,
+          eventoId: dto.eventoId,
+          nome: dto.nome,
+          membros: dto.membros.map(m => ({ funcionarioId: m.funcionarioId, lider: m.lider })),
+        };
+        setEquipes(prev => [...prev, newTeam]);
+        setFuncionarios(prev =>
+          prev.map(f => selectedMembros.includes(f.id)
+            ? { ...f, status: 'Em equipe', lider: f.id === teamLiderId }
+            : f)
+        );
+        setTeamNome(''); setTeamEventoId(''); setSelectedMembros([]); setTeamLiderId(''); setTeamErrors('');
+        setCurrentView('list');
       })
-    );
-
-    setEquipes([...equipes, newTeam]);
-    setTeamNome('');
-    setTeamEventoId('');
-    setSelectedMembros([]);
-    setTeamLiderId('');
-    setTeamErrors('');
-    setCurrentView('list');
+      .catch(err => setTeamErrors(err.message ?? 'Erro ao criar equipe.'));
   };
 
   const handleEditEquipe = (e: React.FormEvent) => {
@@ -417,69 +377,42 @@ export default function App() {
     const prevTeam = equipes.find(eq => eq.id === selectedTeamId);
     const prevMemberIds = prevTeam ? prevTeam.membros.map(m => m.funcionarioId) : [];
 
-    // Reset status of old members to "Disponível"
-    let updatedFuncionarios = funcionarios.map(f => {
-      if (prevMemberIds.includes(f.id)) {
-        return { ...f, status: 'Disponível' as const, lider: false };
-      }
-      return f;
-    });
-
-    // Update status of current selected members to "Em equipe"
-    updatedFuncionarios = updatedFuncionarios.map(f => {
-      if (selectedMembros.includes(f.id)) {
-        return {
-          ...f,
-          status: 'Em equipe' as const,
-          lider: f.id === teamLiderId
-        };
-      }
-      return f;
-    });
-
-    setFuncionarios(updatedFuncionarios);
-
-    setEquipes(
-      equipes.map(eq => {
-        if (eq.id === selectedTeamId) {
-          return {
-            ...eq,
-            eventoId: teamEventoId,
-            nome: teamNome.trim(),
-            membros: selectedMembros.map(mId => ({
-              funcionarioId: mId,
-              lider: mId === teamLiderId
-            }))
-          };
-        }
-        return eq;
+    editarEquipeApi(selectedTeamId, {
+      nome: teamNome.trim(),
+      membros: selectedMembros.map(mId => ({ funcionarioId: mId, lider: mId === teamLiderId })),
+    })
+      .then(dto => {
+        setEquipes(prev => prev.map(eq => eq.id === selectedTeamId
+          ? { id: dto.id, eventoId: dto.eventoId, nome: dto.nome, membros: dto.membros.map(m => ({ funcionarioId: m.funcionarioId, lider: m.lider })) }
+          : eq));
+        setFuncionarios(prev =>
+          prev.map(f => {
+            if (prevMemberIds.includes(f.id) && !selectedMembros.includes(f.id))
+              return { ...f, status: 'Disponível' as const, lider: false };
+            if (selectedMembros.includes(f.id))
+              return { ...f, status: 'Em equipe' as const, lider: f.id === teamLiderId };
+            return f;
+          })
+        );
+        setTeamNome(''); setTeamEventoId(''); setSelectedMembros([]); setTeamLiderId(''); setTeamErrors('');
+        setCurrentView('list');
       })
-    );
-
-    setTeamNome('');
-    setTeamEventoId('');
-    setSelectedMembros([]);
-    setTeamLiderId('');
-    setTeamErrors('');
-    setCurrentView('list');
+      .catch(err => setTeamErrors(err.message ?? 'Erro ao editar equipe.'));
   };
 
   const handleRemoveEquipe = (teamId: string) => {
     const team = equipes.find(eq => eq.id === teamId);
     if (!team) return;
-
-    const teamMemberIds = team.membros.map(m => m.funcionarioId);
-    setFuncionarios(
-      funcionarios.map(f => {
-        if (teamMemberIds.includes(f.id)) {
-          return { ...f, status: 'Disponível', lider: false };
-        }
-        return f;
+    removerEquipeApi(teamId)
+      .then(() => {
+        const teamMemberIds = team.membros.map(m => m.funcionarioId);
+        setFuncionarios(prev =>
+          prev.map(f => teamMemberIds.includes(f.id) ? { ...f, status: 'Disponível', lider: false } : f)
+        );
+        setEquipes(prev => prev.filter(eq => eq.id !== teamId));
+        setCurrentView('list');
       })
-    );
-
-    setEquipes(equipes.filter(eq => eq.id !== teamId));
-    setCurrentView('list');
+      .catch(err => alert(err.message ?? 'Erro ao remover equipe.'));
   };
 
   const navigateToEditTeam = (team: Equipe) => {
