@@ -12,6 +12,7 @@ import domain.local.service.CompatibilidadeLayoutEvento;
 import domain.local.service.LayoutLocalService;
 import domain.local.service.LayoutLocalServiceImpl;
 import domain.local.service.ResumoDesempenhoContextualLocal;
+import domain.local.support.InMemoryAvaliacaoContextualRepository;
 import domain.local.support.InMemoryEventoRepository;
 import domain.local.support.InMemoryLocalRepository;
 import io.cucumber.java.Before;
@@ -49,7 +50,7 @@ public class LayoutCapacidadeEAvaliacaoContextualSteps {
         eventoRepository = new InMemoryEventoRepository();
         localRepository = new InMemoryLocalRepository();
         layoutLocalService = new LayoutLocalServiceImpl(localRepository, eventoRepository);
-        avaliacaoService = new AvaliacaoContextualLocalServiceImpl(eventoRepository, localRepository, new InmemoryAvaliacaoContextualRepository());
+        avaliacaoService = new AvaliacaoContextualLocalServiceImpl(eventoRepository, localRepository, new InMemoryAvaliacaoContextualRepository());
         eventoAtual = null;
         localAtual = null;
         compatibilidades = null;
