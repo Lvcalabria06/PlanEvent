@@ -196,7 +196,7 @@ export function Tasks() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="max-w-7xl mx-auto h-[calc(100vh-6rem)] flex flex-col">
+      <div className="tarefas-page max-w-7xl mx-auto w-full flex flex-col">
         <div className="mb-6 flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gestão de Tarefas</h1>
