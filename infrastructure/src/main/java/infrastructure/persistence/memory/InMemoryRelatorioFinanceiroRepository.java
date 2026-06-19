@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Repository
-@Primary
 public class InMemoryRelatorioFinanceiroRepository implements RelatorioFinanceiroRepository {
 
     private final Map<String, RelatorioFinanceiro> porId = new ConcurrentHashMap<>();

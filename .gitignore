@@ -1,13 +1,19 @@
 # Variáveis de ambiente (credenciais locais). O template .env.example É versionado.
 .env
 
+# Referências locais (projetos de estudo / outros repositórios — não versionar)
+_ref-sgb/
+_ref-*/
+
 # Node / Frontend
 node_modules/
 presentation-frontend/.node/
 presentation-frontend/node_modules/
+presentation-frontend/dist/
 
-# Maven
+# Maven (build por módulo)
 target/
+**/target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

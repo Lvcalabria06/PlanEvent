@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
  * possa ser instanciado sem dependências ausentes.
  *
  * <p>Substituído automaticamente pelo adapter JPA quando o módulo financeiro
- * fornecer sua implementação (via {@code @ConditionalOnMissingBean}).</p>
+ * fornecer sua implementação.</p>
  */
-class InMemoryDespesaRepository implements DespesaRepository {
+public class InMemoryDespesaRepository implements DespesaRepository {
 
     private final Map<String, Despesa> porId = new ConcurrentHashMap<>();
 

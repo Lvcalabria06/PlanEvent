@@ -50,11 +50,6 @@ public class ScaffoldingConfig {
         return new InMemoryEquipeRepository();
     }
 
-    @Bean
-    @ConditionalOnMissingBean(DespesaRepository.class)
-    public DespesaRepository inMemoryDespesaRepository() {
-        return new InMemoryDespesaRepository();
-    }
 
     @Bean
     @ConditionalOnMissingBean(LocalRepository.class)

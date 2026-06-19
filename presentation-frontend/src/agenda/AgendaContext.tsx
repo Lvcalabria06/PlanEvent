@@ -237,7 +237,6 @@ export function AgendaProvider({ eventos: eventosProp, children }: { eventos: Ev
       eventos,
     })
     if (erro) return erro
-    if (!gestorId) return 'Gestor não identificado.'
 
     try {
       const criado = await api<BackendCompromisso>('/compromissos', {

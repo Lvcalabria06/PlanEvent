@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { financeiroApi } from '../api/financeiroApi';
-import type { Despesa } from '../api/financeiroApi';
+import type { Despesa, FornecedorResumo } from '../api/financeiroApi';
 import { ApiError } from '../api/http';
 
 function formatBrl(v: number) {
@@ -14,6 +14,7 @@ interface Props {
 
 export default function AprovacoesPage({ eventoId, eventoNome }: Props) {
   const [pendentes, setPendentes] = useState<Despesa[]>([]);
+  const [fornecedores, setFornecedores] = useState<FornecedorResumo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [rejeitarId, setRejeitarId] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
@@ -21,8 +22,12 @@ export default function AprovacoesPage({ eventoId, eventoNome }: Props) {
   const carregar = useCallback(async () => {
     setErro(null);
     try {
-      const lista = await financeiroApi.listarPendentes(eventoId);
-      setPendentes(lista);
+      const [listaPendentes, listaFornecedores] = await Promise.all([
+        financeiroApi.listarPendentes(eventoId),
+        financeiroApi.listarFornecedores()
+      ]);
+      setPendentes(listaPendentes);
+      setFornecedores(listaFornecedores);
     } catch (e) {
       setErro(e instanceof ApiError ? e.message : 'Erro ao carregar.');
     }
@@ -105,7 +110,7 @@ export default function AprovacoesPage({ eventoId, eventoNome }: Props) {
                     <td>
                       <span className="competency-tag">{d.categoria}</span>
                     </td>
-                    <td>{d.fornecedorId}</td>
+                    <td>{fornecedores.find(f => f.id === d.fornecedorId)?.nome ?? d.fornecedorId}</td>
                     <td>{formatBrl(d.valor)}</td>
                     <td>{new Date(d.dataHoraLancamento).toLocaleString('pt-BR')}</td>
                     <td>
