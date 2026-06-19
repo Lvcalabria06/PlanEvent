@@ -34,7 +34,7 @@ public class FuncionarioRepositoryJpaAdapter implements FuncionarioRepository {
 
     @Override
     public List<Funcionario> listarTodos() {
-        return jpaRepository.findByAtivoTrue().stream()
+        return jpaRepository.findAll().stream()
                 .map(FuncionarioMapper::paraDominio)
                 .toList();
     }
