@@ -109,6 +109,13 @@ public class FuncionarioSteps {
         disponibilidadeInformada = "madrugada";
     }
 
+    @Given("o gestor informa um nome válido {string}, o cargo {string} e a disponibilidade {string}")
+    public void o_gestor_informa_dados_customizados(String nome, String cargo, String disponibilidade) {
+        nomeInformado = nome;
+        cargoInformado = cargo;
+        disponibilidadeInformada = disponibilidade;
+    }
+
     @Given("o gestor informa dados válidos para cadastro")
     public void o_gestor_informa_dados_validos_para_cadastro() {
         nomeInformado = NOME_VALIDO;
@@ -368,6 +375,13 @@ public class FuncionarioSteps {
         assertNull(excecaoLancada);
         assertNotNull(funcionarioEmContexto);
         assertNotNull(funcionarioEmContexto.getId());
+    }
+
+    @Then("o funcionário é salvo com sucesso e o cargo do funcionário deve ser {string}")
+    public void o_funcionario_e_salvo_com_sucesso_e_cargo_deve_ser(String cargoEsperado) {
+        assertNull(excecaoLancada);
+        assertNotNull(funcionarioEmContexto);
+        assertEquals(cargoEsperado, funcionarioEmContexto.getCargo().name());
     }
 
     @Then("o sistema deve impedir o cadastro do funcionário")

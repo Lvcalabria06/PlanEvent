@@ -7,7 +7,10 @@ public enum CargoFuncionario {
     ANALISTA,
     ASSISTENTE,
     TECNICO,
-    GARCOM;
+    GARCOM,
+    COORDENADOR,
+    TECNICO_AV,
+    LOGISTICA;
 
     public static CargoFuncionario fromString(String valor) {
         if (valor == null || valor.trim().isEmpty()) {
@@ -19,6 +22,10 @@ public enum CargoFuncionario {
                 .replaceAll("[^\\p{ASCII}]", "")
                 .toUpperCase()
                 .trim();
+
+        if (normalizado.equals("TECNICO A/V") || normalizado.equals("TECNICO AV") || normalizado.equals("TECNICO_A_V")) {
+            return TECNICO_AV;
+        }
 
         try {
             return CargoFuncionario.valueOf(normalizado);

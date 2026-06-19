@@ -99,7 +99,7 @@ export default function App() {
     nome: dto.nome,
     email: '',
     cargo: dto.cargo,
-    competencias: [],
+    competencias: dto.competencias ?? [],
     disponibilidade: dto.disponibilidade,
     status: dto.ativo ? 'Disponível' : 'Inativo',
     ativo: dto.ativo,
@@ -226,6 +226,7 @@ export default function App() {
       nome: formNome.trim(),
       cargo: formCargo,
       disponibilidade: formDisponibilidade.toUpperCase(),
+      competencias: formCompetencias.split(',').map(c => c.trim()).filter(c => c !== ''),
     })
       .then(dto => {
         setFuncionarios(prev => [...prev, dtoParaFuncionario(dto)]);
@@ -243,10 +244,11 @@ export default function App() {
       nome: formNome.trim(),
       cargo: formCargo,
       disponibilidade: formDisponibilidade.toUpperCase(),
+      competencias: formCompetencias.split(',').map(c => c.trim()).filter(c => c !== ''),
     })
       .then(dto => {
         setFuncionarios(prev =>
-          prev.map(f => f.id === selectedFuncId ? { ...dtoParaFuncionario(dto), email: f.email, competencias: f.competencias } : f)
+          prev.map(f => f.id === selectedFuncId ? { ...dtoParaFuncionario(dto), email: f.email } : f)
         );
         resetForm();
         setCurrentView('list');

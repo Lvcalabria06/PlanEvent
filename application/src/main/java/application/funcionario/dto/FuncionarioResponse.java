@@ -11,6 +11,7 @@ public record FuncionarioResponse(
         String cargo,
         String disponibilidade,
         boolean ativo,
+        java.util.List<String> competencias,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
 }

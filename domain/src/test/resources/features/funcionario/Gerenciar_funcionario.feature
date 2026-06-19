@@ -9,6 +9,17 @@ Feature: Gerenciar funcionário
     When o gestor cadastrar o funcionário no sistema
     Then o funcionário é salvo com sucesso
 
+  Scenario Outline: Cadastrar funcionário com cargos específicos
+    Given o gestor informa um nome válido "<nome>", o cargo "<cargo>" e a disponibilidade "<disponibilidade>"
+    When o gestor cadastrar o funcionário no sistema
+    Then o funcionário é salvo com sucesso e o cargo do funcionário deve ser "<cargo_esperado>"
+
+    Examples:
+      | nome        | cargo       | disponibilidade | cargo_esperado |
+      | Carlos M    | Coordenador | integral        | COORDENADOR    |
+      | Ana P       | Técnico A/V | manhã           | TECNICO_AV     |
+      | Roberto S   | Logística   | tarde           | LOGISTICA      |
+
   Scenario: Impedir cadastro sem nome
     Given o gestor informa cargo e disponibilidade válidos
     When o gestor tentar cadastrar um funcionário sem nome

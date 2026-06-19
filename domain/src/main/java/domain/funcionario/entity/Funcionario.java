@@ -5,6 +5,8 @@ import domain.funcionario.valueobject.DisponibilidadeFuncionario;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Funcionario {
     private final String id;
@@ -12,16 +14,22 @@ public class Funcionario {
     private CargoFuncionario cargo;
     private DisponibilidadeFuncionario disponibilidade;
     private boolean ativo;
+    private List<String> competencias;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public Funcionario(String nome, String cargo, String disponibilidade) {
+        this(nome, cargo, disponibilidade, new java.util.ArrayList<>());
+    }
+
+    public Funcionario(String nome, String cargo, String disponibilidade, List<String> competencias) {
         validarNome(nome);
 
-        this.id = UUID.randomUUID().toString();
+        this.id = java.util.UUID.randomUUID().toString();
         this.nome = nome.trim();
         this.cargo = CargoFuncionario.fromString(cargo);
         this.disponibilidade = DisponibilidadeFuncionario.fromString(disponibilidade);
+        this.competencias = competencias != null ? new java.util.ArrayList<>(competencias) : new java.util.ArrayList<>();
         this.ativo = true;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
@@ -43,6 +51,12 @@ public class Funcionario {
     public void alterarDisponibilidade(String novaDisponibilidade) {
         validarAtivo();
         this.disponibilidade = DisponibilidadeFuncionario.fromString(novaDisponibilidade);
+        atualizarData();
+    }
+
+    public void alterarCompetencias(List<String> novasCompetencias) {
+        validarAtivo();
+        this.competencias = novasCompetencias != null ? new java.util.ArrayList<>(novasCompetencias) : new java.util.ArrayList<>();
         atualizarData();
     }
 
@@ -93,23 +107,25 @@ public class Funcionario {
     public CargoFuncionario getCargo() { return cargo; }
     public DisponibilidadeFuncionario getDisponibilidade() { return disponibilidade; }
     public boolean isAtivo() { return ativo; }
+    public List<String> getCompetencias() { return competencias; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     private Funcionario(String id, String nome, CargoFuncionario cargo,
-            DisponibilidadeFuncionario disponibilidade, boolean ativo,
+            DisponibilidadeFuncionario disponibilidade, boolean ativo, List<String> competencias,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.nome = nome;
         this.cargo = cargo;
         this.disponibilidade = disponibilidade;
         this.ativo = ativo;
+        this.competencias = competencias;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
     public static Funcionario reconstituir(String id, String nome, String cargo,
-            String disponibilidade, boolean ativo,
+            String disponibilidade, boolean ativo, List<String> competencias,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         return new Funcionario(
                 id,
@@ -117,6 +133,7 @@ public class Funcionario {
                 CargoFuncionario.fromString(cargo),
                 DisponibilidadeFuncionario.fromString(disponibilidade),
                 ativo,
+                competencias,
                 createdAt,
                 updatedAt);
     }

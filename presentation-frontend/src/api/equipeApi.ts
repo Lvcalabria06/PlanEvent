@@ -6,11 +6,12 @@ export interface FuncionarioApiDto {
   cargo: string;
   disponibilidade: string;
   ativo: boolean;
+  competencias?: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface MembroEquipeApiDto {
+interface MembroEquipeApiDto {
   id: string;
   funcionarioId: string;
   lider: boolean;
@@ -40,10 +41,10 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 export const listarFuncionarios = (): Promise<FuncionarioApiDto[]> =>
   req('/funcionarios');
 
-export const cadastrarFuncionario = (body: { nome: string; cargo: string; disponibilidade: string }): Promise<FuncionarioApiDto> =>
+export const cadastrarFuncionario = (body: { nome: string; cargo: string; disponibilidade: string; competencias: string[] }): Promise<FuncionarioApiDto> =>
   req('/funcionarios', { method: 'POST', body: JSON.stringify(body) });
 
-export const editarFuncionario = (id: string, body: { nome: string; cargo: string; disponibilidade: string }): Promise<FuncionarioApiDto> =>
+export const editarFuncionario = (id: string, body: { nome: string; cargo: string; disponibilidade: string; competencias: string[] }): Promise<FuncionarioApiDto> =>
   req(`/funcionarios/${id}`, { method: 'PUT', body: JSON.stringify(body) });
 
 export const inativarFuncionario = (id: string): Promise<void> =>

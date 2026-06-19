@@ -27,6 +27,9 @@ public class FuncionarioJpaEntity {
     @Column(name = "disponibilidade", nullable = false)
     private String disponibilidade;
 
+    @Column(name = "competencias")
+    private String competencias;
+
     @Column(name = "ativo", nullable = false)
     private boolean ativo;
 
@@ -40,12 +43,13 @@ public class FuncionarioJpaEntity {
     }
 
     public FuncionarioJpaEntity(String id, String nome, String cargo, String disponibilidade,
-            boolean ativo, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            boolean ativo, String competencias, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.nome = nome;
         this.cargo = cargo;
         this.disponibilidade = disponibilidade;
         this.ativo = ativo;
+        this.competencias = competencias;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -55,6 +59,7 @@ public class FuncionarioJpaEntity {
     public String getCargo() { return cargo; }
     public String getDisponibilidade() { return disponibilidade; }
     public boolean isAtivo() { return ativo; }
+    public String getCompetencias() { return competencias; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
