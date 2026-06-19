@@ -6,5 +6,6 @@ package application.funcionario.dto;
 public record CadastrarFuncionarioRequest(
         String nome,
         String cargo,
-        String disponibilidade) {
+        String disponibilidade,
+        java.util.List<String> competencias) {
 }

@@ -19,7 +19,7 @@ public class FuncionarioUseCaseImpl implements FuncionarioUseCase {
 
     @Override
     public FuncionarioResponse cadastrar(CadastrarFuncionarioRequest request) {
-        Funcionario novo = new Funcionario(request.nome(), request.cargo(), request.disponibilidade());
+        Funcionario novo = new Funcionario(request.nome(), request.cargo(), request.disponibilidade(), request.competencias());
         return FuncionarioDtoMapper.paraResposta(funcionarioService.criarFuncionario(novo));
     }
 
@@ -29,6 +29,7 @@ public class FuncionarioUseCaseImpl implements FuncionarioUseCase {
         atual.alterarNome(request.nome());
         atual.alterarCargo(request.cargo());
         atual.alterarDisponibilidade(request.disponibilidade());
+        atual.alterarCompetencias(request.competencias());
         return FuncionarioDtoMapper.paraResposta(funcionarioService.editarFuncionario(atual));
     }
 

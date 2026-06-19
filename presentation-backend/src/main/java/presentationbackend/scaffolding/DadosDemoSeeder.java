@@ -110,22 +110,22 @@ class DadosDemoSeeder {
     }
 
     // ---- Funcionários ----
-    private void func(String nome, String cargo, String disponibilidade) {
-        Funcionario f = funcRepo.salvar(new Funcionario(nome, cargo, disponibilidade));
+    private void func(String nome, String cargo, String disponibilidade, String... comps) {
+        Funcionario f = funcRepo.salvar(new Funcionario(nome, cargo, disponibilidade, java.util.List.of(comps)));
         funcIdPorNome.put(nome, f.getId());
     }
 
     private void criarFuncionarios() {
-        func("Maria Silva", "GERENTE", "INTEGRAL");
-        func("João Silva", "GERENTE", "INTEGRAL");
-        func("Ana Costa", "ANALISTA", "MANHA");
-        func("Carlos Dias", "ASSISTENTE", "TARDE");
-        func("João Santos", "TECNICO", "TARDE");
-        func("Marcos Paulo", "TECNICO", "INTEGRAL");
-        func("Pedro Oliveira", "ASSISTENTE", "INTEGRAL");
-        func("Carla Mendes", "ASSISTENTE", "TARDE");
-        func("Ricardo Alves", "TECNICO", "NOITE");
-        func("Bruno Lima", "ASSISTENTE", "MANHA");
+        func("Maria Silva", "GERENTE", "INTEGRAL", "Liderança", "Gestão", "Eventos");
+        func("João Silva", "GERENTE", "INTEGRAL", "Liderança", "Orçamento", "Logística");
+        func("Ana Costa", "ANALISTA", "MANHA", "Dados", "Excel", "Inglês");
+        func("Carlos Dias", "ASSISTENTE", "TARDE", "Organização", "Suporte");
+        func("João Santos", "TECNICO", "TARDE", "Som", "Iluminação");
+        func("Marcos Paulo", "TECNICO", "INTEGRAL", "Projeção", "Equipamento A/V");
+        func("Pedro Oliveira", "ASSISTENTE", "INTEGRAL", "Recepção", "Atendimento");
+        func("Carla Mendes", "ASSISTENTE", "TARDE", "Credenciamento", "Comunicação");
+        func("Ricardo Alves", "TECNICO", "NOITE", "Segurança", "Prevenção");
+        func("Bruno Lima", "ASSISTENTE", "MANHA", "Logística", "Atendimento");
     }
 
     // ---- Equipes ----

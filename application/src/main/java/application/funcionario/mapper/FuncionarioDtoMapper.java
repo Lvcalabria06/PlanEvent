@@ -18,6 +18,7 @@ public final class FuncionarioDtoMapper {
                 funcionario.getCargo() != null ? funcionario.getCargo().name() : null,
                 funcionario.getDisponibilidade() != null ? funcionario.getDisponibilidade().name() : null,
                 funcionario.isAtivo(),
+                funcionario.getCompetencias(),
                 funcionario.getCreatedAt(),
                 funcionario.getUpdatedAt());
     }
