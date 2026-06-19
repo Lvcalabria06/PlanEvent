@@ -2,6 +2,8 @@ package domain.local.service;
 
 import domain.local.entity.Local;
 import domain.local.entity.ManutencaoLocal;
+import domain.local.interpreter.AnalisadorExpressaoLocal;
+import domain.local.interpreter.ExpressaoLocal;
 import domain.local.repository.LocalRepository;
 import domain.local.repository.ManutencaoRepository;
 import domain.local.valueobject.StatusLocal;
@@ -77,6 +79,15 @@ public class LocalServiceImpl implements LocalService {
     public List<Local> listarLocais() {
         return localRepository.listarTodos().stream()
                 .map(this::atualizarStatusDinamico)
+                .toList();
+    }
+
+    @Override
+    public List<Local> filtrarLocais(String expressao) {
+        ExpressaoLocal filtro = AnalisadorExpressaoLocal.parse(expressao);
+        return localRepository.listarTodos().stream()
+                .map(this::atualizarStatusDinamico)
+                .filter(filtro::interpretar)
                 .toList();
     }
 }

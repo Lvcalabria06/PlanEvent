@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -54,6 +55,29 @@ public class LocalController {
     @GetMapping
     public List<LocalResponse> listarLocais() {
         return localService.listarLocais().stream()
+                .map(LocalResponse::de)
+                .toList();
+    }
+
+    /**
+     * Filtra locais usando uma expressão textual interpretada pelo padrão
+     * Interpreter (GoF).
+     *
+     * <p>Campos suportados: {@code status}, {@code tipo},
+     * {@code capacidade_min}, {@code capacidade_max}.<br>
+     * Operadores lógicos: {@code AND}, {@code OR}.<br>
+     * Agrupamento com parênteses é suportado.</p>
+     *
+     * <p>Exemplos:</p>
+     * <pre>
+     *   GET /api/locais/filtrar?q=status=ATIVO
+     *   GET /api/locais/filtrar?q=tipo=Salão AND capacidade_min=100
+     *   GET /api/locais/filtrar?q=(status=ATIVO OR status=EM_MANUTENCAO) AND capacidade_max=300
+     * </pre>
+     */
+    @GetMapping("/filtrar")
+    public List<LocalResponse> filtrarLocais(@RequestParam("q") String expressao) {
+        return localService.filtrarLocais(expressao).stream()
                 .map(LocalResponse::de)
                 .toList();
     }
