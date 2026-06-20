@@ -53,7 +53,19 @@ O projeto segue uma estrutura baseada em Domain-Driven Design (DDD) e Clean Arch
 - **`presentation-backend/`**: Controladores e APIs.
 - **`presentation-frontend/`**: Interface web da aplicação.
 
-## 9. Autores
+## 9. Padrões de Projeto
+Padrões utilizados por cada integrante.
+
+Felipe Barros — Strategy
+Victor Paes - Strategy
+Henrique Gueiros — Iterator
+Lucas Calabria — Iterator
+Maria Julia — Template Method
+Samuel Abreu — Interpreter
+Maria Luisa — Interpreter
+Artur Dowsley — Observer
+
+## 10. Autores
 Projeto desenvolvido no contexto da disciplina Requisitos, Projeto de Software e Validação – CESAR School.
 
 **Equipe EventOS:**
