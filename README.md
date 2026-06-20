@@ -64,6 +64,7 @@ Maria Julia — Template Method
 Samuel Abreu — Interpreter
 Maria Luisa — Interpreter
 Artur Dowsley — Observer
+Lucca - Factory Method
 
 ## 10. Padrões de Projeto — Mapa de Arquivos
 
