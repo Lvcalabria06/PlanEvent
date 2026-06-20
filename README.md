@@ -65,7 +65,44 @@ Samuel Abreu — Interpreter
 Maria Luisa — Interpreter
 Artur Dowsley — Observer
 
-## 10. Autores
+## 10. Padrões de Projeto — Mapa de Arquivos
+
+São 6 padrões distintos implementados.
+
+---
+
+### Iterator — Henrique Gueiros
+
+**Intenção:** percorrer apenas os contratos ativos de um fornecedor sem expor a coleção interna de contratos nem vazar a lógica de filtragem para o serviço consumidor.
+
+| Papel no padrão | Arquivo .java |
+|---|---|
+| Interface do iterador | `java.util.Iterator<Contrato>` (JDK — sem arquivo próprio) |
+| Iterador concreto | `domain/contrato/iterator/IteradorContratosAtivos.java` |
+| Agregado iterável (fornece o iterador) | `domain/contrato/iterator/ContratosAtivosFornecedor.java` |
+| Serviço consumidor do iterador | `domain/fornecedor/service/FornecedorServiceImpl.java` |
+
+**Como aparece no código:** `ContratosAtivosFornecedor.iterator()` retorna uma instância de `IteradorContratosAtivos` que carrega os contratos do repositório uma única vez e avança pulando automaticamente os registros com status `ENCERRADO` ou `CANCELADO`. `FornecedorServiceImpl.desativarFornecedor()` usa apenas `possuiAtivos()` — que delega internamente a `hasNext()` — para bloquear a desativação quando há contratos vigentes, sem tocar a lista diretamente.
+
+---
+
+### Interpreter — Samuel Abreu
+
+**Intenção:** permitir que o serviço de locais filtre registros por meio de uma expressão textual arbitrária (ex.: `status = ATIVO AND capacidade_min = 50`) sem que a lógica de filtragem fique acoplada ao serviço — cada regra é encapsulada em um objeto separado e as combinações AND/OR são compostas em árvore.
+
+| Papel no padrão | Arquivo .java |
+|---|---|
+| Interface AbstractExpression | `domain/local/interpreter/ExpressaoLocal.java` |
+| Expressões terminais | `domain/local/interpreter/ExpressaoStatus.java` · `ExpressaoTipo.java` · `ExpressaoCapacidadeMinima.java` · `ExpressaoCapacidadeMaxima.java` |
+| Expressões não-terminais (compostas) | `domain/local/interpreter/ExpressaoAnd.java` · `ExpressaoOr.java` |
+| Parser (constrói a árvore de expressões) | `domain/local/interpreter/AnalisadorExpressaoLocal.java` |
+| Cliente (usa a árvore) | `domain/local/service/LocalServiceImpl.java` |
+
+**Como aparece no código:** `AnalisadorExpressaoLocal.parse(expressao)` tokeniza a string de filtro e monta recursivamente a árvore de `ExpressaoLocal`, respeitando precedência (AND > OR). `LocalServiceImpl.filtrarLocais()` chama `parse()` uma única vez e aplica `filtro::interpretar` a cada `Local` retornado pelo repositório, sem conhecer os campos concretos que estão sendo avaliados.
+
+---
+
+## 11. Autores
 Projeto desenvolvido no contexto da disciplina Requisitos, Projeto de Software e Validação – CESAR School.
 
 **Equipe EventOS:**
