@@ -34,7 +34,7 @@ public class ItemPrevisaoJpaEntity {
     @Column(name = "quantidade_final", nullable = false)
     private int quantidadeFinal;
 
-    @Column(name = "explicacao_calculo")
+    @Column(name = "explicacao_calculo", columnDefinition = "TEXT")
     private String explicacaoCalculo;
 
     @ManyToOne(fetch = FetchType.LAZY)

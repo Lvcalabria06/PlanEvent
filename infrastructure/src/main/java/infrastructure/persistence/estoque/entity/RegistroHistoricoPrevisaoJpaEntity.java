@@ -39,7 +39,7 @@ public class RegistroHistoricoPrevisaoJpaEntity {
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
 
-    @Column(name = "justificativa")
+    @Column(name = "justificativa", columnDefinition = "TEXT")
     private String justificativa;
 
     @ElementCollection(fetch = FetchType.EAGER)
