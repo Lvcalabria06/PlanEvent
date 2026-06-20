@@ -62,7 +62,7 @@ Henrique Gueiros — Iterator
 Lucas Calabria — Iterator
 Maria Julia — Template Method
 Samuel Abreu — Interpreter
-Maria Luisa — Interpreter
+Maria Luíza — Interpreter
 Artur Dowsley — Observer
 Lucca - Factory Method
 
@@ -122,6 +122,43 @@ São 6 padrões distintos implementados.
 O `RelatorioFinanceiroServiceImpl` instancia o gerador adequado (padrão ou what-if) e sempre chama `executar(...)`, sem conhecer os detalhes internos de cada variação.
 
 O mesmo padrão é aplicado em outros componentes do pacote `domain/financeiro/template` (processadores e validadores de despesa).
+
+Aqui está o conteúdo formatado no mesmo estilo:
+
+---
+
+### Interpreter — Maria Luíza Dantas
+
+**Intenção:** definir uma linguagem simples para filtragem de funcionários e membros de equipe, permitindo interpretar expressões textuais compostas por regras de negócio (cargo, disponibilidade, liderança e status), de forma que novas condições possam ser adicionadas sem alterar a lógica principal dos serviços.
+
+| Papel no padrão | Arquivo .java |
+|---|---|
+| Interface Abstrata (Expression) | `domain/funcionario/interpreter/ExpressaoFuncionario.java` |
+| Expressão Terminal | `domain/funcionario/interpreter/ExpressaoCargoFuncionario.java` |
+| Expressão Terminal | `domain/funcionario/interpreter/ExpressaoDisponibilidadeFuncionario.java` |
+| Expressão Terminal | `domain/funcionario/interpreter/ExpressaoAtivoFuncionario.java` |
+| Expressão Não-Terminal | `domain/funcionario/interpreter/ExpressaoAndFuncionario.java` |
+| Expressão Não-Terminal | `domain/funcionario/interpreter/ExpressaoOrFuncionario.java` |
+| Parser | `domain/funcionario/interpreter/AnalisadorExpressaoFuncionario.java` |
+| Cliente | `domain/funcionario/service/FuncionarioServiceImpl.java` |
+| Interface Abstrata (Expression) | `domain/equipe/interpreter/ExpressaoMembro.java` |
+| Expressão Terminal | `domain/equipe/interpreter/ExpressaoLider.java` |
+| Expressão Terminal | `domain/equipe/interpreter/ExpressaoCargo.java` |
+| Expressão Terminal | `domain/equipe/interpreter/ExpressaoDisponibilidade.java` |
+| Expressão Não-Terminal | `domain/equipe/interpreter/ExpressaoAnd.java` |
+| Expressão Não-Terminal | `domain/equipe/interpreter/ExpressaoOr.java` |
+| Parser | `domain/equipe/interpreter/AnalisadorExpressaoMembro.java` |
+| Cliente | `domain/equipe/service/EquipeServiceImpl.java` |
+
+**Como aparece no código:** O método `parse(String expressao)` é responsável por transformar uma expressão textual em uma árvore de objetos do padrão Interpreter. O analisador realiza a tokenização da entrada, identifica expressões terminais e composições lógicas utilizando os operadores AND e OR, construindo a estrutura que será interpretada posteriormente.
+
+- `AnalisadorExpressaoFuncionario` cria expressões para filtragem de funcionários com base em cargo, disponibilidade e status de atividade.
+- `ExpressaoCargoFuncionario`, `ExpressaoDisponibilidadeFuncionario` e `ExpressaoAtivoFuncionario` representam as regras terminais da linguagem.
+- `ExpressaoAndFuncionario` e `ExpressaoOrFuncionario` permitem combinar múltiplas regras em expressões compostas.
+
+O `FuncionarioServiceImpl` interpreta a expressão gerada pelo analisador e aplica o filtro sobre a coleção de funcionários, sem conhecer os detalhes internos de cada regra.
+
+O mesmo padrão é aplicado no pacote `domain/equipe/interpreter`, onde expressões relacionadas a liderança, cargo e disponibilidade são utilizadas para filtrar membros de uma equipe por meio do `EquipeServiceImpl`.
 
 ## 11. Autores
 Projeto desenvolvido no contexto da disciplina Requisitos, Projeto de Software e Validação – CESAR School.
