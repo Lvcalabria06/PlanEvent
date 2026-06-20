@@ -103,6 +103,26 @@ São 6 padrões distintos implementados.
 
 ---
 
+### Template Method — Maria Júlia
+
+**Intenção:** definir o esqueleto de um algoritmo para geração de relatórios financeiros (validação, coleta de orçamento/despesas, cálculos de totais, indicadores de saúde/cobertura e recomendações), permitindo que subclasses personalizem apenas as etapas variáveis (montagem de itens e formatação do conteúdo) sem alterar a estrutura geral.
+
+| Papel no padrão                  | Arquivo .java |
+|----------------------------------|---------------|
+| Classe Abstrata (Template)       | `domain/financeiro/template/GeradorRelatorioFinanceiroTemplateMethod.java` |
+| Classe Concreta (Padrão)         | `domain/financeiro/template/GeradorRelatorioPadraoTemplateMethod.java` |
+| Classe Concreta (What-If)        | `domain/financeiro/template/GeradorRelatorioWhatIfTemplateMethod.java` |
+| Cliente                          | `domain/financeiro/service/RelatorioFinanceiroServiceImpl.java` |
+
+**Como aparece no código:** O método `executar(String eventoId, String usuarioId)` é `final` na classe abstrata e orquestra todo o fluxo fixo: valida evento, obtém orçamento/categorias, monta itens, calcula totais, indicadores, comparativo e recomendações, chamando por fim o método abstrato `construirConteudo(...)`.
+
+- `GeradorRelatorioPadraoTemplateMethod` sobrescreve apenas `construirConteudo` para gerar relatório textual completo.
+- `GeradorRelatorioWhatIfTemplateMethod` sobrescreve `montarItens`, `montarIndicadorCobertura` e `construirConteudo` para suportar simulações com parâmetros (despesas pendentes/hipotéticas e cenários pessimistas).
+
+O `RelatorioFinanceiroServiceImpl` instancia o gerador adequado (padrão ou what-if) e sempre chama `executar(...)`, sem conhecer os detalhes internos de cada variação.
+
+O mesmo padrão é aplicado em outros componentes do pacote `domain/financeiro/template` (processadores e validadores de despesa).
+
 ## 11. Autores
 Projeto desenvolvido no contexto da disciplina Requisitos, Projeto de Software e Validação – CESAR School.
 
